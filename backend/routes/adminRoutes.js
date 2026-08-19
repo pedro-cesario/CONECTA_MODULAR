@@ -30,4 +30,6 @@ router.post('/system/config', requireAuth, requireAdmin, adminController.salvarC
 router.get('/ect/agendas', requireAuth, requireAdmin, adminController.listarAgendasEct);
 router.get('/ect/procedimentos', requireAuth, requireAdmin, adminController.listarProcedimentosEct);
 
+router.get('/sessoes', requireAuth, requireAdmin, adminController.listarSessoes);
+
 module.exports = router;

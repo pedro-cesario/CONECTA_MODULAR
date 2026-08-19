@@ -269,7 +269,8 @@ module.exports = {
   obterConfigSistema,
   salvarConfigSistema,
   listarAgendasEct,
-  listarProcedimentosEct
+  listarProcedimentosEct,
+  listarSessoes
 };
 
 async function listarAgendasEct(req, res) {
@@ -294,3 +295,42 @@ async function listarProcedimentosEct(req, res) {
   }
 }
 
+
+async function listarSessoes(req, res) {
+  try {
+    const redisClient = require('../config/redisClient');
+    if (!redisClient.isReady) {
+      return res.json({ success: true, data: [] });
+    }
+    const keys = await redisClient.keys('sess:*');
+    if (!keys || keys.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+    const sessionDatas = await redisClient.mGet(keys);
+    const sessions = [];
+    for (let i = 0; i < keys.length; i++) {
+      const data = sessionDatas[i];
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.usuario) {
+            sessions.push({
+              id: keys[i].replace('sess:', ''),
+              nm_usuario: parsed.usuario.nm_usuario,
+              nome: parsed.usuario.nome,
+              perfis: parsed.usuario.perfisDisponiveis ? parsed.usuario.perfisDisponiveis.map(p => p.nome).join(', ') : '',
+              perfilAtivo: parsed.usuario.perfilAtivo,
+              authenticated_at: parsed.auth?.authenticated_at || null,
+              auth_source: parsed.auth?.source || parsed.usuario.auth_source || 'unknown',
+              is_ldap: parsed.usuario.is_ldap
+            });
+          }
+        } catch (err) { }
+      }
+    }
+    res.json({ success: true, data: sessions });
+  } catch (error) {
+    console.error('[Admin] Erro ao listar sessões:', error);
+    res.status(500).json({ success: false, message: 'Erro ao listar sessões', error: error.message });
+  }
+}

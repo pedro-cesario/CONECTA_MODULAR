@@ -523,6 +523,9 @@
         <button class="admin-tab-btn" id="apontamentos-tab" data-tab="apontamentos" role="tab" aria-controls="apontamentos" aria-selected="false">
           <i class="bi bi-sliders"></i> Apontamentos do Conecta
         </button>
+        <button class="admin-tab-btn" id="monitoramento-tab" data-tab="monitoramento" role="tab" aria-controls="monitoramento" aria-selected="false">
+          <i class="bi bi-activity"></i> Monitoramento
+        </button>
         <button class="admin-tab-btn" id="cache-tab" data-tab="cache" role="tab" aria-controls="cache" aria-selected="false">
           <i class="bi bi-database-fill-check"></i> Cache
         </button>
@@ -618,7 +621,44 @@
 
         </div>
 
-        <div class="tab-pane" id="cache" role="tabpanel" aria-labelledby="cache-tab">
+        
+        <div class="tab-pane" id="monitoramento" role="tabpanel" aria-labelledby="monitoramento-tab">
+          <div class="admin-header-card">
+            <span class="mode-eyebrow">Monitoramento</span>
+            <h3>Usuários Logados</h3>
+            <p>Lista de todas as sessões ativas no momento pelo Redis.</p>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title"><i class="bi bi-people-fill"></i> Sessões Ativas (<span id="total-sessoes">0</span>)</span>
+              <button class="btn btn-outline-primary btn-sm" id="btn-refresh-sessoes">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+              </button>
+            </div>
+            <div class="admin-card-body p-0">
+              <div class="table-responsive">
+                <table class="table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Usuário</th>
+                      <th>Nome</th>
+                      <th>Perfis Disponíveis</th>
+                      <th>Perfil Ativo</th>
+                      <th>Login (Data/Hora)</th>
+                      <th>Origem Auth</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-sessoes">
+                    <!-- Javascript will populate this -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+<div class="tab-pane" id="cache" role="tabpanel" aria-labelledby="cache-tab">
 
           <div class="admin-card">
             <div class="admin-card-header">
@@ -1936,7 +1976,52 @@
       });
     });
 
+
+    async function loadSessoes() {
+      const tbody = document.getElementById('table-sessoes');
+      const countEl = document.getElementById('total-sessoes');
+      try {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="bi bi-arrow-repeat spin"></i> Carregando...</td></tr>';
+        const result = await api.get(`${apiConfig.baseUrl}/admin/sessoes`);
+        
+        if (result.success && result.data) {
+          countEl.textContent = result.data.length;
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhuma sessão ativa encontrada.</td></tr>';
+            return;
+          }
+          
+          let tableHtml = '';
+          result.data.forEach(sess => {
+            const dateStr = sess.authenticated_at ? new Date(sess.authenticated_at).toLocaleString('pt-BR') : '-';
+            const authBadge = sess.auth_source === 'ldap' ? '<span class="badge badge-primary">AD/LDAP</span>' : '<span class="badge bg-secondary">Local</span>';
+            const ativoBadge = sess.perfilAtivo ? `<span class="badge badge-success">${sess.perfilAtivo}</span>` : '-';
+            
+            tableHtml += `
+              <tr>
+                <td><strong>${sess.nm_usuario || '-'}</strong></td>
+                <td>${sess.nome || '-'}</td>
+                <td><small>${sess.perfis || '-'}</small></td>
+                <td>${ativoBadge}</td>
+                <td>${dateStr}</td>
+                <td>${authBadge}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = tableHtml;
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar sessões.</td></tr>';
+        }
+      } catch (err) {
+        console.error('Erro ao listar sessões:', err);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro de conexão ao carregar sessões.</td></tr>';
+      }
+    }
+
+    document.getElementById('btn-refresh-sessoes').addEventListener('click', loadSessoes);
+
     async function loadAdminData() {
+
       try {
         const sessionResult = await api.get(`${apiConfig.baseUrl}/me`);
         if (!sessionResult.success || !sessionResult.data) {
@@ -1958,6 +2043,7 @@
         await loadCacheInfo();
         await loadFilasPA();
         await loadConfigSistema();
+        await loadSessoes();
       } catch (err) {
         console.error('[Admin] Erro ao verificar sessão:', err);
         window.location.href = '/';
