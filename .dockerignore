@@ -1,0 +1,9 @@
+node_modules
+*.log
+.env
+.git
+.gitignore
+*.md
+auth.sqlite
+.DS_Store
+Thumbs.db

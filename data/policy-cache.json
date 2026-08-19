@@ -1,0 +1,32 @@
+{
+  "conecta|pedro.cesario||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-19T13:24:47.167Z"
+  },
+  "conecta|carlos.lacerda||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-18T20:39:36.853Z"
+  },
+  "conecta|poliana.carvalho||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-18T16:09:31.779Z"
+  }
+}

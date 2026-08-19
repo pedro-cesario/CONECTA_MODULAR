@@ -1,0 +1,492 @@
+<!DOCTYPE html><html class="light" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<title>Conecta HEAL - Passagem de Plantão</title>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .patient-card-red { border-left: 4px solid #DC2626; }
+        .patient-card-orange { border-left: 4px solid #C2410C; }
+        .patient-card-yellow { border-left: 4px solid #CA8A04; }
+        .patient-card-green { border-left: 4px solid #15803D; }
+        .patient-card-blue { border-left: 4px solid #2563EB; }
+        
+        .bg-mesh {
+            background-color: #f9f9ff;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(19, 79, 159, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(19, 79, 159, 0.05) 0px, transparent 50%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "urgent-red": "#DC2626",
+                      "on-secondary-container": "#54647a",
+                      "secondary-fixed": "#d3e4fe",
+                      "inverse-primary": "#acc7ff",
+                      "primary-fixed": "#d7e2ff",
+                      "surface-container-high": "#e7e7ef",
+                      "primary": "#00387a",
+                      "on-secondary-fixed": "#0b1c30",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#a8c4ff",
+                      "secondary": "#505f76",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "warning-yellow": "#CA8A04",
+                      "on-error-container": "#93000a",
+                      "on-surface-variant": "#424751",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "surface-bright": "#f9f9ff",
+                      "tertiary": "#642900",
+                      "stable-green": "#15803D",
+                      "primary-fixed-dim": "#acc7ff",
+                      "on-tertiary-container": "#ffb38b",
+                      "outline": "#737783",
+                      "info-blue": "#2563EB",
+                      "surface-container-highest": "#e2e2e9",
+                      "background": "#f9f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#d0e1fb",
+                      "surface-variant": "#e2e2e9",
+                      "inverse-surface": "#2e3036",
+                      "on-background": "#191b21",
+                      "surface-container-low": "#f3f3fa",
+                      "on-primary-fixed": "#001a40",
+                      "error-container": "#ffdad6",
+                      "surface": "#f9f9ff",
+                      "tertiary-fixed-dim": "#ffb68f",
+                      "on-surface": "#191b21",
+                      "surface-dim": "#d9d9e1",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed-variant": "#004492",
+                      "tertiary-fixed": "#ffdbca",
+                      "on-tertiary-fixed-variant": "#773200",
+                      "primary-container": "#134f9f",
+                      "outline-variant": "#c3c6d3",
+                      "surface-container": "#ededf5",
+                      "on-tertiary-fixed": "#331100",
+                      "surface-tint": "#285dad",
+                      "on-error": "#ffffff",
+                      "tertiary-container": "#883a00",
+                      "priority-orange": "#C2410C",
+                      "inverse-on-surface": "#f0f0f8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "input-height": "48px",
+                      "card-padding": "1.25rem",
+                      "margin-page": "2rem",
+                      "gutter": "1.5rem"
+              },
+              "fontFamily": {
+                      "body-lg": ["Plus Jakarta Sans"],
+                      "label-md": ["Plus Jakarta Sans"],
+                      "headline-sm": ["Plus Jakarta Sans"],
+                      "headline-md": ["Plus Jakarta Sans"],
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "body-md": ["Plus Jakarta Sans"],
+                      "headline-lg": ["Plus Jakarta Sans"]
+              },
+              "fontSize": {
+                      "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["26px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-mesh text-on-surface">
+<!-- TopNavBar (Standardized from SCREEN_2) -->
+<header class="bg-surface border-b border-surface-variant flex justify-between items-center w-full px-margin-page py-3 h-16 fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">Conecta HEAL</span>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<nav class="flex items-center gap-8">
+<a class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-1 rounded-md" href="#">Dashboard</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 px-3 py-1" href="#">Passagem de Plantão</a><a class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-1 rounded-md" href="#">Livro Administrativo</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-1 rounded-md" href="#">Pacientes</a>
+
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-2 pl-2 border-l border-outline-variant">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-secondary-container">
+<img class="w-full h-full object-cover" data-alt="A close-up professional headshot of a mature male doctor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCanpnUmKvzmXMF-rVT7hQ5sfoerUrXe1Qi83kxkGvW_Pv9P7BTMw_xRohdsIe8jxgrIoaM9LWksF20dElexs3kavMI8-mqCrlLyu2nOdMfA3MGFzDpPGoSGXcGMHTkjzVzdVDY6xnYA2BX_lS-94HsKRH7R4cER8oiSdJiJUGTfRvudb4Eksg0w8V-IhgL6hoKujZi9dsP4Q-sUZPF8ofwDQnvuX3ASpPB60oasR7mIPoSHJY2PC_ayA">
+</div>
+<div class="hidden lg:block">
+<p class="font-label-md text-label-md font-bold text-on-surface leading-none">Dr. Roberto Silva</p>
+<p class="text-[10px] text-secondary">CRM: 12345-SP</p>
+</div>
+<button class="text-secondary hover:text-error transition-colors p-1">
+<span class="material-symbols-outlined text-sm">logout</span>
+</button>
+</div>
+</div>
+</header>
+<div class="flex pt-16 h-screen">
+<!-- SideNavBar (Standardized from SCREEN_2) -->
+<aside class="hidden md:flex flex-col h-[calc(100vh-64px)] w-64 bg-surface-container-low border-r border-outline-variant p-4 gap-2 sticky top-16">
+<div class="flex items-center gap-3 px-2 py-4 mb-2">
+<div class="bg-primary-container text-on-primary-container p-2 rounded-lg">
+<span class="material-symbols-outlined">health_and_safety</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Setores</h2>
+<p class="text-xs text-secondary">Navegação por Ala</p>
+</div>
+<button class="ml-auto p-1 hover:bg-surface-container-high rounded-md transition-colors" id="sidebar-toggle"><span class="material-symbols-outlined text-secondary">menu_open</span></button>
+</div>
+<a class="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-transform duration-200 hover:translate-x-1 cursor-pointer select-none" href="#">
+<span class="material-symbols-outlined">medical_services</span>
+<span class="font-label-md text-label-md">UTI Geral</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200 hover:translate-x-1 cursor-pointer select-none" href="#">
+<span class="material-symbols-outlined">child_care</span>
+<span class="font-label-md text-label-md">Pediatria</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200 hover:translate-x-1 cursor-pointer select-none" href="#">
+<span class="material-symbols-outlined">emergency</span>
+<span class="font-label-md text-label-md">Emergência</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200 hover:translate-x-1 cursor-pointer select-none" href="#">
+<span class="material-symbols-outlined">local_hospital</span>
+<span class="font-label-md text-label-md">Centro Cirúrgico</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200 hover:translate-x-1 cursor-pointer select-none" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Almoxarifado</span>
+</a>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-gutter bg-background/50 relative scrollbar-hide pb-32">
+<!-- Header Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary">Passagem de Plantão</h1>
+<p class="text-on-surface-variant font-body-md text-body-md">Ala: UTI Geral • <span id="currentDate" class="">23 de julho de 2026</span></p>
+</div>
+<!-- Shift Toggle -->
+<div class="flex bg-surface-container-high p-1 rounded-full items-center">
+<button class="flex items-center gap-2 px-6 py-2 rounded-full bg-white shadow-sm text-primary font-bold transition-all" id="shift-diurno" onclick="toggleShift('diurno')">
+<span class="material-symbols-outlined text-[20px]">light_mode</span>
+<span class="font-label-md text-label-md">Diurno</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-2 rounded-full text-secondary font-medium transition-all" id="shift-noturno" onclick="toggleShift('noturno')">
+<span class="material-symbols-outlined text-[20px]">dark_mode</span>
+<span class="font-label-md text-label-md">Noturno</span>
+</button>
+</div>
+</div>
+<!-- Grid of Patients -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<!-- Patient Card 1 - High Priority -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-[28px] overflow-hidden patient-card-red flex flex-col shadow-sm hover:shadow-md transition-all duration-300">
+<div class="p-card-padding flex items-start gap-5">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-low shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Portrait of an elderly female patient" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKQceX8IlkgNq8kMoUU8SXUV3GnC2H8h64qRETBi-Ol_HkCS_BaomzWppWfrdha39iWfSZCFQ9XEDFlttqGnXW-phuilZUmLb2npkweoE9TfNn3zECKEKyhmN5xjQz82ms9ignOR8sQhHhYpH3RbO_osybbkwxmpLf7Nx1XSo3jpf67bfhMnGjgPsdin-xF4zJCNoImw3wTVU6zWi6slFd3gdwZRfFKkOLHzoEZmiHPAYqWiDaF1KrLw">
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Maria Aparecida Souza</h3>
+<div class="flex gap-3 text-on-surface-variant text-label-md font-label-md mt-1">
+<span class="">Idade: 68a</span>
+<span class="">Gênero: Fem</span>
+<span class="font-bold text-primary px-2 py-0.5 bg-primary/5 rounded">Leito: 104-A</span>
+</div>
+</div>
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Crítico</span>
+</div>
+</div>
+</div>
+<div class="px-card-padding pb-6 space-y-6">
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input checked="" class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Febre</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Vômito</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input checked="" class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Taquicardia</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Dispneia</span>
+</label>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-secondary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+    Anotações do Plantão
+</label>
+<textarea class="w-full h-28 p-4 rounded-2xl border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md resize-none shadow-sm" placeholder="Relate o estado geral do paciente...">Paciente apresentou pico febril de 38.5°C às 02h. Medicada conforme protocolo. Aguardando resultado de hemocultura.</textarea>
+</div>
+</div>
+</article>
+<!-- Patient Card 2 - Stable -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-[28px] overflow-hidden patient-card-green flex flex-col shadow-sm hover:shadow-md transition-all duration-300">
+<div class="p-card-padding flex items-start gap-5">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-low shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Portrait of a middle-aged male patient" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJsoN7dKJsAuXyIOyFkNmvYIyfyjH8mp4-r-nptEpBupN7D_xFGvEs6OP5N83P1-_pj2I9QWYw6FsZJYLTaVkUxtmgVoqXZaksdqHwgO1fu4_K7IGrSAIoHI_DG01Ag5aoTHijauXkWoikdcWlnIt-7D6bIaqWtRNMncu2Q0zNZbqRaO5GUZ8zAcUuWGUZ2F8nZApohivqiUWsYp0cklytKSU6GWiW2vVRRpowJKganfmlhDrojWmgHw">
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">João Carlos Mendes</h3>
+<div class="flex gap-3 text-on-surface-variant text-label-md font-label-md mt-1">
+<span class="">Idade: 45a</span>
+<span class="">Gênero: Masc</span>
+<span class="font-bold text-primary px-2 py-0.5 bg-primary/5 rounded">Leito: 102-B</span>
+</div>
+</div>
+<span class="bg-stable-green/10 text-stable-green border border-stable-green/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Estável</span>
+</div>
+</div>
+</div>
+<div class="px-card-padding pb-6 space-y-6">
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Febre</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Vômito</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Dor</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Outros</span>
+</label>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-secondary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+    Anotações do Plantão
+</label>
+<textarea class="w-full h-28 p-4 rounded-2xl border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md resize-none shadow-sm" placeholder="Relate o estado geral do paciente...">Mantém boa aceitação de dieta. Sinais vitais dentro da normalidade. Programado desmame de medicação para manhã.</textarea>
+</div>
+</div>
+</article>
+<!-- Patient Card 3 - Alert -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-[28px] overflow-hidden patient-card-orange flex flex-col shadow-sm hover:shadow-md transition-all duration-300">
+<div class="p-card-padding flex items-start gap-5">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-low shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young adult male patient" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVijKfxb5wQB9a_FoZytpGu_c3-V4AxfpNfLgISBwj2UYYNj0kQOF9hk0gVZ9WurOXxo2OAEyupjajHJxWksUGnoHX5BRvlOuICjdlBhbW5s7HUgMZUrrd7YnbIXll4O1wOYcBG-0qftIDoG1kiPRWAz4AtFTmfNqSkGJ-Xdf_UwXSnAXj_w02Df6VTiFOxFGxRAXxRs7HBCJtEf9nyeslsXKAZKRAAYdOr4CEwHMY09kucPoLush7Iw">
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Lucas Peixoto</h3>
+<div class="flex gap-3 text-on-surface-variant text-label-md font-label-md mt-1">
+<span class="">Idade: 29a</span>
+<span class="">Gênero: Masc</span>
+<span class="font-bold text-primary px-2 py-0.5 bg-primary/5 rounded">Leito: 108-C</span>
+</div>
+</div>
+<span class="bg-priority-orange/10 text-priority-orange border border-priority-orange/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Atenção</span>
+</div>
+</div>
+</div>
+<div class="px-card-padding pb-6 space-y-6">
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Agitação</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input checked="" class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Náusea</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Hipotensão</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Confusão</span>
+</label>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-secondary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+    Anotações do Plantão
+</label>
+<textarea class="w-full h-28 p-4 rounded-2xl border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md resize-none shadow-sm" placeholder="Relate o estado geral do paciente...">Apresentou náuseas recorrentes no início do plantão. Administrado antiemético com melhora parcial. Monitorar PA na próxima hora.</textarea>
+</div>
+</div>
+</article>
+<!-- Patient Card 4 - Monitoring -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-[28px] overflow-hidden patient-card-blue flex flex-col shadow-sm hover:shadow-md transition-all duration-300">
+<div class="p-card-padding flex items-start gap-5">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-low shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Portrait of an elderly male patient" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_-TWrHivZHj2yTKxZ-JgBmCk1a6nPqSWp61gTVblUn-lFNsOh-HefEiHiAWymBj9B2ckx1HG8YhJATkjaKqN1YTHBOy_QHDjKclXqL0mBxQPfylKf1SqWb99MTS2jdi9UGjf3fBdy3zJ74TXKQ4S7nDMsWT-DCj0A1GnWVB0KjUdPWJ-hU1RfhinbTkwJaXn416nLwkCq3sJFfqESteMnwE93ipPf9BYKPJ9fyyd8kwWmyiFkgZpUaw">
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Antônio Rezende</h3>
+<div class="flex gap-3 text-on-surface-variant text-label-md font-label-md mt-1">
+<span class="">Idade: 74a</span>
+<span class="">Gênero: Masc</span>
+<span class="font-bold text-primary px-2 py-0.5 bg-primary/5 rounded">Leito: 110-D</span>
+</div>
+</div>
+<span class="bg-info-blue/10 text-info-blue border border-info-blue/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Monitoramento</span>
+</div>
+</div>
+</div>
+<div class="px-card-padding pb-6 space-y-6">
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Convulsão</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Sangramento</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Dessaturação</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container hover:shadow-sm transition-all border border-transparent hover:border-outline-variant">
+<input class="rounded-md border-outline-variant text-primary focus:ring-primary h-5 w-5" type="checkbox">
+<span class="text-body-md font-body-md text-on-surface">Outros</span>
+</label>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-secondary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+    Anotações do Plantão
+</label>
+<textarea class="w-full h-28 p-4 rounded-2xl border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md resize-none shadow-sm" placeholder="Relate o estado geral do paciente...">Estável durante todo o período. Sono preservado. Aguardando avaliação da fisioterapia respiratória.</textarea>
+</div>
+</div>
+</article>
+</div>
+<!-- Standardized Global Footer Save Section -->
+<footer class="fixed bottom-0 right-0 left-0 md:left-64 bg-surface border-t border-outline-variant px-margin-page py-4 flex flex-col md:flex-row items-center justify-between shadow-[0_-4px_24px_rgba(0,0,0,0.08)] glass-panel z-40">
+<div class="flex gap-10 items-center mb-4 md:mb-0">
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Total de Pacientes</span>
+<span class="font-headline-sm text-headline-sm text-primary">12</span>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant hidden sm:block"></div>
+<div class="flex flex-wrap gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-urgent-red"></div>
+<span class="text-body-md font-medium">02 Críticos</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-stable-green"></div>
+<span class="text-body-md font-medium">08 Estáveis</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none px-6 py-2.5 rounded-xl text-secondary border border-outline hover:bg-surface-container-low transition-all font-bold">Salvar Rascunho</button>
+<button class="flex-1 md:flex-none px-8 py-2.5 rounded-xl bg-primary text-on-primary shadow-lg shadow-primary/20 hover:bg-primary-container hover:-translate-y-0.5 active:translate-y-0 transition-all font-bold flex items-center justify-center gap-2">
+                    Finalizar Passagem
+                    <span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+</button>
+</div>
+</footer>
+</main>
+</div>
+<script>
+    function toggleShift(shift) {
+        const diurnoBtn = document.getElementById('shift-diurno');
+        const noturnoBtn = document.getElementById('shift-noturno');
+        
+        if(shift === 'diurno') {
+            diurnoBtn.classList.add('bg-white', 'shadow-sm', 'text-primary', 'font-bold');
+            diurnoBtn.classList.remove('text-secondary', 'font-medium');
+            
+            noturnoBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary', 'font-bold');
+            noturnoBtn.classList.add('text-secondary', 'font-medium');
+        } else {
+            noturnoBtn.classList.add('bg-white', 'shadow-sm', 'text-primary', 'font-bold');
+            noturnoBtn.classList.remove('text-secondary', 'font-medium');
+            
+            diurnoBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary', 'font-bold');
+            diurnoBtn.classList.add('text-secondary', 'font-medium');
+        }
+    }
+
+    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR', options);
+
+    // Sidebar toggle functionality from SCREEN_2
+    const sidebar = document.querySelector('aside');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            const isCollapsed = sidebar.classList.contains('w-20');
+            if (isCollapsed) {
+                sidebar.classList.remove('w-20');
+                sidebar.classList.add('w-64');
+                sidebarToggle.querySelector('span').innerText = 'menu_open';
+            } else {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarToggle.querySelector('span').innerText = 'menu';
+            }
+        });
+    }
+
+    // Active state for sidebar items
+    document.querySelectorAll('aside a').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('aside a').forEach(i => {
+                i.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'font-bold');
+                i.classList.add('text-on-surface-variant');
+            });
+            this.classList.add('bg-secondary-container', 'text-on-secondary-container', 'font-bold');
+            this.classList.remove('text-on-surface-variant');
+        });
+    });
+</script>
+
+
+
+
+</body></html>

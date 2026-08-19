@@ -1,0 +1,539 @@
+<!DOCTYPE html><html class="light" lang="pt-br" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Conecta HEAL - Dashboard de Pacientes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#331100",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-surface": "#2e3036",
+                    "surface-variant": "#e2e2e9",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#d9d9e1",
+                    "tertiary-fixed": "#ffdbca",
+                    "on-surface": "#191b21",
+                    "tertiary-fixed-dim": "#ffb68f",
+                    "on-primary-container": "#a8c4ff",
+                    "urgent-red": "#DC2626",
+                    "surface-bright": "#f9f9ff",
+                    "primary-fixed": "#d7e2ff",
+                    "surface-container-low": "#f3f3fa",
+                    "secondary": "#505f76",
+                    "outline": "#737783",
+                    "surface-container-highest": "#e2e2e9",
+                    "on-primary-fixed": "#001a40",
+                    "on-tertiary-container": "#ffb38b",
+                    "surface": "#f9f9ff",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#134f9f",
+                    "warning-yellow": "#CA8A04",
+                    "background": "#f9f9ff",
+                    "primary": "#00387a",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#acc7ff",
+                    "tertiary": "#642900",
+                    "on-background": "#191b21",
+                    "primary-fixed-dim": "#acc7ff",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#54647a",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary-fixed-variant": "#004492",
+                    "on-error": "#ffffff",
+                    "priority-orange": "#C2410C",
+                    "stable-green": "#15803D",
+                    "info-blue": "#2563EB",
+                    "inverse-on-surface": "#f0f0f8",
+                    "on-tertiary-fixed-variant": "#773200",
+                    "surface-container": "#ededf5",
+                    "on-surface-variant": "#424751",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-secondary-fixed": "#0b1c30",
+                    "tertiary-container": "#883a00",
+                    "surface-container-high": "#e7e7ef",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#285dad",
+                    "outline-variant": "#c3c6d3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "input-height": "48px",
+                    "card-padding": "1.25rem",
+                    "margin-page": "2rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-md": ["Plus Jakarta Sans"],
+                    "headline-sm": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9f9ff; }
+        .glass-header {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-surface dark:bg-surface-dim border-b border-surface-variant dark:border-outline-variant z-50 flex justify-between items-center w-full px-margin-page py-3 px-8">
+<div class="flex items-center gap-8 flex-1">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">Conecta HEAL</h1>
+<nav class="hidden md:flex gap-6 gap-8 justify-center">
+<a class="text-primary dark:text-inverse-primary border-b-2 border-primary font-bold pb-1 transition-colors" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">Passagem de Plantão</a><a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">Livro Administrativo</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">Pacientes</a>
+
+</nav>
+</div>
+<div class="flex items-center gap-4 justify-end gap-6">
+<div class="hidden md:flex items-center bg-surface-container-low px-4 py-1.5 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-48" placeholder="Buscar paciente ou leito..." type="text">
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">apps</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 ml-2 border-l border-outline-variant pl-4">
+<div class="text-right hidden sm:block">
+<p class="font-label-md text-label-md text-on-surface">Dr. Ricardo Silva</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Plantão UTI-B</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border-2 border-surface">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a male doctor in a modern medical setting, wearing a clean white lab coat over a professional blue shirt. The lighting is soft and clinical, highlighting a warm and trustworthy expression. The background is a slightly blurred hospital environment with soft blue and slate tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsTu-i2wyFaXY3yJs_42680DXbU0iB6ywernk8V5Y-huv0WvX3DiME_cORsfcoP1RkgiUnAOrVeXWw8pHPOwTS3e0pQJo66eB6QMqa1LE5_ASJ4NrjXcaJ-Y4-ZpBdr_hM8l77fbb7uJJyQp4JiFWz8OXVZjcewK5Z6RVMmCx4RhwAGp2F9W3Ckpl4NMl7VxYMYbX6NHkzucYPCyRMTGvZZrkEO39EDdMz_x5ExlaJ9DFuCM6UwD72ng">
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class="flex pt-16 h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="sidebar-transition flex-shrink-0 w-64 bg-surface-container-low dark:bg-inverse-surface border-r border-surface-variant dark:border-outline-variant h-full z-40" id="sidebar">
+<div class="flex flex-col h-full p-4 gap-2">
+<div class="flex items-center gap-3 px-2 py-4 mb-2">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">local_hospital</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-[16px] font-extrabold text-on-surface">Setores Clínicos</h2>
+<p class="text-[11px] text-on-surface-variant opacity-70">Gestão de Plantão</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 hover:translate-x-1 transition-all rounded-lg font-body-md" href="#">
+<span class="material-symbols-outlined">medical_services</span>
+<span class="sidebar-label">Pronto Atendimento</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 hover:translate-x-1 transition-all rounded-lg font-body-md" href="#">
+<span class="material-symbols-outlined">bed</span>
+<span class="sidebar-label">Enfermaria A</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-lg font-bold transition-all shadow-sm" href="#">
+<span class="material-symbols-outlined">personal_injury</span>
+<span class="sidebar-label">Enfermaria B</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 hover:translate-x-1 transition-all rounded-lg font-body-md" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="sidebar-label">UTI</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 hover:translate-x-1 transition-all rounded-lg font-body-md" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="sidebar-label">Sectores Administrativos</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-surface-variant">
+<button class="w-full bg-primary text-white font-label-md py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="">Novo Registro</span>
+</button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 rounded-lg text-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="sidebar-label">Configurações</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 rounded-lg text-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span class="sidebar-label">Suporte</span>
+</a>
+</div>
+</div>
+</div>
+</aside>
+<!-- Dashboard Content -->
+<main class="flex-1 overflow-y-auto bg-slate-50 px-margin-page py-8">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Dashboard de Pacientes</h2>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-block w-2 h-2 rounded-full bg-stable-green status-pulse"></span>
+<p class="text-body-md text-on-surface-variant">Setor: <span class="font-semibold text-on-surface">Enfermaria B</span></p>
+<span class="mx-2 text-outline">|</span>
+<p class="text-body-md text-on-surface-variant italic">Atualização em <span id="timer" class="">25s</span></p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 bg-white border border-slate-200 text-on-surface-variant rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shadow-sm" onclick="window.location.reload()">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<div class="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+<button class="px-4 py-2 bg-secondary-container text-on-secondary-container font-bold rounded-lg text-sm">Grid</button>
+<button class="px-4 py-2 text-on-surface-variant font-medium rounded-lg text-sm hover:bg-slate-50">Lista</button>
+</div>
+</div>
+</div>
+<!-- Stat Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-8">
+<!-- Total Patients -->
+<div class="bg-white p-card-padding rounded-xl border border-slate-200 flex items-center gap-4 card-hover transition-all">
+<div class="w-12 h-12 rounded-xl bg-info-blue/10 text-info-blue flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">group</span>
+</div>
+<div>
+<p class="text-label-md text-on-surface-variant uppercase tracking-wider">Total de Pacientes</p>
+<p class="text-headline-md text-on-surface">42</p>
+</div>
+</div>
+<!-- Pending Medications -->
+<div class="bg-white p-card-padding rounded-xl border border-slate-200 flex items-center gap-4 card-hover transition-all">
+<div class="w-12 h-12 rounded-xl bg-urgent-red/10 text-urgent-red flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">medication</span>
+</div>
+<div>
+<p class="text-label-md text-urgent-red font-bold uppercase tracking-wider">Medicações Pendentes</p>
+<p class="text-headline-md text-urgent-red">08</p>
+</div>
+</div>
+<!-- Delayed Checks -->
+<div class="bg-white p-card-padding rounded-xl border border-slate-200 flex items-center gap-4 card-hover transition-all">
+<div class="w-12 h-12 rounded-xl bg-warning-yellow/10 text-warning-yellow flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">assignment_late</span>
+</div>
+<div>
+<p class="text-label-md text-warning-yellow font-bold uppercase tracking-wider">Checks em Atraso</p>
+<p class="text-headline-md text-on-surface">14</p>
+</div>
+</div>
+<!-- Expected Discharge -->
+<div class="bg-white p-card-padding rounded-xl border border-slate-200 flex items-center gap-4 card-hover transition-all">
+<div class="w-12 h-12 rounded-xl bg-primary-container/10 text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">logout</span>
+</div>
+<div>
+<p class="text-label-md text-info-blue font-bold uppercase tracking-wider">Alta Prevista</p>
+<p class="text-headline-md text-on-surface">05</p>
+</div>
+</div>
+</div>
+<!-- Patient Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+<!-- Patient Card 1: Critical -->
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden card-hover transition-all flex flex-col h-full border-l-[6px] border-l-urgent-red">
+<div class="p-5 flex justify-between items-start border-b border-slate-50">
+<div>
+<span class="inline-block bg-error-container text-error text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter mb-2">Crítico</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Maria Helena Silva</h3>
+<p class="text-body-md text-on-surface-variant">Leito <span class="font-semibold text-primary">204-A</span> • 68 anos • F</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-5 flex-1 space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-error-container/20 text-error px-3 py-1 rounded-full text-[11px] font-semibold border border-error/10">Alto Risco Fall</span>
+<span class="bg-warning-yellow/10 text-warning-yellow px-3 py-1 rounded-full text-[11px] font-semibold border border-warning-yellow/10">Jejum</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Último Check</p>
+<p class="text-body-md font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-stable-green">timer</span>
+                                    Há 15 min
+                                </p>
+</div>
+<div class="p-3 bg-error-container/10 rounded-lg">
+<p class="text-[10px] text-urgent-red uppercase font-bold tracking-widest mb-1">Próxima Med.</p>
+<p class="text-body-md font-bold text-urgent-red flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    Agora (10:30)
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50/50 p-4 border-t border-slate-100 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">ecg</span>
+<span class="text-xs text-on-surface-variant">Monitoramento Ativo</span>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Ver Prontuário</button>
+</div>
+</div>
+<!-- Patient Card 2: Stable -->
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden card-hover transition-all flex flex-col h-full border-l-[6px] border-l-stable-green">
+<div class="p-5 flex justify-between items-start border-b border-slate-50">
+<div>
+<span class="inline-block bg-stable-green/10 text-stable-green text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter mb-2">Estável</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Joaquim Barbosa</h3>
+<p class="text-body-md text-on-surface-variant">Leito <span class="font-semibold text-primary">206-B</span> • 45 anos • M</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-5 flex-1 space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-stable-green/10 text-stable-green px-3 py-1 rounded-full text-[11px] font-semibold border border-stable-green/10">Check OK</span>
+<span class="bg-info-blue/10 text-info-blue px-3 py-1 rounded-full text-[11px] font-semibold border border-info-blue/10">Fisioterapia</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Último Check</p>
+<p class="text-body-md font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-stable-green">timer</span>
+                                    Há 45 min
+                                </p>
+</div>
+<div class="p-3 bg-slate-100/50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Próxima Med.</p>
+<p class="text-body-md font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    12:00
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50/50 p-4 border-t border-slate-100 flex justify-between items-center">
+<div class="flex items-center gap-2 text-info-blue">
+<span class="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+<span class="text-xs font-semibold">Plano de Cuidados em Dia</span>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Ver Prontuário</button>
+</div>
+</div>
+<!-- Patient Card 3: Attention -->
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden card-hover transition-all flex flex-col h-full border-l-[6px] border-l-warning-yellow">
+<div class="p-5 flex justify-between items-start border-b border-slate-50">
+<div>
+<span class="inline-block bg-warning-yellow/10 text-warning-yellow text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter mb-2">Atenção</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Cláudia Regina Mendes</h3>
+<p class="text-body-md text-on-surface-variant">Leito <span class="font-semibold text-primary">201-A</span> • 52 anos • F</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-5 flex-1 space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-warning-yellow/10 text-warning-yellow px-3 py-1 rounded-full text-[11px] font-semibold border border-warning-yellow/10">Aguardando Lab</span>
+<span class="bg-info-blue/10 text-info-blue px-3 py-1 rounded-full text-[11px] font-semibold border border-info-blue/10">Isolamento</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Último Check</p>
+<p class="text-body-md font-semibold flex items-center gap-1 text-warning-yellow">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+                                    Há 2h
+                                </p>
+</div>
+<div class="p-3 bg-slate-100/50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Próxima Med.</p>
+<p class="text-body-md font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    11:30
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50/50 p-4 border-t border-slate-100 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">history_edu</span>
+<span class="text-xs text-on-surface-variant">Pendente: Evolução Médico</span>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Ver Prontuário</button>
+</div>
+</div>
+<!-- Patient Card 4 -->
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden card-hover transition-all flex flex-col h-full border-l-[6px] border-l-stable-green">
+<div class="p-5 flex justify-between items-start border-b border-slate-50">
+<div>
+<span class="inline-block bg-stable-green/10 text-stable-green text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter mb-2">Estável</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Roberto de Souza</h3>
+<p class="text-body-md text-on-surface-variant">Leito <span class="font-semibold text-primary">208-A</span> • 74 anos • M</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-5 flex-1 space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-info-blue/10 text-info-blue px-3 py-1 rounded-full text-[11px] font-semibold border border-info-blue/10">Alta Prevista</span>
+<span class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[11px] font-semibold border border-slate-200">Acomp. Social</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Último Check</p>
+<p class="text-body-md font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-stable-green">timer</span>
+                                    Há 25 min
+                                </p>
+</div>
+<div class="p-3 bg-slate-100/50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Próxima Med.</p>
+<p class="text-body-md font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    14:00
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50/50 p-4 border-t border-slate-100 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">inventory</span>
+<span class="text-xs text-on-surface-variant">Kit Medicamento Entregue</span>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Ver Prontuário</button>
+</div>
+</div>
+<!-- Patient Card 5: Critical/Urgent -->
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden card-hover transition-all flex flex-col h-full border-l-[6px] border-l-urgent-red">
+<div class="p-5 flex justify-between items-start border-b border-slate-50">
+<div>
+<span class="inline-block bg-error-container text-error text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter mb-2">Crítico</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Fernando Mendes Lima</h3>
+<p class="text-body-md text-on-surface-variant">Leito <span class="font-semibold text-primary">202-B</span> • 31 anos • M</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-5 flex-1 space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-error-container/20 text-error px-3 py-1 rounded-full text-[11px] font-semibold border border-error/10">Sepsis Protocol</span>
+<span class="bg-error-container/20 text-error px-3 py-1 rounded-full text-[11px] font-semibold border border-error/10">Oxigênio</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-error-container/10 rounded-lg">
+<p class="text-[10px] text-urgent-red uppercase font-bold tracking-widest mb-1">Status Sinais</p>
+<p class="text-body-md font-bold text-urgent-red flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                                    Instável
+                                </p>
+</div>
+<div class="p-3 bg-slate-100/50 rounded-lg">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Próxima Med.</p>
+<p class="text-body-md font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    10:45
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50/50 p-4 border-t border-slate-100 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-urgent-red text-[18px]">notification_important</span>
+<span class="text-xs text-urgent-red font-bold">Avaliação Médica Imediata</span>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Ver Prontuário</button>
+</div>
+</div>
+<!-- Add New Patient Placeholder -->
+<button class="border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center p-8 gap-4 hover:bg-slate-100/50 hover:border-primary/50 transition-all group">
+<div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-[32px] group-hover:text-primary">person_add</span>
+</div>
+<div class="text-center">
+<p class="font-headline-sm text-headline-sm text-slate-500 group-hover:text-on-surface">Internar Novo Paciente</p>
+<p class="text-body-md text-slate-400">Clique para abrir formulário de admissão</p>
+</div>
+</button>
+</div>
+</main>
+</div>
+<!-- Floating Action Button for Mobile -->
+<div class="md:hidden fixed bottom-6 right-6 z-50">
+<button class="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+</div>
+<script>
+        // Simple micro-interactions and timer
+        let timeLeft = 30;
+        const timerEl = document.getElementById('timer');
+        
+        setInterval(() => {
+            timeLeft = timeLeft <= 1 ? 30 : timeLeft - 1;
+            timerEl.textContent = timeLeft + 's';
+        }, 1000);
+
+        // Sidebar collapse simulation (visual only for this prototype)
+        const sidebar = document.getElementById('sidebar');
+        const labels = document.querySelectorAll('.sidebar-label');
+        
+        // This would be triggered by a menu button in a real app
+        function toggleSidebar() {
+            sidebar.classList.toggle('w-64');
+            sidebar.classList.toggle('w-20');
+            labels.forEach(l => l.classList.toggle('hidden'));
+        }
+    </script>
+
+
+
+
+
+
+</body></html>

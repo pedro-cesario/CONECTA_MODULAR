@@ -1,0 +1,193 @@
+/**
+ * =============================================================================
+ * CONFIGURAÇÃO CENTRAL DE MÓDULOS - CONECTA HEAL ASSISTENCIAL
+ * =============================================================================
+ * 
+ * Este arquivo é a FONTE DA VERDADE para configuração de módulos do sistema.
+ * 
+ * PARA ADICIONAR UM NOVO MÓDULO:
+ * 1. Adicione uma entrada no array MODULOS abaixo (apenas como fallback estático)
+ * 2. Defina allowedProfiles com os IDs dos perfis que terão acesso
+ * 3. O sistema automaticamente reconhecerá o novo módulo
+ * 
+ * PARA ADICIONAR UM NOVO PERFIL A UM MÓDULO EXISTENTE:
+ * 1. Adicione o ID do perfil no array allowedProfiles do módulo desejado
+ * 2. O perfil deve existir em ESPECIALIDADES (backend/config/especialidades.js)
+ * 
+ * IMPORTANTE:
+ * - IDs devem ser únicos e em snake_case
+ * - allowedProfiles deve conter IDs válidos de ESPECIALIDADES
+ * - Backend e frontend devem estar sincronizados
+ * - Nunca hardcodar perfis - sempre usar esta configuração central
+ * =============================================================================
+ */
+
+let useCache = false;
+let configCacheInstance = null;
+
+try {
+  configCacheInstance = require('./configCache');
+  const metadata = configCacheInstance.getCacheMetadata();
+  if (metadata && metadata.modulosCount > 0) {
+    useCache = true;
+  }
+} catch (_) {
+  useCache = false;
+}
+
+const MODULOS_STATIC = [
+  {
+    id: 'passagem',
+    nome: 'Passagem de Plantão',
+    descricao: 'Registro de intercorrências durante a passagem de plantão',
+    icon: 'bi-journal-medical',
+    allowedProfiles: ['enfermagem', 'psicologia'],
+    setorId: null, // Usa setor do perfil ativo
+    backend: {
+      controller: 'ocorrenciaController',
+      method: 'salvar'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-passagem',
+      workspaceId: 'workspace-passagem'
+    }
+  },
+  {
+    id: 'dashboard',
+    nome: 'Dashboard de Pacientes',
+    descricao: 'Visualização de pacientes internados com indicadores',
+    icon: 'bi-layout-text-window-reverse',
+    allowedProfiles: ['enfermagem', 'tecnico_enfermagem'],
+    setorId: null,
+    backend: {
+      controller: 'dashboardController',
+      method: 'validarAcessoDashboard'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-dashboard',
+      workspaceId: 'workspace-dashboard'
+    }
+  },
+  {
+    id: 'livro',
+    nome: 'Livro Administrativo',
+    descricao: 'Registro de ocorrências administrativas do livro',
+    icon: 'bi-clipboard2-data',
+    allowedProfiles: ['enfermagem'],
+    setorId: null,
+    backend: {
+      controller: 'ocorrenciaController',
+      method: 'salvarLivroAdministrativo'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-livro',
+      workspaceId: 'workspace-livro'
+    }
+  },
+  {
+    id: 'escala',
+    nome: 'Gestão de Escalas',
+    descricao: 'Consulta e organização das escalas assistenciais por data, turno e setor',
+    icon: 'bi-calendar-week',
+    allowedProfiles: ['psicologia'],
+    setorId: null,
+    backend: {
+      controller: 'escalaAtivaController',
+      method: 'loadEscalaAtiva'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-escala',
+      workspaceId: 'workspace-escala'
+    }
+  },
+  {
+    id: 'dashboard_pa',
+    nome: 'Dashboard P.A.',
+    descricao: 'Gestão de internações no Pronto Atendimento',
+    icon: 'bi-hospital',
+    allowedProfiles: ['enfermagem'],
+    setorId: null,
+    backend: {
+      controller: 'dashboardController',
+      method: 'validarAcessoDashboardPA'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-dashboard-internacao',
+      workspaceId: 'workspace-dashboard-internacao'
+    }
+  }
+];
+
+function getModulos() {
+  if (useCache && configCacheInstance) {
+    return configCacheInstance.getCachedModulos().map(m => ({
+      ...m,
+      backend: MODULOS_STATIC.find(s => s.id === m.id)?.backend || { controller: '', method: '' },
+      frontend: MODULOS_STATIC.find(s => s.id === m.id)?.frontend || { buttonId: '', workspaceId: '' }
+    }));
+  }
+  return MODULOS_STATIC;
+}
+
+const MODULOS = getModulos();
+
+/**
+ * Obtém módulo por ID
+ * @param {string} moduloId - ID do módulo
+ * @returns {Object|null} Configuração do módulo ou null
+ */
+function getModuloById(moduloId) {
+  return getModulos().find(m => m.id === moduloId) || null;
+}
+
+/**
+ * Obtém todos os módulos disponíveis para um perfil
+ * @param {string} perfilId - ID do perfil
+ * @returns {Array} Lista de módulos disponíveis
+ */
+function getModulosByPerfil(perfilId) {
+  if (useCache && configCacheInstance) {
+    return configCacheInstance.getModulosByPerfil(perfilId).map(m => ({
+      ...m,
+      backend: MODULOS_STATIC.find(s => s.id === m.id)?.backend || { controller: '', method: '' },
+      frontend: MODULOS_STATIC.find(s => s.id === m.id)?.frontend || { buttonId: '', workspaceId: '' }
+    }));
+  }
+  return MODULOS.filter(m => m.allowedProfiles.includes(perfilId));
+}
+
+/**
+ * Verifica se um perfil tem acesso a um módulo
+ * @param {string} perfilId - ID do perfil
+ * @param {string} moduloId - ID do módulo
+ * @returns {boolean} True se tem acesso
+ */
+function perfilTemAcessoModulo(perfilId, moduloId) {
+  if (useCache && configCacheInstance) {
+    return configCacheInstance.perfilTemAcessoModulo(perfilId, moduloId);
+  }
+  if (!perfilId || !moduloId) return false;
+  const modulo = getModuloById(moduloId);
+  if (!modulo) return false;
+  return modulo.allowedProfiles.includes(perfilId);
+}
+
+/**
+ * Obtém lista de IDs de módulos disponíveis para um perfil
+ * @param {string} perfilId - ID do perfil
+ * @returns {Array<string>} Lista de IDs de módulos
+ */
+function getModuloIdsByPerfil(perfilId) {
+  if (useCache && configCacheInstance) {
+    return configCacheInstance.getModuloIdsByPerfil(perfilId);
+  }
+  return getModulosByPerfil(perfilId).map(m => m.id);
+}
+
+module.exports = {
+  MODULOS,
+  getModuloById,
+  getModulosByPerfil,
+  perfilTemAcessoModulo,
+  getModuloIdsByPerfil
+};

@@ -1,0 +1,2 @@
+/instantclient-files/libclntsh.so.19.1 filter=lfs diff=lfs merge=lfs -text
+/instantclient-files/libociei.so filter=lfs diff=lfs merge=lfs -text

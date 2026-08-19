@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#00387A">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Conecta HEAL - Admin painel</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/style.css?v=85" rel="stylesheet">
+
+  <style>
+    .admin-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .admin-container .topbar {
+      flex-shrink: 0;
+    }
+
+    .admin-main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      padding: clamp(1rem, 2vw, 2rem);
+      background: var(--slate-50);
+    }
+
+    .topbar-title small {
+      font-weight: 300;
+      opacity: 0.7;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
+    .topbar-brand-link {
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-brand-link:hover {
+      color: var(--primary-light);
+    }
+
+    .admin-tabs {
+      display: flex;
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 2px;
+      height: 100%;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .admin-tab-btn {
+      background: none;
+      border: none;
+      color: var(--slate-500);
+      font-weight: 500;
+      padding: 14px 20px;
+      font-size: 0.95rem;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .admin-tab-btn:hover {
+      color: var(--primary);
+      background: rgba(0, 56, 122, 0.04);
+    }
+
+    .admin-tab-btn.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .admin-tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    .admin-tab-btn:hover {
+      color: var(--primary);
+      background: var(--primary-50);
+    }
+
+    .admin-tab-btn.active {
+      color: var(--primary);
+      background: var(--primary-50);
+    }
+
+    .admin-tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 12px;
+      right: 12px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    .admin-tab-btn i {
+      margin-right: 6px;
+    }
+
+    .admin-header-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,56,122,0.08);
+    }
+
+    .admin-header-card .mode-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      color: #00387A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-header-card h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 4px 0 4px;
+    }
+
+    .admin-header-card p {
+      color: #6c757d;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .admin-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,56,122,0.06);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .admin-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .admin-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #00387A;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-card-body {
+      padding: 24px;
+    }
+
+    .admin-card-body .table {
+      width: 100%;
+      margin: 0;
+    }
+
+    .admin-card-body .table th {
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6c757d;
+      background: #f8f9fa;
+      border-bottom: 2px solid #00387A;
+      white-space: nowrap;
+    }
+
+    .admin-card-body .table td {
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+      word-break: break-all;
+    }
+
+    .admin-card-body .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-card-body .table tr:hover {
+      background: #f1f5f9;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .admin-actions .btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-primary {
+      background: #00387A;
+      color: white;
+    }
+
+    .badge-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      z-index: 1060;
+    }
+
+    .toast {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      padding: 12px 18px;
+      margin-bottom: 8px;
+      border-left: 4px solid #00387A;
+      animation: slideInRight 0.3s ease;
+      font-size: 14px;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast.success { border-left-color: #28a745; }
+    .toast.error { border-left-color: #dc3545; }
+    .toast.warning { border-left-color: #ffc107; }
+
+    .loader { display: none; text-align: center; padding: 20px; }
+    .loader.active { display: block; }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #00387A;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .form-check {
+      margin-bottom: 8px;
+      padding: 10px 14px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .form-check:hover { background: #f8f9fa; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1050;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: white;
+      padding: 28px 32px;
+      border-radius: 14px;
+      max-width: 520px;
+      width: 92%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #00387A;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #6c757d;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .close-modal:hover {
+      background: #f0f0f0;
+      color: #00387A;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #00387A;
+      box-shadow: 0 0 0 3px rgba(0,56,122,0.12);
+      background: white;
+    }
+
+    .btn-primary {
+      background: #00387A;
+      border-color: #00387A;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover { background: #002f5c; border-color: #002f5c; }
+
+    .btn-danger { background: #dc3545; border-color: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; border-color: #c82333; }
+
+    .btn-secondary { background: #6c757d; border-color: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; border-color: #5a6268; }
+
+    .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+
+    .error-message {
+      color: #dc3545;
+      font-size: 13px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .form-group.has-error input,
+    .form-group.has-error select,
+    .form-group.has-error textarea { border-color: #dc3545; }
+
+    .form-group.has-error label { color: #dc3545; }
+
+    .autocomplete-field { position: relative; }
+
+    .autocomplete-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      z-index: 1060;
+    }
+
+    .autocomplete-dropdown.show { display: block; }
+
+    .autocomplete-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+      font-size: 14px;
+    }
+
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover { background: #f1f5f9; }
+
+    .autocomplete-item .item-sub {
+      font-size: 12px;
+      color: #6c757d;
+      margin-left: 8px;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.show.active { display: block; }
+
+    .cache-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+    }
+
+    .cache-card h5 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #00387A;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 767px) {
+      .admin-tab-btn {
+        padding: 0.65rem 0.8rem;
+        font-size: 0.82rem;
+      }
+
+      .admin-header-card,
+      .admin-card-body {
+        padding: 1rem;
+      }
+
+      .admin-card-header {
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="admin-container">
+
+    <nav class="topbar">
+      <div class="topbar-left">
+        <a href="/" class="topbar-brand-link" title="Voltar para o Conecta">
+          <i class="bi bi-heart-pulse"></i>
+          <span class="topbar-title">Conecta HEAL<small>Admin</small></span>
+        </a>
+      </div>
+      <div class="admin-tabs" id="adminNav" role="tablist">
+        <button class="admin-tab-btn active" id="perfis-tab" data-tab="perfis" role="tab" aria-controls="perfis" aria-selected="true">
+          <i class="bi bi-people-fill"></i> Perfis
+        </button>
+        <button class="admin-tab-btn" id="modulos-tab" data-tab="modulos" role="tab" aria-controls="modulos" aria-selected="false">
+          <i class="bi bi-grid-1x2-fill"></i> Módulos
+        </button>
+        <button class="admin-tab-btn" id="apontamentos-tab" data-tab="apontamentos" role="tab" aria-controls="apontamentos" aria-selected="false">
+          <i class="bi bi-sliders"></i> Apontamentos do Conecta
+        </button>
+        <button class="admin-tab-btn" id="cache-tab" data-tab="cache" role="tab" aria-controls="cache" aria-selected="false">
+          <i class="bi bi-database-fill-check"></i> Cache
+        </button>
+      </div>
+      <div class="topbar-right">
+        <span class="user-badge" id="user-display">
+          <i class="bi bi-person-circle"></i>
+          <span class="user-copy">
+            <strong id="user-name"></strong>
+            <small>Administrador</small>
+          </span>
+        </span>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="admin-main">
+
+      <div class="admin-header-card">
+        <div class="mode-eyebrow">Administração do sistema</div>
+        <h3>Painel Administrativo</h3>
+        <p>Gerenciar perfis, módulos e permissões do Conecta Heal</p>
+      </div>
+
+      <div class="tab-content" id="adminTabContent">
+
+        <div class="tab-pane show active" id="perfis" role="tabpanel" aria-labelledby="perfis-tab">
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="admin-card-title">
+                <i class="bi bi-people-fill"></i> Gerenciar Perfis
+              </div>
+              <button class="btn btn-primary" id="btn-novo-perfil">
+                <i class="bi bi-plus-lg"></i> Novo Perfil
+              </button>
+            </div>
+            <div class="admin-card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nome</th>
+                      <th>Setor ID</th>
+                      <th>Grupo LDAP</th>
+                      <th>Flag de Sessão</th>
+                      <th>Ref. Fixa</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="perfis-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="tab-pane" id="modulos" role="tabpanel" aria-labelledby="modulos-tab">
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="admin-card-title">
+                <i class="bi bi-grid-1x2-fill"></i> Gerenciar Módulos
+              </div>
+              <button class="btn btn-primary" id="btn-novo-modulo">
+                <i class="bi bi-plus-lg"></i> Novo Módulo
+              </button>
+            </div>
+            <div class="admin-card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nome</th>
+                      <th>Descrição</th>
+                      <th>Ícone</th>
+                      <th>Setor ID</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modulos-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="tab-pane" id="cache" role="tabpanel" aria-labelledby="cache-tab">
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="admin-card-title">
+                <i class="bi bi-database-fill-check"></i> Informações do Cache
+              </div>
+            </div>
+            <div class="admin-card-body">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="cache-card">
+                    <h5>Metadados do Cache</h5>
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Perfis carregados</span>
+                        <span class="badge badge-primary" id="cache-perfis-count">0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Módulos carregados</span>
+                        <span class="badge badge-primary" id="cache-modulos-count">0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Permissões carregadas</span>
+                        <span class="badge badge-primary" id="cache-permissoes-count">0</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="cache-card">
+                    <h5>Ações</h5>
+                    <button class="btn btn-secondary w-100 mb-2" id="btn-cache-reload">
+                      <i class="bi bi-arrow-clockwise"></i> Recarregar Cache
+                    </button>
+                    <div class="loader" id="cache-loader">
+                      <div class="spinner"></div>
+                      <p>Recarregando cache...</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="tab-pane" id="apontamentos" role="tabpanel" aria-labelledby="apontamentos-tab">
+          
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="admin-card-title">
+                <i class="bi bi-sliders"></i> Apontamentos e Configurações do Sistema
+              </div>
+            </div>
+            <div class="admin-card-body">
+              <div class="row g-4">
+                
+                <div class="col-md-6">
+                  <div class="cache-card">
+                    <h5>Dashboard P.A.</h5>
+                    <p class="text-muted small">Fila de espera de destino para pacientes aceitos pela enfermagem no P.A.</p>
+                    <div class="form-group mb-3">
+                      <label for="config-fila-destino">Fila TASY (Destino)</label>
+                      <select id="config-fila-destino" class="form-select">
+                        <option value="">Selecione a fila...</option>
+                      </select>
+                    </div>
+                    <button class="btn btn-primary w-100" id="btn-save-config-pa">
+                      <i class="bi bi-save"></i> Salvar Apontamento
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="cache-card">
+                    <h5>Configurações do Sistema</h5>
+                    <p class="text-muted small">Versão do sistema e ambiente de testes.</p>
+                    <div class="form-group mb-3">
+                      <label for="config-app-version">Versão do Sistema</label>
+                      <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 1.6">
+                    </div>
+                    <div class="form-group mb-3">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="config-show-test-bar">
+                        <label class="form-check-label" for="config-show-test-bar">Exibir barra de homologação (Base de Testes)</label>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary w-100" id="btn-save-config-sistema">
+                      <i class="bi bi-save"></i> Salvar Configuração
+                    </button>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="cache-card">
+                    <h5>Configurações ECT</h5>
+                    <p class="text-muted small">Agenda e Procedimento do TASY para a listagem do ECT.</p>
+                    <div class="form-group mb-3">
+                      <label for="config-ect-agenda">Agenda TASY</label>
+                      <select id="config-ect-agenda" class="form-select">
+                        <option value="">Carregando agendas...</option>
+                      </select>
+                    </div>
+                    <div class="form-group mb-3">
+                      <label for="config-ect-procedimento">Procedimento TASY</label>
+                      <select id="config-ect-procedimento" class="form-select">
+                        <option value="">Carregando procedimentos...</option>
+                      </select>
+                    </div>
+                    <button class="btn btn-primary w-100" id="btn-save-config-ect">
+                      <i class="bi bi-save"></i> Salvar Apontamento
+                    </button>
+                  </div>
+                </div>
+
+            </div>
+          </div>
+          
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="perfil-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="perfil-modal-title">Novo Perfil</h3>
+        <button class="close-modal" id="perfil-modal-close">&times;</button>
+      </div>
+      <form id="perfil-form">
+        <div class="form-group">
+          <label for="perfil-id">ID</label>
+          <input type="text" id="perfil-id" required>
+          <div class="error-message">O ID é obrigatório</div>
+        </div>
+        <div class="form-group">
+          <label for="perfil-nome">Nome</label>
+          <input type="text" id="perfil-nome" required>
+          <div class="error-message">O nome é obrigatório</div>
+        </div>
+        <div class="form-group">
+          <label for="perfil-setorId">Setor ID</label>
+          <input type="number" id="perfil-setorId" required>
+          <div class="error-message">O Setor ID é obrigatório</div>
+        </div>
+        <div class="form-group autocomplete-field">
+          <label for="perfil-grupoLdap">Grupo LDAP</label>
+          <input type="text" id="perfil-grupoLdap" required placeholder="Digite para buscar grupos LDAP..." autocomplete="off">
+          <div class="autocomplete-dropdown" id="ldap-dropdown"></div>
+          <div class="error-message" id="perfil-grupoLdap-error">O Grupo LDAP é obrigatório</div>
+        </div>
+        <div class="form-group">
+          <label for="perfil-sessionFlag">Flag de Sessão</label>
+          <input type="text" id="perfil-sessionFlag" required>
+          <div class="error-message">A Flag de Sessão é obrigatória</div>
+        </div>
+        <div class="form-group">
+          <label for="perfil-setorReferenciaFixo">Referência Fixa</label>
+          <select id="perfil-setorReferenciaFixo">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+        </div>
+        <div class="form-group autocomplete-field">
+          <label for="perfil-dsPerfilTasy">DS Perfil Tasy</label>
+          <input type="text" id="perfil-dsPerfilTasy" placeholder="Digite para buscar perfis do TASY..." autocomplete="off">
+          <div class="autocomplete-dropdown" id="tasy-dropdown"></div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" style="flex: 1;" id="perfil-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modulo-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modulo-modal-title">Novo Módulo</h3>
+        <button class="close-modal" id="modulo-modal-close">&times;</button>
+      </div>
+      <form id="modulo-form">
+        <div class="form-group">
+          <label for="modulo-id">ID</label>
+          <input type="text" id="modulo-id" required>
+          <div class="error-message">O ID é obrigatório</div>
+        </div>
+        <div class="form-group">
+          <label for="modulo-nome">Nome</label>
+          <input type="text" id="modulo-nome" required>
+          <div class="error-message">O nome é obrigatório</div>
+        </div>
+        <div class="form-group">
+          <label for="modulo-descricao">Descrição</label>
+          <textarea id="modulo-descricao" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="modulo-icon">Ícone</label>
+          <input type="text" id="modulo-icon" placeholder="bi-icone">
+        </div>
+        <div class="form-group">
+          <label for="modulo-setorId">Setor ID (Opcional)</label>
+          <input type="number" id="modulo-setorId">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" style="flex: 1;" id="modulo-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="permissoes-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Gerenciar Permissões do Perfil</h3>
+        <button class="close-modal" id="permissoes-modal-close">&times;</button>
+      </div>
+      <div id="permissoes-modal-content">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" style="flex: 1;" id="permissoes-cancelar">Cancelar</button>
+        <button type="button" class="btn btn-primary" style="flex: 1;" id="permissoes-salvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let apiConfig = {
+      baseUrl: window.location.origin + '/api'
+    };
+
+    const api = {
+      async post(url, data) {
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        return json;
+      },
+
+      async get(url) {
+        const res = await fetch(url, { credentials: 'include' });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        return json;
+      },
+
+      async put(url, data) {
+        const res = await fetch(url, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        return json;
+      },
+
+      async del(url) {
+        const res = await fetch(url, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        return json;
+      }
+    };
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle-fill' : type === 'error' ? 'bi-x-circle-fill' : 'bi-info-circle-fill'}"></i> ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 5000);
+    }
+
+    function formatPerfil(perfil) {
+      return {
+        id: perfil.id,
+        nome: perfil.nome,
+        setorId: perfil.setorId,
+        grupoLdap: perfil.grupoLdap || '',
+        sessionFlag: perfil.sessionFlag || '',
+        setorReferenciaFixo: perfil.setorReferenciaFixo || false,
+        dsPerfilTasy: perfil.dsPerfilTasy || perfil.grupoLdap || ''
+      };
+    }
+
+    function formatModulo(modulo) {
+      return {
+        id: modulo.id,
+        nome: modulo.nome,
+        descricao: modulo.descricao || '',
+        icon: modulo.icon || 'bi-gear',
+        setorId: modulo.setorId || null
+      };
+    }
+
+    async function loadPerfis() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/perfis`);
+        if (result.success) {
+          const tbody = document.getElementById('perfis-tbody');
+          tbody.innerHTML = '';
+          result.data.forEach(perfil => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td><code>${perfil.id}</code></td>
+              <td>${escapeHtml(perfil.nome)}</td>
+              <td>${perfil.setorId}</td>
+              <td><code>${perfil.grupoLdap}</code></td>
+              <td>${escapeHtml(perfil.sessionFlag)}</td>
+              <td><span class="badge ${perfil.setorReferenciaFixo ? 'badge-success' : 'badge-primary'}">${perfil.setorReferenciaFixo ? 'Sim' : 'Não'}</span></td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-sm btn-primary" onclick="editPerfil('${perfil.id}')">
+                    <i class="bi bi-pencil"></i> Editar
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deletePerfil('${perfil.id}')">
+                    <i class="bi bi-trash"></i> Excluir
+                  </button>
+                  <button class="btn btn-sm btn-secondary" onclick="managePermissoes('${perfil.id}')">
+                    <i class="bi bi-lock-fill"></i> Permissões
+                  </button>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        } else {
+          showToast('Erro ao carregar perfis: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao carregar perfis: ' + err.message, 'error');
+      }
+    }
+
+    async function loadModulos() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/modulos`);
+        if (result.success) {
+          const tbody = document.getElementById('modulos-tbody');
+          tbody.innerHTML = '';
+          result.data.forEach(modulo => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td><code>${escapeHtml(modulo.id)}</code></td>
+              <td>${escapeHtml(modulo.nome)}</td>
+              <td>${escapeHtml(modulo.descricao)}</td>
+              <td><i class="bi ${escapeHtml(modulo.icon || 'bi-gear')}"></i></td>
+              <td>${modulo.setorId || ''}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-sm btn-primary" onclick="editModulo('${modulo.id}')">
+                    <i class="bi bi-pencil"></i> Editar
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteModulo('${modulo.id}')">
+                    <i class="bi bi-trash"></i> Excluir
+                  </button>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        } else {
+          showToast('Erro ao carregar módulos: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao carregar módulos: ' + err.message, 'error');
+      }
+    }
+
+    async function loadCacheInfo() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/cache`);
+        if (result.success) {
+          document.getElementById('cache-perfis-count').textContent = result.data.perfisCount;
+          document.getElementById('cache-modulos-count').textContent = result.data.modulosCount;
+          document.getElementById('cache-permissoes-count').textContent = result.data.permissoesCount;
+        }
+      } catch (err) {
+        console.error('Erro ao carregar info do cache:', err);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    let currentPerfilEditando = null;
+    let currentModuloEditando = null;
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try {
+        await api.post(`${apiConfig.baseUrl}/logout`);
+        showToast('Logout realizado com sucesso', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (_) {
+        showToast('Logout realizado', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      }
+    });
+
+    document.getElementById('btn-novo-perfil').addEventListener('click', () => {
+      openPerfilModal();
+    });
+
+    let ldapGruposCache = [];
+    let tasyPerfisCache = [];
+    let autocompleteTimer = null;
+
+    function debounceAutocomplete(fn, ms) {
+      return function (...args) {
+        clearTimeout(autocompleteTimer);
+        autocompleteTimer = setTimeout(() => fn.apply(this, args), ms);
+      };
+    }
+
+    async function loadLdapGruposCache() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/ldap/grupos`);
+        if (result.success && result.data) {
+          ldapGruposCache = result.data;
+        }
+      } catch (_) {}
+    }
+
+    async function loadTasyPerfisCache() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/tasy/perfis`);
+        if (result.success && result.data) {
+          tasyPerfisCache = result.data;
+        }
+      } catch (_) {}
+    }
+
+    function showAutocomplete(input, dropdown, items, renderFn, onSelect) {
+      const value = input.value.trim().toLowerCase();
+      if (!value || items.length === 0) {
+        dropdown.classList.remove('show');
+        return;
+      }
+
+      const filtered = items.filter(item => {
+        const searchStr = (typeof item === 'string' ? item : JSON.stringify(item)).toLowerCase();
+        return searchStr.includes(value);
+      }).slice(0, 20);
+
+      if (filtered.length === 0) {
+        dropdown.classList.remove('show');
+        return;
+      }
+
+      dropdown.innerHTML = filtered.map((item, index) => {
+        return `<div class="autocomplete-item" data-index="${index}">${renderFn(item)}</div>`;
+      }).join('');
+
+      dropdown.querySelectorAll('.autocomplete-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.index);
+          onSelect(filtered[idx]);
+          dropdown.classList.remove('show');
+          input.focus();
+        });
+      });
+
+      dropdown.classList.add('show');
+    }
+
+    function closeAutocompleteOnOutsideClick(e) {
+      if (!e.target.closest('.autocomplete-field')) {
+        document.querySelectorAll('.autocomplete-dropdown.show').forEach(d => d.classList.remove('show'));
+      }
+    }
+    document.addEventListener('click', closeAutocompleteOnOutsideClick);
+
+    const handleLdapInput = debounceAutocomplete(function () {
+      const input = document.getElementById('perfil-grupoLdap');
+      const dropdown = document.getElementById('ldap-dropdown');
+      showAutocomplete(input, dropdown, ldapGruposCache,
+        item => `<strong>${escapeHtml(item.cn)}</strong><span class="item-sub">${escapeHtml(item.dn)}</span>`,
+        item => { input.value = item.cn; }
+      );
+    }, 250);
+
+    const handleTasyInput = debounceAutocomplete(function () {
+      const input = document.getElementById('perfil-dsPerfilTasy');
+      const dropdown = document.getElementById('tasy-dropdown');
+      showAutocomplete(input, dropdown, tasyPerfisCache,
+        item => `<strong>${escapeHtml(item.ds_perfil)}</strong><span class="item-sub">Código: ${item.cd_perfil}</span>`,
+        item => { input.value = item.ds_perfil; }
+      );
+    }, 250);
+
+    document.getElementById('perfil-grupoLdap').addEventListener('input', handleLdapInput);
+    document.getElementById('perfil-grupoLdap').addEventListener('focus', function () {
+      if (this.value.trim()) handleLdapInput();
+    });
+
+    document.getElementById('perfil-dsPerfilTasy').addEventListener('input', handleTasyInput);
+    document.getElementById('perfil-dsPerfilTasy').addEventListener('focus', function () {
+      if (this.value.trim()) handleTasyInput();
+    });
+
+    document.getElementById('btn-novo-modulo').addEventListener('click', () => {
+      openModuloModal();
+    });
+
+    document.getElementById('perfil-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('perfil-id').value.trim();
+      const nome = document.getElementById('perfil-nome').value.trim();
+      const setorId = parseInt(document.getElementById('perfil-setorId').value);
+      const grupoLdap = document.getElementById('perfil-grupoLdap').value.trim();
+      const sessionFlag = document.getElementById('perfil-sessionFlag').value.trim();
+      const setorReferenciaFixo = document.getElementById('perfil-setorReferenciaFixo').value === 'true';
+      const dsPerfilTasy = document.getElementById('perfil-dsPerfilTasy').value.trim() || grupoLdap;
+
+      if (!id || !nome || !setorId || !grupoLdap || !sessionFlag) {
+        showToast('Preencha todos os campos obrigatórios (ID, Nome, Setor ID, Grupo LDAP, Flag de Sessão)', 'error');
+        return;
+      }
+
+      try {
+        const perfilData = formatPerfil({ id, nome, setorId, grupoLdap, sessionFlag, setorReferenciaFixo, dsPerfilTasy });
+        const result = await api.post(`${apiConfig.baseUrl}/admin/perfis`, perfilData);
+        if (result.success) {
+          showToast('Perfil salvo com sucesso!', 'success');
+          closePerfilModal();
+          loadPerfis();
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao salvar perfil: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar perfil: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('modulo-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('modulo-id').value.trim();
+      const nome = document.getElementById('modulo-nome').value.trim();
+      const descricao = document.getElementById('modulo-descricao').value;
+      const icon = document.getElementById('modulo-icon').value.trim() || 'bi-gear';
+      const setorId = document.getElementById('modulo-setorId').value ? parseInt(document.getElementById('modulo-setorId').value) : null;
+
+      if (!id || !nome) {
+        showToast('Preencha os campos obrigatórios (ID, Nome)', 'error');
+        return;
+      }
+
+      try {
+        const moduloData = formatModulo({ id, nome, descricao, icon, setorId });
+        const result = await api.post(`${apiConfig.baseUrl}/admin/modulos`, moduloData);
+        if (result.success) {
+          showToast('Módulo salvo com sucesso!', 'success');
+          closeModuloModal();
+          loadModulos();
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao salvar módulo: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar módulo: ' + err.message, 'error');
+      }
+    });
+
+    function openPerfilModal(perfil = null) {
+      const modal = document.getElementById('perfil-modal');
+      const title = document.getElementById('perfil-modal-title');
+      const form = document.getElementById('perfil-form');
+
+      if (perfil) {
+        title.textContent = 'Editar Perfil';
+        document.getElementById('perfil-id').value = perfil.id;
+        document.getElementById('perfil-id').readOnly = true;
+        document.getElementById('perfil-nome').value = perfil.nome;
+        document.getElementById('perfil-setorId').value = perfil.setorId;
+        document.getElementById('perfil-grupoLdap').value = perfil.grupoLdap;
+        document.getElementById('perfil-sessionFlag').value = perfil.sessionFlag;
+        document.getElementById('perfil-setorReferenciaFixo').value = perfil.setorReferenciaFixo ? 'true' : 'false';
+        document.getElementById('perfil-dsPerfilTasy').value = perfil.dsPerfilTasy || perfil.grupoLdap;
+        currentPerfilEditando = perfil.id;
+      } else {
+        title.textContent = 'Novo Perfil';
+        document.getElementById('perfil-id').value = '';
+        document.getElementById('perfil-id').readOnly = false;
+        form.reset();
+        currentPerfilEditando = null;
+      }
+
+      loadLdapGruposCache();
+      loadTasyPerfisCache();
+
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closePerfilModal() {
+      document.getElementById('perfil-modal').classList.remove('show');
+      document.body.classList.remove('modal-open');
+      document.getElementById('perfil-form').reset();
+      document.getElementById('ldap-dropdown').classList.remove('show');
+      document.getElementById('tasy-dropdown').classList.remove('show');
+    }
+
+    function openModuloModal(modulo = null) {
+      const modal = document.getElementById('modulo-modal');
+      const title = document.getElementById('modulo-modal-title');
+      const form = document.getElementById('modulo-form');
+
+      if (modulo) {
+        title.textContent = 'Editar Módulo';
+        document.getElementById('modulo-id').value = modulo.id;
+        document.getElementById('modulo-id').readOnly = true;
+        document.getElementById('modulo-nome').value = modulo.nome;
+        document.getElementById('modulo-descricao').value = modulo.descricao;
+        document.getElementById('modulo-icon').value = modulo.icon;
+        document.getElementById('modulo-setorId').value = modulo.setorId || '';
+        currentModuloEditando = modulo.id;
+      } else {
+        title.textContent = 'Novo Módulo';
+        document.getElementById('modulo-id').value = '';
+        document.getElementById('modulo-id').readOnly = false;
+        form.reset();
+        currentModuloEditando = null;
+      }
+
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeModuloModal() {
+      document.getElementById('modulo-modal').classList.remove('show');
+      document.body.classList.remove('modal-open');
+      document.getElementById('modulo-form').reset();
+    }
+
+    async function editPerfil(id) {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/perfis`);
+        if (result.success) {
+          const perfil = result.data.find(p => p.id === id);
+          if (perfil) {
+            openPerfilModal(perfil);
+          }
+        }
+      } catch (err) {
+        showToast('Erro ao carregar perfil: ' + err.message, 'error');
+      }
+    }
+
+    async function deletePerfil(id) {
+      if (!confirm('Tem certeza que deseja excluir este perfil? Esta ação não pode ser desfeita.')) {
+        return;
+      }
+
+      try {
+        const deleteResult = await api.del(`${apiConfig.baseUrl}/admin/perfis/${id}`);
+        if (deleteResult.success) {
+          showToast('Perfil excluído com sucesso!', 'success');
+          loadPerfis();
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao excluir perfil: ' + deleteResult.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao excluir perfil: ' + err.message, 'error');
+      }
+    }
+
+    async function editModulo(id) {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/modulos`);
+        if (result.success) {
+          const modulo = result.data.find(m => m.id === id);
+          if (modulo) {
+            openModuloModal(modulo);
+          }
+        }
+      } catch (err) {
+        showToast('Erro ao carregar módulo: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteModulo(id) {
+      if (!confirm('Tem certeza que deseja excluir este módulo?')) {
+        return;
+      }
+
+      try {
+        const result = await api.del(`${apiConfig.baseUrl}/admin/modulos/${id}`);
+        if (result.success) {
+          showToast('Módulo excluído com sucesso!', 'success');
+          loadModulos();
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao excluir módulo: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao excluir módulo: ' + err.message, 'error');
+      }
+    }
+
+    const CHECKBOX_INTERCORRENCIAS = [
+      { field: 'acompanhante', label: 'Acompanhante' },
+      { field: 'broncoaspiracao', label: 'Broncoaspiração' },
+      { field: 'contencao', label: 'Contenção' },
+      { field: 'heteroautoagressao', label: 'Heteroagressão/Autoagressão' },
+      { field: 'jejum', label: 'Jejum' },
+      { field: 'lesao', label: 'Lesão' },
+      { field: 'queda', label: 'Queda' },
+      { field: 'tae', label: 'TAE' },
+      { field: 'riscofuga', label: 'Risco de Fuga' }
+    ];
+
+    let currentPerfilPermissoes = null;
+    let checkboxHandler = null;
+
+    function managePermissoes(perfilId) {
+      currentPerfilPermissoes = perfilId;
+      const modal = document.getElementById('permissoes-modal');
+      const content = document.getElementById('permissoes-modal-content');
+
+      content.innerHTML = '';
+
+      Promise.all([
+        api.get(`${apiConfig.baseUrl}/admin/modulos`),
+        api.get(`${apiConfig.baseUrl}/admin/passagem/setores`)
+      ])
+        .then(([result, setoresResult]) => {
+          if (!result.success) throw new Error(result.message);
+          const rawSetores = (setoresResult && setoresResult.success && Array.isArray(setoresResult.data)) ? setoresResult.data : [];
+          const seenSetorIds = new Set();
+          const setoresInternacao = rawSetores.filter(s => {
+            const sid = String(s.id);
+            if (seenSetorIds.has(sid)) return false;
+            seenSetorIds.add(sid);
+            return true;
+          });
+
+          result.data.forEach(modulo => {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+              <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}" value="${modulo.id}" data-modulo-check>
+              <label class="form-check-label" for="perm-${perfilId}-${modulo.id}">
+                <strong>${escapeHtml(modulo.nome)}</strong>
+                <br><small class="text-muted">${escapeHtml(modulo.descricao)}</small>
+                <br><small class="text-info">ID: ${escapeHtml(modulo.id)}</small>
+              </label>
+              ${modulo.id === 'escala' ? `
+                <div class="ms-4 mt-2">
+                  <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}-edit" value="editar_publicar_escala" data-edit-escala disabled>
+                  <label class="form-check-label" for="perm-${perfilId}-${modulo.id}-edit">
+                    <small><strong>Editar/Publicar escala</strong></small>
+                  </label>
+                </div>
+              ` : ''}
+              ${modulo.id === 'livro' ? `
+                <div class="ms-4 mt-2">
+                  <small><strong>Escalas Habilitadas:</strong></small>
+                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                    ${setoresInternacao.map(setor => `
+                      <div class="form-check form-check-inline m-0">
+                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-livro-setor-${setor.id}" value="${setor.id}" data-livro-setor disabled>
+                        <label class="form-check-label text-muted" for="perm-${perfilId}-livro-setor-${setor.id}">
+                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
+                        </label>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+              ${modulo.id === 'dashboard' ? `
+                <div class="ms-4 mt-2">
+                  <small><strong>Setores Habilitados:</strong></small>
+                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                    ${setoresInternacao.map(setor => `
+                      <div class="form-check form-check-inline m-0">
+                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-dashboard-setor-${setor.id}" value="${setor.id}" data-dashboard-setor disabled>
+                        <label class="form-check-label text-muted" for="perm-${perfilId}-dashboard-setor-${setor.id}">
+                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
+                        </label>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+              ${modulo.id === 'passagem' ? `
+                <div class="ms-4 mt-2">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-lancar" value="lancar_nova_passagem" data-lancar-passagem disabled>
+                    <label class="form-check-label" for="perm-${perfilId}-passagem-lancar"><small><strong>Lançar nova passagem</strong></small></label>
+                  </div>
+                  <div class="mb-2">
+                    <small><strong>Itens de Intercorrência Habilitados:</strong></small>
+                    <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                      ${CHECKBOX_INTERCORRENCIAS.map(item => `
+                        <div class="form-check form-check-inline m-0">
+                          <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-check-${item.field}" value="campo_${item.field}" data-passagem-checkbox disabled>
+                          <label class="form-check-label text-muted" for="perm-${perfilId}-passagem-check-${item.field}">
+                            <small>${escapeHtml(item.label)}</small>
+                          </label>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  <div class="mb-2 mt-3">
+                    <small><strong>Modelo de Trabalho:</strong></small>
+                    <div class="d-flex flex-wrap mt-1" style="gap: 15px;">
+                      <div class="form-check form-check-inline m-0">
+                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-modelo-plantao" value="modelo_plantao" data-passagem-checkbox disabled onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-periodo').checked = false">
+                        <label class="form-check-label text-muted" for="perm-${perfilId}-modelo-plantao">
+                          <small>Plantão (Diurno / Noturno)</small>
+                        </label>
+                      </div>
+                      <div class="form-check form-check-inline m-0">
+                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-modelo-periodo" value="modelo_periodo" data-passagem-checkbox disabled onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-plantao').checked = false">
+                        <label class="form-check-label text-muted" for="perm-${perfilId}-modelo-periodo">
+                          <small>Período (Manhã / Tarde / Noite)</small>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <small><strong>Setores Habilitados:</strong></small>
+                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                    ${setoresInternacao.map(setor => `
+                      <div class="form-check form-check-inline m-0">
+                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-setor-${setor.id}" value="${setor.id}" data-passagem-setor disabled>
+                        <label class="form-check-label text-muted" for="perm-${perfilId}-passagem-setor-${setor.id}">
+                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
+                        </label>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            `;
+            content.appendChild(div);
+          });
+
+          checkboxHandler = e => {
+            const checkbox = e.target.closest('.form-check input');
+            if (checkbox) {
+              const modId = checkbox.value;
+              if (checkbox.dataset.moduloCheck !== undefined) {
+                const editCheckbox = document.querySelector(`#perm-${perfilId}-${modId}-edit`);
+                if (editCheckbox) {
+                  if (checkbox.checked) {
+                    editCheckbox.disabled = false;
+                  } else {
+                    editCheckbox.checked = false;
+                    editCheckbox.disabled = true;
+                  }
+                }
+              }
+              if (checkbox.dataset.moduloCheck !== undefined && modId === 'passagem') {
+                  document.querySelectorAll('input[data-passagem-setor]').forEach(cb => {
+                    cb.disabled = !checkbox.checked;
+                    if (!checkbox.checked) cb.checked = false;
+                  });
+                  document.querySelectorAll('input[data-passagem-checkbox]').forEach(cb => {
+                    cb.disabled = !checkbox.checked;
+                    if (!checkbox.checked) cb.checked = false;
+                  });
+                  const lancar = document.querySelector('input[data-lancar-passagem]');
+                  if (lancar) {
+                    lancar.disabled = !checkbox.checked;
+                    if (!checkbox.checked) lancar.checked = false;
+                  }
+              }
+              if (checkbox.dataset.moduloCheck !== undefined && modId === 'livro') {
+                  document.querySelectorAll('input[data-livro-setor]').forEach(cb => {
+                    cb.disabled = !checkbox.checked;
+                    if (!checkbox.checked) cb.checked = false;
+                  });
+              }
+              if (checkbox.dataset.moduloCheck !== undefined && modId === 'dashboard') {
+                  document.querySelectorAll('input[data-dashboard-setor]').forEach(cb => {
+                    cb.disabled = !checkbox.checked;
+                    if (!checkbox.checked) cb.checked = false;
+                  });
+              }
+              if (checkbox.dataset.passagemSetor !== undefined || checkbox.dataset.lancarPassagem !== undefined || checkbox.dataset.passagemCheckbox !== undefined) {
+                 const moduloCheck = document.querySelector(`#perm-${perfilId}-passagem`);
+                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
+                   moduloCheck.checked = true;
+                   document.querySelectorAll('input[data-passagem-setor]').forEach(cb => cb.disabled = false);
+                   document.querySelectorAll('input[data-passagem-checkbox]').forEach(cb => cb.disabled = false);
+                   const lancar = document.querySelector('input[data-lancar-passagem]');
+                   if (lancar) lancar.disabled = false;
+                 }
+              }
+              if (checkbox.dataset.livroSetor !== undefined) {
+                 const moduloCheck = document.querySelector(`#perm-${perfilId}-livro`);
+                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
+                   moduloCheck.checked = true;
+                   document.querySelectorAll('input[data-livro-setor]').forEach(cb => cb.disabled = false);
+                 }
+              }
+              if (checkbox.dataset.dashboardSetor !== undefined) {
+                 const moduloCheck = document.querySelector(`#perm-${perfilId}-dashboard`);
+                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
+                   moduloCheck.checked = true;
+                   document.querySelectorAll('input[data-dashboard-setor]').forEach(cb => cb.disabled = false);
+                 }
+              }
+              if (checkbox.dataset.editEscala !== undefined) {
+                const moduloCheck = document.querySelector(`#perm-${perfilId}-${modId}`);
+                if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
+                  moduloCheck.checked = true;
+                  const edit = document.querySelector(`#perm-${perfilId}-${modId}-edit`);
+                  if (edit) edit.disabled = false;
+                }
+              }
+            }
+          };
+          content.addEventListener('change', checkboxHandler);
+
+          loadPermissoesModulo(perfilId);
+
+          modal.classList.add('show');
+          document.body.classList.add('modal-open');
+        })
+        .catch(err => {
+          showToast('Erro ao carregar módulos: ' + err.message, 'error');
+        });
+    }
+
+    async function loadPermissoesModulo(perfilId) {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/cache`);
+        if (result && result.success) {
+          const perfilModulos = result.data.perfilModulos || [];
+          const perfilPermissoes = result.data.perfilPermissoes || [];
+          const perfilModuloSetores = result.data.perfilModuloSetores || [];
+
+          const modulos = document.querySelectorAll('.form-check input[data-modulo-check]');
+          modulos.forEach(checkbox => {
+            const moduloId = checkbox.value;
+            checkbox.checked = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === moduloId);
+          });
+
+          const editChecks = document.querySelectorAll('.form-check input[data-edit-escala]');
+          editChecks.forEach(checkbox => {
+            const moduloId = checkbox.value;
+            const escalaGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'escala');
+            const temEdicao = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'escala' && pp.permissao === 'editar_publicar_escala');
+            checkbox.checked = temEdicao;
+            checkbox.disabled = !escalaGranted;
+            if (!escalaGranted) checkbox.checked = false;
+          });
+
+          const passagemChecks = document.querySelectorAll('.form-check input[data-passagem-setor]');
+          passagemChecks.forEach(checkbox => {
+             const setorId = checkbox.value;
+             const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
+             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'passagem' && String(item.cd_setor_atendimento) === String(setorId));
+             checkbox.checked = temSetor;
+             checkbox.disabled = !passagemGranted;
+             if (!passagemGranted) checkbox.checked = false;
+          });
+
+          const livroChecksElements = document.querySelectorAll('.form-check input[data-livro-setor]');
+          livroChecksElements.forEach(checkbox => {
+             const setorId = checkbox.value;
+             const livroGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'livro');
+             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'livro' && String(item.cd_setor_atendimento) === String(setorId));
+             checkbox.checked = temSetor;
+             checkbox.disabled = !livroGranted;
+             if (!livroGranted) checkbox.checked = false;
+          });
+
+          const dashboardChecksElements = document.querySelectorAll('.form-check input[data-dashboard-setor]');
+          dashboardChecksElements.forEach(checkbox => {
+             const setorId = checkbox.value;
+             const dashboardGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'dashboard');
+             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'dashboard' && String(item.cd_setor_atendimento) === String(setorId));
+             checkbox.checked = temSetor;
+             checkbox.disabled = !dashboardGranted;
+             if (!dashboardGranted) checkbox.checked = false;
+          });
+
+          const lancarPassagem = document.querySelector('input[data-lancar-passagem]');
+          if (lancarPassagem) {
+            const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
+            lancarPassagem.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'passagem' && pp.permissao === 'lancar_nova_passagem');
+            lancarPassagem.disabled = !passagemGranted;
+          }
+
+          const passagemCheckboxes = document.querySelectorAll('.form-check input[data-passagem-checkbox]');
+          passagemCheckboxes.forEach(checkbox => {
+             const permName = checkbox.value;
+             const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
+             const temPerm = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'passagem' && pp.permissao === permName);
+             checkbox.checked = temPerm;
+             checkbox.disabled = !passagemGranted;
+             if (!passagemGranted) checkbox.checked = false;
+          });
+
+          const plantaoRadio = document.getElementById(`perm-${perfilId}-modelo-plantao`);
+          const periodoRadio = document.getElementById(`perm-${perfilId}-modelo-periodo`);
+          if (plantaoRadio && periodoRadio && !plantaoRadio.checked && !periodoRadio.checked && !plantaoRadio.disabled) {
+            plantaoRadio.checked = true;
+          }
+        }
+      } catch (_) {
+      }
+    }
+
+    document.getElementById('permissoes-modal-close').addEventListener('click', closePermissoesModal);
+    document.getElementById('permissoes-cancelar').addEventListener('click', closePermissoesModal);
+    document.getElementById('permissoes-salvar').addEventListener('click', async () => {
+      if (!currentPerfilPermissoes) return;
+
+      const checkboxes = document.querySelectorAll('.form-check input:checked[data-modulo-check]');
+      const modulos = Array.from(checkboxes).map(c => c.value);
+
+      const permissoes = {};
+      const editChecks = document.querySelectorAll('.form-check input[data-edit-escala]:checked');
+      if (editChecks.length > 0) {
+        permissoes['escala'] = Array.from(editChecks).map(c => c.value);
+      }
+      const passagemChecks = document.querySelectorAll('.form-check input[data-passagem-setor]:checked');
+      const livroChecks = document.querySelectorAll('.form-check input[data-livro-setor]:checked');
+      const dashboardChecks = document.querySelectorAll('.form-check input[data-dashboard-setor]:checked');
+      const lancarPassagem = document.querySelector('.form-check input[data-lancar-passagem]:checked');
+      const passagemCheckboxes = document.querySelectorAll('.form-check input[data-passagem-checkbox]:checked');
+
+      const passagemPermissoes = [];
+      if (lancarPassagem) {
+        passagemPermissoes.push(lancarPassagem.value);
+      }
+      passagemCheckboxes.forEach(cb => {
+        passagemPermissoes.push(cb.value);
+      });
+      if (passagemPermissoes.length > 0) {
+        permissoes['passagem'] = passagemPermissoes;
+      }
+
+      const setoresPorModulo = {
+        passagem: Array.from(passagemChecks).map(c => Number(c.value)).filter(Number.isInteger),
+        livro: Array.from(livroChecks).map(c => Number(c.value)).filter(Number.isInteger),
+        dashboard: Array.from(dashboardChecks).map(c => Number(c.value)).filter(Number.isInteger)
+      };
+
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/permissoes`, {
+          perfilId: currentPerfilPermissoes,
+          modulos,
+          permissoes,
+          setoresPorModulo
+        });
+
+        if (result.success) {
+          showToast('Permissões salvas com sucesso!', 'success');
+          closePermissoesModal();
+          loadPerfis();
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao salvar permissões: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar permissões: ' + err.message, 'error');
+      }
+    });
+
+    function closePermissoesModal() {
+      const modal = document.getElementById('permissoes-modal');
+      modal.classList.remove('show');
+      document.body.classList.remove('modal-open');
+      if (checkboxHandler) {
+        const content = document.getElementById('permissoes-modal-content');
+        content.removeEventListener('change', checkboxHandler);
+        checkboxHandler = null;
+      }
+      currentPerfilPermissoes = null;
+    }
+
+    document.getElementById('perfil-modal-close').addEventListener('click', closePerfilModal);
+    document.getElementById('perfil-cancelar').addEventListener('click', closePerfilModal);
+
+    document.getElementById('modulo-modal-close').addEventListener('click', closeModuloModal);
+    document.getElementById('modulo-cancelar').addEventListener('click', closeModuloModal);
+
+    document.getElementById('btn-cache-reload').addEventListener('click', async () => {
+      const loader = document.getElementById('cache-loader');
+      loader.classList.add('active');
+
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/cache/reload`);
+        if (result.success) {
+          showToast('Cache recarregado com sucesso!', 'success');
+          loadCacheInfo();
+        } else {
+          showToast('Erro ao recarregar cache: ' + result.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao recarregar cache: ' + err.message, 'error');
+      } finally {
+        loader.classList.remove('active');
+      }
+    });
+    
+    async function loadConfigPA() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/dashboard-pa/config`);
+        if (result.success && result.data) {
+          document.getElementById('config-fila-destino').value = result.data.nr_sequencia_fila || '';
+        }
+      } catch (err) {
+        console.error('Erro ao carregar config PA', err);
+      }
+    }
+
+    async function loadFilasPA() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/dashboard-pa/filas`);
+        if (result.success) {
+          const select = document.getElementById('config-fila-destino');
+          select.innerHTML = '<option value="">Selecione a fila...</option>';
+          result.data.forEach(fila => {
+            const option = document.createElement('option');
+            option.value = fila.NR_SEQUENCIA;
+            option.textContent = `${fila.NR_SEQUENCIA} - ${fila.DS_FILA}`;
+            select.appendChild(option);
+          });
+          await loadConfigPA();
+        }
+      } catch (err) {
+        console.error('Erro ao listar filas PA', err);
+      }
+    }
+
+    async function loadAgendasEct() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/ect/agendas`);
+        if (result.success) {
+          const select = document.getElementById('config-ect-agenda');
+          select.innerHTML = '<option value="">Selecione a agenda...</option>';
+          result.data.forEach(agenda => {
+            const option = document.createElement('option');
+            option.value = agenda.CD_AGENDA;
+            option.textContent = `${agenda.CD_AGENDA} - ${agenda.DS_AGENDA}`;
+            select.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao listar agendas', err);
+      }
+    }
+
+    async function loadProcedimentosEct() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/ect/procedimentos`);
+        if (result.success) {
+          const select = document.getElementById('config-ect-procedimento');
+          select.innerHTML = '<option value="">Selecione o procedimento...</option>';
+          result.data.forEach(proc => {
+            const option = document.createElement('option');
+            option.value = proc.CD_PROCEDIMENTO;
+            option.textContent = `${proc.CD_PROCEDIMENTO} - ${proc.DS_PROC_EXAME}`;
+            select.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao listar procedimentos', err);
+      }
+    }
+
+    async function loadConfigSistema() {
+      try {
+        await loadAgendasEct();
+        await loadProcedimentosEct();
+        
+        const result = await api.get(`${apiConfig.baseUrl}/admin/system/config`);
+        if (result.success && result.data) {
+          document.getElementById('config-app-version').value = result.data.app_version || '';
+          document.getElementById('config-show-test-bar').checked = result.data.show_test_bar === 'true';
+          
+          if (result.data.ect_cd_agenda) {
+            document.getElementById('config-ect-agenda').value = result.data.ect_cd_agenda;
+          }
+          if (result.data.ect_cd_procedimento) {
+            document.getElementById('config-ect-procedimento').value = result.data.ect_cd_procedimento;
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar config sistema', err);
+      }
+    }
+
+    document.getElementById('btn-save-config-sistema').addEventListener('click', async () => {
+      const app_version = document.getElementById('config-app-version').value;
+      const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
+      const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
+      const ect_cd_procedimento = document.getElementById('config-ect-procedimento').value;
+      
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
+          app_version,
+          show_test_bar,
+          ect_cd_agenda,
+          ect_cd_procedimento
+        });
+        if (result.success) {
+          showToast('Configurações do sistema salvas com sucesso!', 'success');
+        } else {
+          showToast(result.message || 'Erro ao salvar configurações', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar configurações', 'error');
+      }
+    });
+
+    document.getElementById('btn-save-config-ect').addEventListener('click', async () => {
+      const app_version = document.getElementById('config-app-version').value;
+      const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
+      const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
+      const ect_cd_procedimento = document.getElementById('config-ect-procedimento').value;
+      
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
+          app_version,
+          show_test_bar,
+          ect_cd_agenda,
+          ect_cd_procedimento
+        });
+        if (result.success) {
+          showToast('Configurações ECT salvas com sucesso!', 'success');
+        } else {
+          showToast(result.message || 'Erro ao salvar configurações', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar configurações', 'error');
+      }
+    });
+
+    document.getElementById('btn-save-config-pa').addEventListener('click', async () => {
+      const select = document.getElementById('config-fila-destino');
+      const seq = select.value;
+      const text = select.options[select.selectedIndex]?.text || '';
+      if (!seq) return showToast('Selecione uma fila', 'warning');
+      
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/dashboard-pa/config`, {
+          nr_sequencia_fila: parseInt(seq, 10),
+          ds_fila: text
+        });
+        if (result.success) {
+          showToast('Configuração salva com sucesso!', 'success');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar config: ' + err.message, 'error');
+      }
+    });
+
+    window.addEventListener('click', (e) => {
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(modal => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+          document.body.classList.remove('modal-open');
+        }
+      });
+    });
+
+    document.querySelectorAll('.admin-tab-btn').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        document.querySelectorAll('.admin-tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-btn').forEach(t => t.setAttribute('aria-selected', 'false'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        const targetId = tab.getAttribute('data-tab');
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.classList.add('show', 'active');
+        }
+      });
+    });
+
+    async function loadAdminData() {
+      try {
+        const sessionResult = await api.get(`${apiConfig.baseUrl}/me`);
+        if (!sessionResult.success || !sessionResult.data) {
+          window.location.href = '/';
+          return;
+        }
+
+        const gruposAd = sessionResult.data.grupos_ad || [];
+        const adminGroup = 'API_CONECTA_ADMIN';
+        const isAdmin = gruposAd.some(g => String(g || '').trim().toUpperCase() === adminGroup.toUpperCase());
+
+        if (!isAdmin) {
+          window.location.href = '/';
+          return;
+        }
+
+        await loadPerfis();
+        await loadModulos();
+        await loadCacheInfo();
+        await loadFilasPA();
+        await loadConfigSistema();
+      } catch (err) {
+        console.error('[Admin] Erro ao verificar sessão:', err);
+        window.location.href = '/';
+      }
+    }
+
+    loadAdminData();
+
+    console.log('[Admin] Painel carregado');
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+# =============================================================================
+# DOCKER-COMPOSE - CONECTA HEAL ASSISTENCIAL 2.1.0
+# =============================================================================
+# Projeto: Dashboard P.A. + Dashboard Pacientes + Passagem de Plantao + Livro Administrativo
+# Testes: Dashboard de Testes Automatizados
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # API Principal - Porta 3006
+  # ---------------------------------------------------------------------------
+  node:
+    build: .
+    ports:
+      - "3006:3006"
+    container_name: hml-conecta-assistencial-10
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+      - DOCKER_CONTAINER=true
+    volumes:
+      - ./auth.sqlite:/home/node/app/auth.sqlite
+      - ./data:/home/node/app/data
+      - ./frontend:/home/node/app/frontend
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ---------------------------------------------------------------------------
+  # Redis - Cache e Sessões - Sem exposição pública
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: hml-conecta-assistencial-redis-10
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_pwd_default} --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Testes Automatizados - Porta 3007
+  # ---------------------------------------------------------------------------
+  test:
+    build:
+      context: .
+      dockerfile: test/Dockerfile
+    ports:
+      - "3007:3007"
+    container_name: hml-conecta-assistencial-testes-10
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3007
+      - SESSION_SECRET=conecta-heal-testes-session-secret
+      - API_URL=http://node:3006
+      - LDAP_URL=ldap://192.168.1.4:389
+      - LDAP_BASE_DN=DC=heal,DC=local
+      - LDAP_USER_DOMAIN=heal
+      - LDAP_ADMIN_USER=servico.ldap
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD_TEST}
+    depends_on:
+      - node
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  redis_data:
