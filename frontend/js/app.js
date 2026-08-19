@@ -4447,6 +4447,64 @@ function stopDashboardRefresh() {
     return;
   }
 
+  function getHolidays(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    const easter = new Date(year, month - 1, day);
+
+    const addDays = (date, days) => {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    };
+
+    const formatDate = d => {
+      const mn = String(d.getMonth() + 1).padStart(2, '0');
+      const dy = String(d.getDate()).padStart(2, '0');
+      return `${mn}-${dy}`;
+    };
+
+    const carnaval = addDays(easter, -47);
+    const sextaSanta = addDays(easter, -2);
+    const corpusChristi = addDays(easter, 60);
+
+    return {
+      '01-01': 'Ano Novo',
+      '04-21': 'Tiradentes',
+      '05-01': 'Dia do Trabalho',
+      '09-07': 'Independência',
+      '10-12': 'N. Sra Aparecida',
+      '11-02': 'Finados',
+      '11-15': 'Proc. República',
+      '11-20': 'Consciência Negra',
+      '12-25': 'Natal',
+      '08-15': 'Assunção N.S. (BH)',
+      '12-08': 'Imaculada C. (BH)',
+      [formatDate(carnaval)]: 'Carnaval',
+      [formatDate(sextaSanta)]: 'Sexta-feira Santa',
+      [formatDate(corpusChristi)]: 'Corpus Christi'
+    };
+  }
+
+  function getFeriado(date) {
+    const year = date.getFullYear();
+    const formatted = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const holidays = getHolidays(year);
+    return holidays[formatted] || null;
+  }
+
   function getMonday(date) {
     const value = new Date(`${date}T12:00:00`);
     const day = value.getDay() || 7;
@@ -4508,7 +4566,7 @@ function stopDashboardRefresh() {
       const monday = new Date(state.escalaSemanaInicial);
       monday.setDate(monday.getDate() + week * 7);
       const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
-      html += `<section class="escala-week-card"><header><strong>Semana — ${formatShortDate(monday)} a ${formatShortDate(sunday)}</strong><span class="escala-week-status ${week === 0 ? 'active' : ''}">${week < 0 ? 'Passada' : week === 0 ? 'Ativa' : 'Futura'}</span></header><div class="escala-table"><div class="escala-table-head"><span>Turno</span>${days.map((day, index) => { const d = new Date(monday); d.setDate(d.getDate() + index); return `<span>${day}<small>${formatShortDate(d)}</small></span>`; }).join('')}</div>`;
+      html += `<section class="escala-week-card"><header><strong>Semana — ${formatShortDate(monday)} a ${formatShortDate(sunday)}</strong><span class="escala-week-status ${week === 0 ? 'active' : ''}">${week < 0 ? 'Passada' : week === 0 ? 'Ativa' : 'Futura'}</span></header><div class="escala-table"><div class="escala-table-head"><span>Turno</span>${days.map((day, index) => { const d = new Date(monday); d.setDate(d.getDate() + index); const feriado = getFeriado(d); return `<span class="${feriado ? 'escala-feriado-col' : ''}">${day}<small>${formatShortDate(d)}</small>${feriado ? `<div class="escala-feriado-badge" title="${feriado}">${feriado}</div>` : ''}</span>`; }).join('')}</div>`;
       [['M', 'Manhã'], ['N', 'Tarde']].forEach(([turno, label]) => {
         if (turnoFiltro && turnoFiltro !== turno) return;
         html += `<div class="escala-table-row"><strong>${label}</strong>`;

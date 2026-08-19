@@ -6370,6 +6370,24 @@ input[type="password"] {
   font-size: .82rem;
 }
 
+#workspace-escala .escala-table-head span.escala-feriado-col {
+  color: var(--red-600);
+}
+
+#workspace-escala .escala-feriado-badge {
+  font-size: 0.65rem;
+  background: var(--red-50);
+  color: var(--red-600);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  border: 1px solid var(--red-200);
+  display: inline-block;
+  line-height: 1.1;
+  text-align: center;
+}
 #workspace-escala .escala-table-row > strong {
   font-size: 1rem;
 }
