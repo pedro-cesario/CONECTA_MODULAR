@@ -7280,6 +7280,10 @@ input[type="password"] {
     font-size: 0.8rem !important;
   }
 
+  .topbar {
+    padding: 0 1rem !important;
+  }
+
   .topbar-nav:not(.d-none) {
     position: absolute !important;
     left: 50% !important;
@@ -7292,12 +7296,17 @@ input[type="password"] {
   }
 
   .topbar-nav-item:not(.d-none) {
-    padding: 0.4rem 0.65rem !important;
-    font-size: 0.92rem !important;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.88rem !important;
     white-space: nowrap !important;
     display: inline-flex !important;
     justify-content: center !important;
     margin: 0 !important;
+  }
+
+  .topbar-nav-item::after {
+    left: 0.35rem !important;
+    right: 0.35rem !important;
   }
 
   .topbar-nav-item.d-none {
