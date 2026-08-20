@@ -6744,6 +6744,26 @@ input[type="password"] {
   50%       { outline-color: transparent; }
 }
 
+.btn-save--highlight {
+  outline: 3px solid var(--primary) !important;
+  outline-offset: 4px !important;
+  border-radius: 0.65rem !important;
+  animation: btnSaveHighlightPulse 0.55s ease 0s 4 !important;
+}
+
+@keyframes btnSaveHighlightPulse {
+  0%, 100% {
+    outline-color: var(--primary);
+    box-shadow: 0 0 0 6px rgba(19, 79, 159, 0.4) !important;
+    transform: scale(1.03);
+  }
+  50% {
+    outline-color: transparent;
+    box-shadow: 0 4px 14px rgba(19, 79, 159, 0.3) !important;
+    transform: scale(1);
+  }
+}
+
 /* =====================================================
    USER PROFILE DROPDOWN (MENU NO USER-BADGE)
    ===================================================== */

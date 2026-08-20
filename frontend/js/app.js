@@ -5494,6 +5494,12 @@ function stopDashboardRefresh() {
             if (typeof showModal === 'function') {
               await showModal('warning', 'Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Clique em "Salvar / Finalizar Passagem" e escolha "Salvar e Continuar Passagem" para não perder os dados!');
             }
+            const btnSalvar = document.getElementById('btn-salvar');
+            if (btnSalvar) {
+              btnSalvar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              btnSalvar.classList.add('btn-save--highlight');
+              setTimeout(() => btnSalvar.classList.remove('btn-save--highlight'), 2400);
+            }
             return;
           } else {
             const descartar = await showConfirmModal('Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Deseja descartar as alterações e trocar de setor?');
