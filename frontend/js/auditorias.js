@@ -88,7 +88,6 @@
   async function openForm() {
     show('workspace-auditoria-higiene-form');
     clearMessage();
-    byId('auditoria-save-feedback')?.classList.add('d-none');
     byId('auditoria-data').value = isoToday();
     renderOportunidades();
     try { await loadOptions(); } catch (err) { message(err.message); }
@@ -103,7 +102,7 @@
       dt_auditoria: byId('auditoria-data').value,
       cd_setor_atendimento: Number(byId('auditoria-setor').value),
       cd_avaliador: Number(byId('auditoria-avaliador').value),
-      ie_turno: document.querySelector('input[name="auditoria-turno"]:checked')?.value || '',
+      ie_turno: new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'D' : 'N',
       cd_profissional: Number(byId('auditoria-profissional').value),
       ds_observacao: byId('auditoria-observacoes').value,
       oportunidades: oportunidadesPayload
@@ -123,8 +122,20 @@
       button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Salvando...';
       const result = await request('/api/auditorias/higiene-maos', { method: 'POST', body: JSON.stringify(payload) });
       auditId = result.data.nr_sequencia;
-      byId('auditoria-save-feedback')?.classList.remove('d-none');
-      message(result.message || 'Auditoria salva com sucesso.', 'success');
+      const overlay = byId('modal-overlay');
+      if (overlay) {
+        byId('modal-icon').className = 'modal-icon success';
+        byId('modal-icon').innerHTML = '<i class="bi bi-check-lg"></i>';
+        byId('modal-title').textContent = 'Sucesso!';
+        byId('modal-message').textContent = result.message || 'Auditoria salva com sucesso.';
+        overlay.classList.remove('d-none');
+        document.body.classList.add('modal-open');
+        const close = () => { overlay.classList.add('d-none'); document.body.classList.remove('modal-open'); };
+        byId('modal-close').onclick = close;
+        overlay.onclick = e => { if (e.target === overlay) close(); };
+      } else {
+        message(result.message || 'Auditoria salva com sucesso.', 'success');
+      }
     } catch (err) { message(err.message); }
     finally { button.disabled = false; button.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar'; }
   }
@@ -208,7 +219,7 @@
         data: byId('auditoria-data')?.value || '',
         setor: byId('auditoria-setor')?.value || '',
         avaliador: byId('auditoria-avaliador')?.value || '',
-        turno: document.querySelector('input[name="auditoria-turno"]:checked')?.value || '',
+        turno: new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'D' : 'N',
         profissional: byId('auditoria-profissional')?.value || '',
         observacoes: byId('auditoria-observacoes')?.value || '',
         oportunidades: oportunidades.map(([code]) => ({
@@ -235,7 +246,7 @@
         if (f.setor) byId('auditoria-setor').value = f.setor;
         if (f.avaliador) byId('auditoria-avaliador').value = f.avaliador;
         if (f.profissional) byId('auditoria-profissional').value = f.profissional;
-        if (f.turno) { const el = document.querySelector(`input[name="auditoria-turno"][value="${f.turno}"]`); if (el) el.checked = true; }
+        // turno auto-detectado pelo horário, sem campo visual
         (f.oportunidades || []).forEach(({ code, value }) => {
           if (value) { const el = document.querySelector(`input[name="auditoria-${code}"][value="${value}"]`); if (el) el.checked = true; }
         });

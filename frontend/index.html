@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/style.css?v=162" rel="stylesheet">
+  <link href="css/style.css?v=163" rel="stylesheet">
 </head>
 <body>
 
@@ -203,7 +203,6 @@
         <div class="livro-field"><label for="auditoria-data">Data <span class="required-star">*</span></label><input type="date" id="auditoria-data" required></div>
         <div class="livro-field"><label for="auditoria-setor">Setor <span class="required-star">*</span></label><select id="auditoria-setor" class="form-select" required><option value="">Selecione...</option></select></div>
         <div class="livro-field"><label for="auditoria-avaliador">Avaliador <span class="required-star">*</span></label><select id="auditoria-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
-        <div class="livro-field"><span class="livro-field-label">Turno <span class="required-star">*</span></span><div class="livro-turno-options"><label class="livro-turno-option"><input type="radio" name="auditoria-turno" value="D"><span><i class="bi bi-sun"></i> Dia</span></label><label class="livro-turno-option"><input type="radio" name="auditoria-turno" value="N"><span><i class="bi bi-moon"></i> Noite</span></label></div></div>
       </div>
       <div class="livro-section auditoria-section">
         <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades</span></div>
@@ -214,7 +213,6 @@
       </div>
       <div class="livro-section auditoria-section"><div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div><div class="livro-section-body"><textarea id="auditoria-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div></div>
       <div class="auditoria-feedback d-none" id="auditoria-feedback" role="status"></div>
-      <div class="auditoria-save-feedback d-none" id="auditoria-save-feedback"><i class="bi bi-check-circle-fill"></i><span>Auditoria salva com sucesso.</span><div><button class="btn-secondary" id="btn-auditoria-baixar-xlsx" type="button"><i class="bi bi-file-earmark-excel"></i> Baixar XLSX</button><button class="btn-secondary" id="btn-auditoria-baixar-pdf" type="button"><i class="bi bi-file-earmark-pdf"></i> Baixar PDF</button></div></div>
       <div class="livro-actions livro-action-bar"><div></div><div class="livro-action-group livro-action-group-end"><button class="btn-secondary livro-clear-btn" id="btn-auditoria-cancelar" type="button">Cancelar</button><button class="btn-save" id="btn-auditoria-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button></div></div>
     </section>
 
