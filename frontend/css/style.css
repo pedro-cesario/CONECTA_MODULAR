@@ -2803,6 +2803,11 @@ body {
   color: var(--primary);
 }
 
+.modal-icon.warning {
+  background: linear-gradient(145deg, #fff3cd, #fff8e1);
+  color: #ffc107;
+}
+
 .modal-icon.success i {
   font-size: 2.5rem;
 }

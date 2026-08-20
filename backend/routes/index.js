@@ -60,6 +60,11 @@ router.post('/dashboard/internacao/acao', requireAuth, dashboardController.execu
 
 router.post('/perfil/alterar', requireAuth, authController.alterarPerfil);
 
+// Rascunho de Lote
+router.post('/lote/draft', requireAuth, ocorrenciaController.salvarLoteDraft);
+router.get('/lote/draft', requireAuth, ocorrenciaController.obterLoteDraft);
+router.delete('/lote/draft', requireAuth, ocorrenciaController.limparLoteDraft);
+
 // Salvar passagem (protegido)
 router.post('/salvar', requireAuth, ocorrenciaController.salvar);
 router.get('/passagens/anteriores', requireAuth, ocorrenciaController.listarPassagensAnteriores);

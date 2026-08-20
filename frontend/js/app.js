@@ -228,6 +228,7 @@
     turno: null,
 
     savedTexts: {},
+    loteSectors: new Set(),
 
     mode: null,
 
@@ -715,7 +716,17 @@
 
       iconEl.className = 'modal-icon ' + type;
 
-      iconEl.innerHTML = type === 'success' ? '<i class="bi bi-check-lg"></i>' : '<i class="bi bi-x-lg"></i>';
+      // Limpar estilos inline residuais
+      iconEl.style.color = '';
+      iconEl.style.background = '';
+      
+      if (type === 'success') {
+         iconEl.innerHTML = '<i class="bi bi-check-lg"></i>';
+      } else if (type === 'warning') {
+         iconEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+      } else {
+         iconEl.innerHTML = '<i class="bi bi-x-lg"></i>';
+      }
 
       titleEl.textContent = title;
 
@@ -984,6 +995,15 @@
   }
 
   function updatePassagemContext() {
+    const btnSalvar = document.getElementById('btn-salvar');
+    if (btnSalvar) {
+      if (temPermissaoAtiva('passagem', 'lancar_passagem_lote')) {
+         btnSalvar.innerHTML = '<i class="bi bi-check-circle"></i> Salvar / Finalizar Passagem';
+      } else {
+         btnSalvar.innerHTML = '<i class="bi bi-check-circle"></i> Finalizar Passagem';
+      }
+    }
+
     const context = document.getElementById('passagem-context');
     if (!context) return;
 
@@ -3393,6 +3413,15 @@ function stopDashboardRefresh() {
             `/api/escala-ativa/diff?cd_setor=${encodeURIComponent(String(setorId))}&dt_plantao=${encodeURIComponent(dtPlantao)}&turno=${encodeURIComponent(turno)}&versao=${versao}`
           );
           if (result.success && result.data) {
+        if (temPermissaoAtiva('passagem', 'lancar_passagem_lote')) {
+           try {
+              const draftRes = await api.get('/api/lote/draft');
+              if (draftRes.success && draftRes.data && draftRes.data.setoresSelecionados) {
+                 state.loteSectors = new Set(draftRes.data.setoresSelecionados.map(Number));
+              }
+           } catch(e) {}
+        }
+
             showDiffModal(result.data, turno, versao);
           }
         } catch (err) {
@@ -5439,11 +5468,24 @@ function stopDashboardRefresh() {
 
 
     list.querySelectorAll('.setor-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        if (item.classList.contains('active')) return;
+        
+        let hasUnsaved = false;
+        document.querySelectorAll('.intercorrencia-checkbox').forEach(cb => { if (cb.checked) hasUnsaved = true; });
+        document.querySelectorAll('.intercorrencia-textarea').forEach(ta => {
+           const html = typeof getEditorHtmlForSave === 'function' ? getEditorHtmlForSave(ta) : ta.value;
+           if (html && html.trim() !== '' && html !== '<p><br></p>') hasUnsaved = true;
+        });
 
-      item.addEventListener('click', () => {
+        if (hasUnsaved) {
+           if (typeof showModal === 'function') {
+             await showModal('warning', 'Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Clique em "Salvar / Finalizar Passagem" e escolha "Salvar e Continuar Passagem" para não perder os dados!');
+           }
+           return;
+        }
 
         list.querySelectorAll('.setor-item').forEach(i => i.classList.remove('active'));
-
         item.classList.add('active');
 
         item.querySelector('input[type="radio"]').checked = true;
@@ -5460,6 +5502,24 @@ function stopDashboardRefresh() {
   }
 
 
+
+  
+  function renderLoteChecksNaSidebar() {
+    document.querySelectorAll('.setor-item').forEach(item => {
+      const cd = parseInt(item.dataset.cd, 10);
+      let badge = item.querySelector('.lote-check');
+      if (state.loteSectors && state.loteSectors.has(cd)) {
+         if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'lote-check ms-auto text-primary';
+            badge.innerHTML = '<i class="bi bi-check2-all"></i>';
+            item.appendChild(badge);
+         }
+      } else if (badge) {
+         badge.remove();
+      }
+    });
+  }
 
   function highlightSidebarSetor(setorId) {
 
@@ -6022,6 +6082,91 @@ const btnSalvar = document.getElementById('btn-salvar');
 
     try {
 
+    if (temPermissaoAtiva('passagem', 'lancar_passagem_lote')) {
+      const overlay = document.getElementById('modal-confirm-overlay');
+      const btnYes = document.getElementById('modal-confirm-yes');
+      const btnNo = document.getElementById('modal-confirm-no');
+      
+      const originalYes = btnYes.innerHTML;
+      const originalNo = btnNo.innerHTML;
+      
+      const choice = await new Promise(resolve => {
+        document.getElementById('modal-confirm-title').textContent = "Continuar a passagem para outros setores?";
+        document.getElementById('modal-confirm-message').textContent = "";
+        
+        btnYes.innerHTML = '<i class="bi bi-save"></i> Salvar e Continuar Passagem';
+        btnNo.innerHTML = '<i class="bi bi-check2-circle"></i> Finalizar';
+        
+        // Custom styling for this specific prompt
+        btnNo.classList.remove('modal-btn-secondary');
+        btnNo.classList.add('modal-btn-primary');
+        btnNo.setAttribute('style', 'background: var(--success, #198754) !important; border-color: var(--success, #198754) !important; color: white !important; box-shadow: 0 4px 14px rgba(25,135,84,0.4) !important;');
+        
+        overlay.classList.remove('d-none');
+        document.body.classList.add('modal-open');
+
+        const close = (result) => {
+          overlay.classList.add('d-none');
+          document.body.classList.remove('modal-open');
+          btnYes.innerHTML = originalYes;
+          btnNo.innerHTML = originalNo;
+          
+          // Restore classes
+          btnNo.classList.add('modal-btn-secondary');
+          btnNo.classList.remove('modal-btn-primary');
+          btnNo.style.backgroundColor = '';
+          btnNo.style.borderColor = '';
+          
+          resolve(result);
+        };
+
+        btnYes.onclick = () => close(true);
+        btnNo.onclick = () => close(false);
+        overlay.onclick = e => { if (e.target === overlay) close(null); };
+      });
+
+      if (choice === true) {
+        const btnSalvarLocal = document.getElementById('btn-salvar');
+        const btnOriginalHtml = btnSalvarLocal.innerHTML;
+        btnSalvarLocal.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Salvando...';
+        btnSalvarLocal.disabled = true;
+
+        try {
+           const payload = {
+              setoresSelecionados: state.setoresSelecionados,
+              intercorrencias,
+              setorIntercorrencias
+           };
+           const result = await api.post('/api/lote/draft', payload);
+           if (result.success) {
+              if (!state.loteSectors) state.loteSectors = new Set();
+              (result.data.setoresSelecionados || []).forEach(s => state.loteSectors.add(Number(s)));
+              renderLoteChecksNaSidebar();
+              
+              // Clear screen so we don't trigger "unsaved data" when clicking next sector
+              document.getElementById('pacientes-list').classList.add('d-none');
+              document.getElementById('pacientes-list').innerHTML = '';
+              document.getElementById('empty-state').classList.remove('d-none');
+              document.getElementById('main-footer').classList.add('d-none');
+              document.querySelectorAll('.setor-item').forEach(el => el.classList.remove('active'));
+              
+              document.getElementById('btn-expand-sidebar')?.click();
+              showToast('Setor salvo no lote. Escolha o próximo setor.', 'success');
+           } else {
+              throw new Error(result.message || 'Erro ao salvar passagem');
+           }
+        } catch (err) {
+           showToast(err.message, 'error');
+        } finally {
+           btnSalvarLocal.innerHTML = btnOriginalHtml;
+           btnSalvarLocal.disabled = false;
+        }
+        return; 
+      } else if (choice === null) {
+        return; // Cancelado
+      }
+    }
+
       const result = await api.post('/api/salvar', {
 
         nr_seq_turno: state.turno,
@@ -6068,6 +6213,8 @@ const btnSalvar = document.getElementById('btn-salvar');
 
 
   function resetForm() {
+    if (state.loteSectors) state.loteSectors.clear();
+    if (typeof renderLoteChecksNaSidebar === 'function') renderLoteChecksNaSidebar();
 
     state.pacientes = [];
 

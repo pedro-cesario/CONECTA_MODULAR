@@ -150,7 +150,7 @@ async function salvarPassagem(dados, usuario) {
     const binds = {
       nm_usuario_logado: usuario.nm_usuario,
       nr_seq_turno,
-      setor_referencia: getSetorReferenciaFixo(setoresNumericos),
+      setor_referencia: getSetorReferenciaFixo(setoresNumericos, cd_modulo),
       cd_perfil: cdPerfil
     };
 

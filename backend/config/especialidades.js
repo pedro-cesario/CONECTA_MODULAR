@@ -111,9 +111,17 @@ function getSessionFlags(perfis = {}) {
   }, {});
 }
 
-function getSetorReferenciaFixo(setoresSelecionados = []) {
-  const setores = new Set((setoresSelecionados || []).map(Number).filter(Number.isInteger));
+function getSetorReferenciaFixo(setoresSelecionados = [], cdModulo = null) {
   const especialidades = getESpecialidades();
+  
+  if (cdModulo) {
+    const especialidade = especialidades.find(e => e.setorId === Number(cdModulo));
+    if (especialidade && especialidade.setorReferenciaFixo) {
+      return especialidade.setorId;
+    }
+  }
+
+  const setores = new Set((setoresSelecionados || []).map(Number).filter(Number.isInteger));
   const especialidade = especialidades.find(e => e.setorReferenciaFixo && setores.has(e.setorId));
   return especialidade ? especialidade.setorId : null;
 }
