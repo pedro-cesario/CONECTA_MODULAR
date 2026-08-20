@@ -494,6 +494,7 @@
     if (moduleId === 'passagem') return capturePassagemDraft();
     if (moduleId === 'livro') return captureLivroDraft();
     if (moduleId === 'escala') return captureEscalaDraft();
+    if (moduleId === 'auditorias') return typeof window.captureAuditoriaDraft === 'function' ? window.captureAuditoriaDraft() : null;
     return null;
   }
 
@@ -1386,7 +1387,9 @@
 
   window.conectaApp = {
     activateWorkspace,
-    showModeChooser
+    showModeChooser,
+    getModuleDraft,
+    markModuleDraftDirty
   };
 
 

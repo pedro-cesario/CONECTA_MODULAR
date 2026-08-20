@@ -28,8 +28,26 @@
     return body;
   }
 
+  const modeMap = {
+    'auditorias-sub-menu': 'auditorias-submenu',
+    'auditoria-higiene-sub-menu': 'auditoria-higiene-submenu',
+    'workspace-auditoria-higiene-form': 'auditoria-higiene-form',
+    'workspace-auditoria-historico': 'auditoria-historico'
+  };
+
   function hideAll() { appSections().forEach(section => section.classList.add('d-none')); }
-  function show(id) { hideAll(); byId(id)?.classList.remove('d-none'); window.scrollTo(0, 0); }
+  function show(id) {
+    const target = byId(id);
+    if (!target) return;
+    const mode = modeMap[id] || 'auditorias-submenu';
+    if (window.conectaApp && typeof window.conectaApp.activateWorkspace === 'function') {
+      window.conectaApp.activateWorkspace(mode, target);
+    } else {
+      hideAll();
+      target.classList.remove('d-none');
+    }
+    window.scrollTo(0, 0);
+  }
   function message(text, type = 'error') {
     const feedback = byId('auditoria-feedback');
     if (!feedback) return;
@@ -43,9 +61,12 @@
   function renderOportunidades() {
     const target = byId('auditoria-oportunidades');
     if (!target) return;
-    target.innerHTML = oportunidades.map(([code, label]) => `<div class="auditoria-oportunidade">
-      <span class="auditoria-oportunidade-label">${escapeHtml(label)} <span class="required-star">*</span></span>
-      <div class="livro-turno-options">${[['A', 'Álcool', 'bi-droplet'], ['S', 'Sabonete', 'bi-hand-index-thumb'], ['P', 'Perdida', 'bi-x-circle']].map(([value, text, icon]) => `<label class="livro-turno-option"><input type="radio" name="auditoria-${code}" value="${value}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
+    target.innerHTML = oportunidades.map(([code, label], index) => `<div class="auditoria-oportunidade-card">
+      <div class="auditoria-oportunidade-header">
+        <span class="auditoria-moment-badge"><i class="bi bi-shield-check"></i> Momento ${index + 1}</span>
+        <span class="auditoria-oportunidade-label">${escapeHtml(label)} <span class="required-star">*</span></span>
+      </div>
+      <div class="livro-turno-options">${[['A', 'Álcool', 'bi-droplet-fill'], ['S', 'Sabonete', 'bi-hand-index-thumb-fill'], ['P', 'Perdida', 'bi-x-circle-fill']].map(([value, text, icon]) => `<label class="livro-turno-option"><input type="radio" name="auditoria-${code}" value="${value}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
     </div>`).join('');
   }
 
@@ -112,6 +133,12 @@
     return total ? Math.round((conformes / total) * 100) : 0;
   }
 
+    function getComplianceBadge(percentual) {
+    if (percentual >= 80) return `<span class="auditoria-result-badge compliance-high"><i class="bi bi-check-circle-fill"></i> ${percentual}% Adesão</span>`;
+    if (percentual >= 50) return `<span class="auditoria-result-badge compliance-medium"><i class="bi bi-exclamation-triangle-fill"></i> ${percentual}% Adesão</span>`;
+    return `<span class="auditoria-result-badge compliance-low"><i class="bi bi-x-circle-fill"></i> ${percentual}% Adesão</span>`;
+  }
+
   async function mostrarDetalheIndividual(id, target) {
     if (!target) return;
     target.innerHTML = '<div class="auditoria-detalhe-loading"><i class="bi bi-arrow-repeat spin"></i> Carregando dados individuais...</div>';
@@ -119,7 +146,7 @@
     try {
       const result = await request(`/api/auditorias/higiene-maos/${encodeURIComponent(id)}`);
       const auditoria = result.data;
-      target.innerHTML = `<div class="auditoria-detalhe-grid"><span><strong>Data:</strong> ${escapeHtml(auditoria.DT_AUDITORIA)}</span><span><strong>Setor:</strong> ${escapeHtml(auditoria.NM_SETOR)}</span><span><strong>Avaliador:</strong> ${escapeHtml(auditoria.NM_AVALIADOR)}</span><span><strong>Profissional:</strong> ${escapeHtml(auditoria.NM_PROFISSIONAL)}</span></div><div class="auditoria-detalhe-oportunidades">${(auditoria.oportunidades || []).map(item => `<span>${escapeHtml(item.oportunidade_label)}<strong>${escapeHtml(item.resultado_label)} · ${item.conforme ? 'Conforme' : 'Não conforme'}</strong></span>`).join('')}</div>${auditoria.DS_OBSERVACAO ? `<p class="auditoria-detalhe-obs"><strong>Observações:</strong> ${escapeHtml(auditoria.DS_OBSERVACAO)}</p>` : ''}`;
+      target.innerHTML = `<div class="auditoria-detalhe-grid"><span><strong>Data:</strong> ${escapeHtml(auditoria.DT_AUDITORIA)}</span><span><strong>Setor:</strong> ${escapeHtml(auditoria.NM_SETOR)}</span><span><strong>Avaliador:</strong> ${escapeHtml(auditoria.NM_AVALIADOR)}</span><span><strong>Profissional:</strong> ${escapeHtml(auditoria.NM_PROFISSIONAL)}</span></div><div class="auditoria-detalhe-oportunidades">${(auditoria.oportunidades || []).map(item => `<span class="${item.conforme ? 'conforme' : 'nao-conforme'}">${escapeHtml(item.oportunidade_label)}<strong>${escapeHtml(item.resultado_label)} · ${item.conforme ? 'Conforme' : 'Não conforme'}</strong></span>`).join('')}</div>${auditoria.DS_OBSERVACAO ? `<p class="auditoria-detalhe-obs"><strong>Observações:</strong> ${escapeHtml(auditoria.DS_OBSERVACAO)}</p>` : ''}`;
     } catch (err) { target.innerHTML = `<div class="auditoria-feedback">${escapeHtml(err.message)}</div>`; }
   }
 
@@ -128,7 +155,8 @@
       const total = Number(row.TOTAL_OPORTUNIDADES || 0); const conformes = Number(row.OPORTUNIDADES_CONFORMES || 0);
       const percentual = formatPercentual(conformes, total);
       const id = Number(row.NR_SEQUENCIA);
-      return `<article class="auditoria-historico-item"><div><strong>${escapeHtml(row.DT_AUDITORIA)}</strong><span>${escapeHtml(row.NM_SETOR)}</span><small>Avaliador: ${escapeHtml(row.NM_AVALIADOR)} · Profissional: ${escapeHtml(row.NM_PROFISSIONAL)} · ${row.IE_TURNO === 'N' ? 'Noite' : 'Dia'}</small></div><div class="auditoria-historico-actions"><span class="auditoria-result">${conformes}/${total} conformes · ${percentual}%</span><button class="btn-secondary" type="button" data-view="${id}"><i class="bi bi-eye"></i> Ver dados</button><button class="btn-secondary" type="button" data-xlsx="${id}"><i class="bi bi-file-earmark-excel"></i> XLSX</button><button class="btn-secondary" type="button" data-pdf="${id}"><i class="bi bi-file-earmark-pdf"></i> PDF</button></div><div class="auditoria-detalhe d-none" data-detail="${id}"></div></article>`;
+      const badgeHtml = getComplianceBadge(percentual);
+      return `<article class="auditoria-historico-item"><div class="auditoria-historico-info"><div class="auditoria-historico-meta-header"><span class="auditoria-date-badge"><i class="bi bi-calendar-event"></i> ${escapeHtml(row.DT_AUDITORIA)}</span><span class="auditoria-setor-badge"><i class="bi bi-hospital"></i> ${escapeHtml(row.NM_SETOR)}</span><span class="auditoria-turno-badge"><i class="bi ${row.IE_TURNO === 'N' ? 'bi-moon' : 'bi-sun'}"></i> ${row.IE_TURNO === 'N' ? 'Noite' : 'Dia'}</span></div><small class="auditoria-historico-people"><strong>Avaliador:</strong> ${escapeHtml(row.NM_AVALIADOR)} &nbsp;·&nbsp; <strong>Profissional:</strong> ${escapeHtml(row.NM_PROFISSIONAL)}</small></div><div class="auditoria-historico-actions"><div class="auditoria-result-group">${badgeHtml} <span class="auditoria-count-label">${conformes}/${total} conformes</span></div><div class="auditoria-btn-group"><button class="btn-secondary btn-sm" type="button" data-view="${id}"><i class="bi bi-eye"></i> Detalhes</button><button class="btn-secondary btn-sm" type="button" data-xlsx="${id}"><i class="bi bi-file-earmark-excel"></i> XLSX</button><button class="btn-secondary btn-sm" type="button" data-pdf="${id}"><i class="bi bi-file-earmark-pdf"></i> PDF</button></div></div><div class="auditoria-detalhe d-none" data-detail="${id}"></div></article>`;
     }).join('');
     list.querySelectorAll('[data-xlsx]').forEach(button => button.addEventListener('click', () => download(button.dataset.xlsx, 'xlsx')));
     list.querySelectorAll('[data-pdf]').forEach(button => button.addEventListener('click', () => download(button.dataset.pdf, 'pdf')));
@@ -142,7 +170,9 @@
   function renderHistoricoConsolidado(rows, list) {
     list.innerHTML = rows.map(row => {
       const total = Number(row.TOTAL_OPORTUNIDADES || 0); const conformes = Number(row.OPORTUNIDADES_CONFORMES || 0);
-      return `<article class="auditoria-historico-item auditoria-historico-consolidado"><div><strong>${escapeHtml(row.DT_AUDITORIA)} · ${escapeHtml(row.NM_SETOR)}</strong><small>Avaliador: ${escapeHtml(row.NM_AVALIADOR)} · ${row.IE_TURNO === 'N' ? 'Noite' : 'Dia'} · ${Number(row.TOTAL_AUDITORIAS)} auditoria(s)</small></div><div class="auditoria-consolidado-metricas"><span><strong>${total}</strong> oportunidades</span><span><strong>${Number(row.TOTAL_ALCOOL || 0)}</strong> álcool</span><span><strong>${Number(row.TOTAL_SABONETE || 0)}</strong> sabonete</span><span><strong>${Number(row.TOTAL_PERDIDAS || 0)}</strong> perdidas</span><span class="auditoria-result"><strong>${formatPercentual(conformes, total)}%</strong> adesão</span></div></article>`;
+      const percentual = formatPercentual(conformes, total);
+      const badgeHtml = getComplianceBadge(percentual);
+      return `<article class="auditoria-historico-item auditoria-historico-consolidado"><div class="auditoria-historico-info"><div class="auditoria-historico-meta-header"><span class="auditoria-date-badge"><i class="bi bi-calendar-event"></i> ${escapeHtml(row.DT_AUDITORIA)}</span><span class="auditoria-setor-badge"><i class="bi bi-hospital"></i> ${escapeHtml(row.NM_SETOR)}</span><span class="auditoria-turno-badge"><i class="bi ${row.IE_TURNO === 'N' ? 'bi-moon' : 'bi-sun'}"></i> ${row.IE_TURNO === 'N' ? 'Noite' : 'Dia'}</span></div><small class="auditoria-historico-people"><strong>Avaliador:</strong> ${escapeHtml(row.NM_AVALIADOR)} &nbsp;·&nbsp; ${Number(row.TOTAL_AUDITORIAS)} auditoria(s)</small></div><div class="auditoria-consolidado-metricas"><span><strong>${total}</strong> ops</span><span><strong>${Number(row.TOTAL_ALCOOL || 0)}</strong> álcool</span><span><strong>${Number(row.TOTAL_SABONETE || 0)}</strong> sabonete</span><span><strong>${Number(row.TOTAL_PERDIDAS || 0)}</strong> perdidas</span>${badgeHtml}</div></article>`;
     }).join('');
   }
 
@@ -163,7 +193,74 @@
   }
 
   function download(id, extension) { window.location.assign(`/api/auditorias/higiene-maos/${encodeURIComponent(id)}/${extension}`); }
-  function showAuditorias() { show('auditorias-sub-menu'); }
+
+  // --- Sistema de Draft para Auditorias ---
+  function captureAuditoriaDraft() {
+    // Descobre qual tela está visível no momento
+    const activeScreen = auditIds.find(id => !byId(id)?.classList.contains('d-none'));
+    if (!activeScreen) return null;
+
+    const draft = { activeScreen, historicoModo };
+
+    // Se o formulário estiver aberto, salva os dados preenchidos
+    if (activeScreen === 'workspace-auditoria-higiene-form') {
+      draft.form = {
+        data: byId('auditoria-data')?.value || '',
+        setor: byId('auditoria-setor')?.value || '',
+        avaliador: byId('auditoria-avaliador')?.value || '',
+        turno: document.querySelector('input[name="auditoria-turno"]:checked')?.value || '',
+        profissional: byId('auditoria-profissional')?.value || '',
+        observacoes: byId('auditoria-observacoes')?.value || '',
+        oportunidades: oportunidades.map(([code]) => ({
+          code,
+          value: document.querySelector(`input[name="auditoria-${code}"]:checked`)?.value || ''
+        }))
+      };
+    }
+    return draft;
+  }
+
+  function hydrateAuditoriaDraft(draft) {
+    if (!draft?.activeScreen) return;
+    show(draft.activeScreen);
+
+    if (draft.activeScreen === 'workspace-auditoria-higiene-form' && draft.form) {
+      const f = draft.form;
+      renderOportunidades();
+      // Restaura valores básicos
+      if (byId('auditoria-data') && f.data) byId('auditoria-data').value = f.data;
+      if (byId('auditoria-observacoes')) byId('auditoria-observacoes').value = f.observacoes || '';
+      // Restaura seleções (setores/avaliador/profissional podem precisar estar carregados)
+      loadOptions().then(() => {
+        if (f.setor) byId('auditoria-setor').value = f.setor;
+        if (f.avaliador) byId('auditoria-avaliador').value = f.avaliador;
+        if (f.profissional) byId('auditoria-profissional').value = f.profissional;
+        if (f.turno) { const el = document.querySelector(`input[name="auditoria-turno"][value="${f.turno}"]`); if (el) el.checked = true; }
+        (f.oportunidades || []).forEach(({ code, value }) => {
+          if (value) { const el = document.querySelector(`input[name="auditoria-${code}"][value="${value}"]`); if (el) el.checked = true; }
+        });
+      }).catch(() => {});
+    } else if (draft.activeScreen === 'workspace-auditoria-historico') {
+      loadHistorico(draft.historicoModo || 'individual');
+    }
+  }
+
+  // Expõe no window para o app.js usar
+  window.captureAuditoriaDraft = captureAuditoriaDraft;
+  window.hydrateAuditoriaDraft = hydrateAuditoriaDraft;
+
+  // Ao abrir Auditorias via nav, verifica se há draft e restaura a tela
+  function showAuditorias() {
+    const draft = typeof window.conectaApp?.getModuleDraft === 'function'
+      ? window.conectaApp.getModuleDraft('auditorias')
+      : null;
+    if (draft?.activeScreen) {
+      hydrateAuditoriaDraft(draft);
+    } else {
+      show('auditorias-sub-menu');
+    }
+  }
+
   function showHigieneMenu() { show('auditoria-higiene-sub-menu'); }
 
   async function refreshAccess() {
@@ -179,7 +276,7 @@
 
   byId('btn-abrir-auditorias')?.addEventListener('click', showAuditorias);
   byId('nav-auditorias')?.addEventListener('click', showAuditorias);
-  byId('btn-auditorias-voltar-home')?.addEventListener('click', () => { hideAll(); byId('mode-selector')?.classList.remove('d-none'); });
+  byId('btn-auditorias-voltar-home')?.addEventListener('click', () => { if (window.conectaApp?.showModeChooser) { window.conectaApp.showModeChooser(); } else { hideAll(); byId('mode-selector')?.classList.remove('d-none'); } });
   byId('btn-auditorias-higiene-maos')?.addEventListener('click', showHigieneMenu);
   byId('btn-auditoria-higiene-voltar')?.addEventListener('click', showAuditorias);
   byId('btn-auditoria-nova')?.addEventListener('click', openForm);
@@ -199,5 +296,17 @@
     if (button.closest('#topbar-nav') || button.closest('.mode-grid') || button.id === 'topbar-brand') auditIds.forEach(id => byId(id)?.classList.add('d-none'));
   });
   document.addEventListener('click', event => { if (event.target.closest('#user-profile-menu')) setTimeout(refreshAccess, 250); });
+
+  // Marca draft como sujo ao interagir com o formulário (ativa o amarelinho no topbar)
+  const auditForm = document.getElementById('workspace-auditoria-higiene-form');
+  if (auditForm) {
+    auditForm.addEventListener('input', () => {
+      window.conectaApp?.markModuleDraftDirty?.('auditorias');
+    });
+    auditForm.addEventListener('change', () => {
+      window.conectaApp?.markModuleDraftDirty?.('auditorias');
+    });
+  }
+
   setTimeout(refreshAccess, 250);
 })();
