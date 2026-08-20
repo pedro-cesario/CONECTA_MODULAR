@@ -45,6 +45,15 @@
       activeModes: ['escala'],
       entryFnName: 'enterEscalaMode'
     },
+        auditorias: {
+      id: 'auditorias',
+      nome: 'Auditorias',
+      allowedProfiles: [],
+      buttonId: 'btn-abrir-auditorias',
+      topbarButtonId: 'nav-auditorias',
+      activeModes: ['auditorias-submenu', 'auditoria-higiene-submenu', 'auditoria-higiene-form', 'auditoria-historico'],
+      entryFnName: 'enterAuditoriasMode'
+    },
     dashboard_pa: {
       id: 'dashboard_pa',
       nome: 'Dashboard P.A.',
@@ -1195,18 +1204,7 @@
   let activeProfileChangePromise = null;
 
   function hideAllAppSections() {
-    [
-      modeSelector,
-      livroSubMenu,
-      passagemSubMenu,
-      workspacePassagensAnteriores,
-      workspacePrint,
-      workspaceEscala,
-      workspacePassagem,
-      workspaceLivro,
-      workspaceDashboard,
-      workspaceDashboardInternacao
-    ].filter(Boolean).forEach(section => section.classList.add('d-none'));
+    document.querySelectorAll('#screen-app > section, #screen-app > .app-container').forEach(el => el.classList.add('d-none'));
   }
 
   function activateWorkspace(mode, target) {
@@ -7055,6 +7053,10 @@ const btnSalvar = document.getElementById('btn-salvar');
 
 
 const moduleHandlers = {
+    enterAuditoriasMode: () => {
+      const menu = document.getElementById('auditorias-sub-menu');
+      if (menu) activateWorkspace('auditorias-submenu', menu);
+    },
    passagem: () => {
      showPassagemSubMenu(); return; if (false) {
        enterPassagemMode();
