@@ -438,12 +438,16 @@
 
   function capturePassagemDraft() {
     const entries = {};
+    let hasActualData = false;
 
     document.querySelectorAll('.intercorrencia-textarea').forEach(textarea => {
       const key = getTextareaKey(textarea);
       if (!key) return;
-      entries[key] = entries[key] || { text: '', checks: [] };
-      entries[key].text = getEditorValue(textarea) || '';
+      if (editorHasContent(textarea)) {
+        entries[key] = entries[key] || { text: '', checks: [] };
+        entries[key].text = getEditorValue(textarea) || '';
+        hasActualData = true;
+      }
     });
 
     document.querySelectorAll('.intercorrencia-checkbox:checked').forEach(checkbox => {
@@ -453,7 +457,12 @@
       const key = `atendimento_${atendimento}`;
       entries[key] = entries[key] || { text: '', checks: [] };
       entries[key].checks.push(field);
+      hasActualData = true;
     });
+
+    if (!hasActualData && (!state.setoresSelecionados || state.setoresSelecionados.length === 0)) {
+      return null;
+    }
 
     return {
       setoresSelecionados: [...state.setoresSelecionados],
@@ -506,7 +515,11 @@
     if (!draftDirtyModules.has(dirtyKey)) return;
 
     const payload = captureModuleDraft(moduleId);
-    if (payload) setModuleDraft(moduleId, payload, profileId);
+    if (payload) {
+      setModuleDraft(moduleId, payload, profileId);
+    } else {
+      clearModuleDraft(moduleId, profileId);
+    }
     draftDirtyModules.delete(dirtyKey);
     updateTopbarDraftIndicators();
   }
@@ -777,14 +790,23 @@
   }
 
   function editorHasContent(el) {
-    if (el.isContentEditable) return el.innerText.trim() !== '';
-    return el.value.trim() !== '';
+    if (!el) return false;
+    if (el.isContentEditable) {
+      const text = (el.innerText || el.textContent || '')
+        .replace(/[\u00a0\u200B\uFEFF\s\r\n]+/g, '')
+        .trim();
+      if (text.length > 0) return true;
+      const hasMedia = el.querySelector('img, table, video, audio');
+      return Boolean(hasMedia);
+    }
+    return (el.value || '').trim() !== '';
   }
 
   function getEditorHtmlForSave(el) {
+    if (!el) return '';
+    if (!editorHasContent(el)) return '';
     if (!el.isContentEditable) return el.value.trim();
     const inner = el.innerHTML.trim();
-    if (!inner || inner === '<br>' || inner === '<br/>') return '';
     return `<html tasy="html5"><body>${inner}</body></html>`;
   }
 
@@ -1046,61 +1068,45 @@
 
 
   function saveTextsBeforeRender() {
-
     document.querySelectorAll('.intercorrencia-textarea').forEach(ta => {
-
       const key = getTextareaKey(ta);
-
-      if (key && editorHasContent(ta)) {
-
-        state.savedTexts[key] = getEditorValue(ta);
-
+      if (key) {
+        if (editorHasContent(ta)) {
+          state.savedTexts[key] = getEditorValue(ta);
+        } else {
+          delete state.savedTexts[key];
+        }
       }
-
     });
-
   }
-
-
 
   function restoreTextsAfterRender() {
-
     document.querySelectorAll('.intercorrencia-textarea').forEach(ta => {
-
       const key = getTextareaKey(ta);
-
       if (key && state.savedTexts[key]) {
-
         setEditorValue(ta, state.savedTexts[key]);
-
         ta.classList.add('has-text');
-
       }
-
     });
-
   }
 
-
-
   function bindTextareaEvents(container) {
-
     container.querySelectorAll('.intercorrencia-textarea').forEach(ta => {
-
       ta.addEventListener('input', () => {
-
-        ta.classList.toggle('has-text', editorHasContent(ta));
+        const hasContent = editorHasContent(ta);
+        ta.classList.toggle('has-text', hasContent);
 
         const key = getTextareaKey(ta);
         if (key) {
-          const val = getEditorValue(ta);
-          if (val && val !== '<br>') state.savedTexts[key] = val;
-          else delete state.savedTexts[key];
+          if (hasContent) {
+            state.savedTexts[key] = getEditorValue(ta);
+          } else {
+            delete state.savedTexts[key];
+          }
         }
 
         updateFooter();
         markModuleDraftDirty('passagem');
-
       });
 
       // Bind the formatting toolbar for contenteditable editors
@@ -5480,8 +5486,7 @@ function stopDashboardRefresh() {
         let hasUnsaved = false;
         document.querySelectorAll('.intercorrencia-checkbox').forEach(cb => { if (cb.checked) hasUnsaved = true; });
         document.querySelectorAll('.intercorrencia-textarea').forEach(ta => {
-           const html = typeof getEditorHtmlForSave === 'function' ? getEditorHtmlForSave(ta) : ta.value;
-           if (html && html.trim() !== '' && html !== '<p><br></p>') hasUnsaved = true;
+          if (editorHasContent(ta)) hasUnsaved = true;
         });
 
         if (hasUnsaved) {
