@@ -894,6 +894,79 @@
     }
   }
 
+  // --- DEFAULT TEMPLATES ---
+  const DEFAULT_TEMPLATES = {
+    'passagem': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
+        <div class="col-md-3">
+          <div class="card p-3 shadow-sm border-0 studio-canvas-node" style="border-radius: 1rem; background: #ffffff;">
+            <h5 class="studio-text" style="font-weight: 800; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.85rem;">
+              <i class="bi bi-hospital"></i> Setores
+            </h5>
+            <div class="list-group list-group-flush small">
+              <a href="#" class="list-group-item list-group-item-action active" style="border-radius: 0.5rem; font-weight: 700; background: var(--primary);"><i class="bi bi-geo-alt"></i> Setor de Internação 1</a>
+              <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.5rem; font-weight: 600;"><i class="bi bi-geo-alt"></i> U.T.I. Geral</a>
+              <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.5rem; font-weight: 600;"><i class="bi bi-geo-alt"></i> Centro Cirúrgico</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+          </div>
+          ${COMPONENT_DEFINITIONS['card_paciente'].render()}
+          ${COMPONENT_DEFINITIONS['card_paciente'].render()}
+          ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
+        </div>
+      </div>
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'dashboard_pa': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="row g-3 mb-3" style="width: 100%;">
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
+      </div>
+      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'pacientes': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
+      </div>
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'auditorias': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      ${COMPONENT_DEFINITIONS['panel_white'].render()}
+      ${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'livro': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      ${COMPONENT_DEFINITIONS['panel_white'].render()}
+      ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'escala': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `
+  };
+
   // --- SAVE & LOAD FROM BACKEND ---
   async function loadPageData() {
     const canvas = document.getElementById('studio-canvas-root');
@@ -924,8 +997,10 @@
           if (pageNameInput) pageNameInput.value = state.pageData.nome;
           if (pageBadge) pageBadge.innerText = state.pageData.is_native ? 'Nativa do Sistema' : 'Personalizada';
 
-          if (state.pageData.html_output) {
+          if (state.pageData.html_output && state.pageData.html_output.trim()) {
             canvas.innerHTML = state.pageData.html_output;
+          } else if (DEFAULT_TEMPLATES[state.pageId]) {
+            canvas.innerHTML = DEFAULT_TEMPLATES[state.pageId]().trim();
           } else if (state.pageData.layout_json) {
             renderLayoutFromJson(state.pageData.layout_json);
           }
@@ -937,15 +1012,19 @@
       console.warn('[Studio] Erro ao carregar tela do backend, verificando fallback local:', err);
     }
 
-    // Fallback: localStorage
-    const local = localStorage.getItem(`conecta_studio_${state.pageId}`);
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        state.pageData = parsed;
-        if (pageNameInput) pageNameInput.value = parsed.nome;
-        canvas.innerHTML = parsed.html_output || '';
-      } catch (e) {}
+    // Fallback: Default template or localStorage
+    if (DEFAULT_TEMPLATES[state.pageId]) {
+      canvas.innerHTML = DEFAULT_TEMPLATES[state.pageId]().trim();
+    } else {
+      const local = localStorage.getItem(`conecta_studio_${state.pageId}`);
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          state.pageData = parsed;
+          if (pageNameInput) pageNameInput.value = parsed.nome;
+          canvas.innerHTML = parsed.html_output || '';
+        } catch (e) {}
+      }
     }
     saveHistoryState();
   }
@@ -957,9 +1036,10 @@
       if (layout && layout.components && Array.isArray(layout.components)) {
         canvas.innerHTML = '';
         layout.components.forEach(comp => {
-          if (COMPONENT_DEFINITIONS[comp.type]) {
+          const typeKey = comp.type;
+          if (COMPONENT_DEFINITIONS[typeKey]) {
             const temp = document.createElement('div');
-            temp.innerHTML = COMPONENT_DEFINITIONS[comp.type].render().trim();
+            temp.innerHTML = COMPONENT_DEFINITIONS[typeKey].render().trim();
             canvas.appendChild(temp.firstElementChild);
           }
         });
