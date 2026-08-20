@@ -115,6 +115,13 @@ const MODULOS_STATIC = [
       buttonId: 'btn-abrir-dashboard-internacao',
       workspaceId: 'workspace-dashboard-internacao'
     }
+  },
+  {
+    id: 'auditorias', nome: 'Auditorias',
+    descricao: 'Auditorias assistenciais do Núcleo de Segurança do Paciente', icon: 'bi-clipboard2-check',
+    allowedProfiles: ['admin'], setorId: null,
+    backend: { controller: 'auditoriaController', method: 'salvarHigieneMaos' },
+    frontend: { buttonId: 'btn-abrir-auditorias', workspaceId: 'workspace-auditorias' }
   }
 ];
 

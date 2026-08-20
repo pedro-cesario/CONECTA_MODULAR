@@ -2289,6 +2289,38 @@ body {
   color: var(--slate-700);
 }
 
+/* Auditorias NISA: composição exclusiva com os componentes existentes do Livro. */
+.auditoria-section { width: min(1480px, 100%); margin-left: auto; margin-right: auto; }
+.auditoria-profissional-field { max-width: 520px; margin-bottom: 1rem; }
+.auditoria-oportunidades { display: grid; gap: .85rem; }
+.auditoria-oportunidade { padding: .85rem 0; border-bottom: 1px solid var(--slate-200); }
+.auditoria-oportunidade:last-child { border-bottom: 0; }
+.auditoria-oportunidade-label { display: block; font-weight: 700; margin-bottom: .55rem; color: var(--slate-700); font-size: var(--fs-sm); }
+.auditoria-feedback, .auditoria-save-feedback { width: min(1480px, 100%); margin: 0 auto 1rem; padding: .85rem 1rem; border-radius: var(--radius-sm); font-size: .9rem; }
+.auditoria-feedback { border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; }
+.auditoria-feedback.success, .auditoria-save-feedback { border: 1px solid #bbf7d0; background: #f0fdf4; color: #166534; }
+.auditoria-save-feedback { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; font-weight: 700; }
+.auditoria-save-feedback > div { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+.auditoria-historico-list { width: min(1480px, 100%); margin: 0 auto; }
+.auditoria-historico-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--slate-200); }
+.auditoria-historico-item > div:first-child { display: flex; flex-direction: column; gap: .25rem; }
+.auditoria-historico-item small { color: var(--slate-500); }
+.auditoria-historico-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .45rem; }
+.auditoria-result { color: var(--slate-700); font-size: .85rem; font-weight: 700; }
+.auditoria-view-toggle { display: flex; flex-wrap: wrap; gap: .5rem; }
+.auditoria-view-toggle .btn-secondary.active { background: var(--primary); border-color: var(--primary); }
+.auditoria-historico-item { flex-wrap: wrap; }
+.auditoria-detalhe { width: 100%; margin-top: .25rem; padding: .85rem; border-top: 1px solid var(--slate-200); background: var(--slate-50); }
+.auditoria-detalhe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .45rem 1rem; font-size: .85rem; color: var(--slate-700); }
+.auditoria-detalhe-oportunidades { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .45rem; margin-top: .75rem; }
+.auditoria-detalhe-oportunidades span { display: flex; justify-content: space-between; gap: .75rem; padding: .5rem .6rem; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); background: #fff; font-size: .82rem; }
+.auditoria-detalhe-oportunidades strong { color: var(--primary); white-space: nowrap; }
+.auditoria-detalhe-obs { margin: .75rem 0 0; font-size: .85rem; color: var(--slate-700); }
+.auditoria-detalhe-loading { color: var(--slate-500); font-size: .85rem; }
+.auditoria-consolidado-metricas { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .5rem .85rem; color: var(--slate-600); font-size: .82rem; }
+.auditoria-consolidado-metricas strong { color: var(--slate-800); }
+@media (max-width: 700px) { .auditoria-historico-item { align-items: flex-start; flex-direction: column; } .auditoria-historico-actions { justify-content: flex-start; } .auditoria-save-feedback > div { margin-left: 0; } }
+
 .livro-section-body {
   padding: 12px;
 }

@@ -8,6 +8,7 @@ const ocorrenciaController = require('../controllers/ocorrenciaController');
 const usuarioController = require('../controllers/usuarioController');
 const dashboardController = require('../controllers/dashboardController');
 const escalaAtivaController = require('../controllers/escalaAtivaController');
+const auditoriaController = require('../controllers/auditoriaController');
 const nativeSsoController = require('../controllers/nativeSsoController');
 const adminRoutes = require('./adminRoutes');
 const configCache = require('../config/configCache');
@@ -45,6 +46,14 @@ router.get('/setores-livro', requireAuth, setorController.listarSetoresLivro);
 router.get('/tecnicos', requireAuth, usuarioController.listarTecnicos);
 router.get('/enfermeiros', requireAuth, usuarioController.listarEnfermeiros);
 router.get('/profissionais-psicologia', requireAuth, usuarioController.listarProfissionaisSetor4);
+
+router.get('/auditorias/higiene-maos/opcoes', requireAuth, auditoriaController.listarOpcoes);
+router.post('/auditorias/higiene-maos', requireAuth, auditoriaController.salvarHigieneMaos);
+router.get('/auditorias/higiene-maos/historico', requireAuth, auditoriaController.listarHistorico);
+router.get('/auditorias/higiene-maos/historico/consolidado', requireAuth, auditoriaController.listarHistoricoConsolidado);
+router.get('/auditorias/higiene-maos/:id/xlsx', requireAuth, auditoriaController.baixarXlsx);
+router.get('/auditorias/higiene-maos/:id/pdf', requireAuth, auditoriaController.baixarPdf);
+router.get('/auditorias/higiene-maos/:id', requireAuth, auditoriaController.obterAuditoria);
 
 // Pacientes (protegido)
 router.post('/pacientes', requireAuth, pacienteController.listarPacientes);

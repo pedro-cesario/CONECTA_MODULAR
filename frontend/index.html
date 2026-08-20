@@ -68,6 +68,7 @@
         <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
         <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
         <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
       </div>
       <div class="topbar-right">
         <div class="user-dropdown-container" id="user-dropdown-container">
@@ -145,8 +146,81 @@
             </span>
             <i class="bi bi-arrow-up-right module-arrow"></i>
           </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-auditorias" type="button">
+            <span class="module-icon module-icon-primary"><i class="bi bi-clipboard2-check"></i></span>
+            <span class="module-content"><strong>Auditorias</strong><small>Registre auditorias assistenciais do Núcleo de Segurança do Paciente.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
         </div>
       </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditorias-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditorias-voltar-home" type="button" aria-label="Voltar ao menu principal"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-choice-eyebrow">Núcleo de Segurança do Paciente</span><h1>Auditorias</h1><p>Selecione uma auditoria para registrar ou consultar seus lançamentos.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditorias-higiene-maos" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-hand-index-thumb"></i></span>
+            <span class="livro-choice-card-copy"><strong>Higiene de Mãos</strong><small>Registre oportunidades observadas e resultados de adesão.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditoria-higiene-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditoria-higiene-voltar" type="button" aria-label="Voltar às auditorias"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-hand-index-thumb"></i></span>
+          <div><span class="livro-choice-eyebrow">Auditorias</span><h1>Higiene de Mãos</h1><p>Registre uma nova observação ou consulte o histórico de auditorias.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditoria-nova" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-pencil-square"></i></span>
+            <span class="livro-choice-card-copy"><strong>Nova Auditoria</strong><small>Preencha os dados da observação e as cinco oportunidades de higiene.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-auditoria-historico" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clock-history"></i></span>
+            <span class="livro-choice-card-copy"><strong>Histórico</strong><small>Recupere auditorias persistidas e gere XLSX ou PDF novamente.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-higiene-form">
+      <header class="livro-page-header">
+        <div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-form-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-hand-index-thumb"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Nova Auditoria de Higiene de Mãos</h2><p>Registre a observação e as oportunidades avaliadas.</p></div></div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+      <div class="livro-filter-panel auditoria-form-grid" aria-label="Informações da observação">
+        <div class="livro-field"><label for="auditoria-data">Data <span class="required-star">*</span></label><input type="date" id="auditoria-data" required></div>
+        <div class="livro-field"><label for="auditoria-setor">Setor <span class="required-star">*</span></label><select id="auditoria-setor" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field"><label for="auditoria-avaliador">Avaliador <span class="required-star">*</span></label><select id="auditoria-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field"><span class="livro-field-label">Turno <span class="required-star">*</span></span><div class="livro-turno-options"><label class="livro-turno-option"><input type="radio" name="auditoria-turno" value="D"><span><i class="bi bi-sun"></i> Dia</span></label><label class="livro-turno-option"><input type="radio" name="auditoria-turno" value="N"><span><i class="bi bi-moon"></i> Noite</span></label></div></div>
+      </div>
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades</span></div>
+        <div class="livro-section-body">
+          <div class="livro-field auditoria-profissional-field"><label for="auditoria-profissional">Profissional <span class="required-star">*</span></label><select id="auditoria-profissional" class="form-select" required><option value="">Selecione...</option></select></div>
+          <div id="auditoria-oportunidades" class="auditoria-oportunidades"></div>
+        </div>
+      </div>
+      <div class="livro-section auditoria-section"><div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div><div class="livro-section-body"><textarea id="auditoria-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div></div>
+      <div class="auditoria-feedback d-none" id="auditoria-feedback" role="status"></div>
+      <div class="auditoria-save-feedback d-none" id="auditoria-save-feedback"><i class="bi bi-check-circle-fill"></i><span>Auditoria salva com sucesso.</span><div><button class="btn-secondary" id="btn-auditoria-baixar-xlsx" type="button"><i class="bi bi-file-earmark-excel"></i> Baixar XLSX</button><button class="btn-secondary" id="btn-auditoria-baixar-pdf" type="button"><i class="bi bi-file-earmark-pdf"></i> Baixar PDF</button></div></div>
+      <div class="livro-actions livro-action-bar"><div></div><div class="livro-action-group livro-action-group-end"><button class="btn-secondary livro-clear-btn" id="btn-auditoria-cancelar" type="button">Cancelar</button><button class="btn-save" id="btn-auditoria-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button></div></div>
+    </section>
+
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-historico">
+      <header class="livro-page-header"><div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-historico-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-clock-history"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Histórico de Higiene de Mãos</h2><p>Auditorias persistidas no Oracle e disponíveis para nova exportação.</p></div></div><div class="auditoria-view-toggle"><button class="btn-secondary active" id="btn-auditoria-visao-individual" type="button"><i class="bi bi-person-lines-fill"></i> Individual</button><button class="btn-secondary" id="btn-auditoria-visao-consolidada" type="button"><i class="bi bi-bar-chart-line"></i> Consolidado</button></div></header>
+      <div class="livro-preview auditoria-historico-list" id="auditoria-historico-list"><div class="loading-placeholder">Carregando auditorias...</div></div>
     </section>
 
     <section class="livro-sub-menu d-none" id="livro-sub-menu">
@@ -793,6 +867,7 @@
   </div>
 
   <script src="js/app.js?v=94"></script>
+  <script src="js/auditorias.js?v=1"></script>
 </body>
 </html>
 

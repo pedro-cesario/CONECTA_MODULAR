@@ -1449,6 +1449,18 @@
                   </label>
                 </div>
               ` : ''}
+              ${modulo.id === 'auditorias' ? `
+                <div class="ms-4 mt-2">
+                  <small><strong>Funções habilitadas:</strong></small>
+                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                    ${[
+                      ['lancar_higiene_maos', 'Lançar auditoria de Higiene de Mãos'],
+                      ['visualizar_historico_higiene_maos', 'Visualizar histórico'],
+                      ['exportar_higiene_maos', 'Exportar XLSX e PDF']
+                    ].map(([value, label]) => `<div class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" id="perm-${perfilId}-auditorias-${value}" value="${value}" data-auditoria-permissao disabled><label class="form-check-label text-muted" for="perm-${perfilId}-auditorias-${value}"><small>${label}</small></label></div>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
               ${modulo.id === 'livro' ? `
                 <div class="ms-4 mt-2">
                   <small><strong>Escalas Habilitadas:</strong></small>
@@ -1578,6 +1590,19 @@
                     if (!checkbox.checked) cb.checked = false;
                   });
               }
+              if (checkbox.dataset.moduloCheck !== undefined && modId === 'auditorias') {
+                document.querySelectorAll('input[data-auditoria-permissao]').forEach(cb => {
+                  cb.disabled = !checkbox.checked;
+                  if (!checkbox.checked) cb.checked = false;
+                });
+              }
+              if (checkbox.dataset.auditoriaPermissao !== undefined) {
+                const moduloCheck = document.querySelector(`#perm-${perfilId}-auditorias`);
+                if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
+                  moduloCheck.checked = true;
+                  document.querySelectorAll('input[data-auditoria-permissao]').forEach(cb => cb.disabled = false);
+                }
+              }
               if (checkbox.dataset.passagemSetor !== undefined || checkbox.dataset.lancarPassagem !== undefined || checkbox.dataset.passagemCheckbox !== undefined) {
                  const moduloCheck = document.querySelector(`#perm-${perfilId}-passagem`);
                  if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
@@ -1695,6 +1720,14 @@
              if (!passagemGranted) checkbox.checked = false;
           });
 
+          const auditoriaChecks = document.querySelectorAll('.form-check input[data-auditoria-permissao]');
+          auditoriaChecks.forEach(checkbox => {
+            const auditoriasGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'auditorias');
+            checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'auditorias' && pp.permissao === checkbox.value);
+            checkbox.disabled = !auditoriasGranted;
+            if (!auditoriasGranted) checkbox.checked = false;
+          });
+
           const plantaoRadio = document.getElementById(`perm-${perfilId}-modelo-plantao`);
           const periodoRadio = document.getElementById(`perm-${perfilId}-modelo-periodo`);
           if (plantaoRadio && periodoRadio && !plantaoRadio.checked && !periodoRadio.checked && !plantaoRadio.disabled) {
@@ -1733,6 +1766,10 @@
       });
       if (passagemPermissoes.length > 0) {
         permissoes['passagem'] = passagemPermissoes;
+      }
+      const auditoriaChecks = document.querySelectorAll('.form-check input[data-auditoria-permissao]:checked');
+      if (auditoriaChecks.length > 0) {
+        permissoes['auditorias'] = Array.from(auditoriaChecks).map(c => c.value);
       }
 
       const setoresPorModulo = {

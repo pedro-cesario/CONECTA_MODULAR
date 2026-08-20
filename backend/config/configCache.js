@@ -127,6 +127,15 @@ async function ensureAccessSchema() {
     }
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes')");
   }
+  const migrationAuditorias = await all("SELECT id FROM config_migrations WHERE id = '2026_08_auditorias_nisa'");
+  if (migrationAuditorias.length === 0) {
+    await run(`INSERT OR IGNORE INTO modulos (id, nome, descricao, icon, setorId) VALUES ('auditorias', 'Auditorias', 'Auditorias assistenciais do Núcleo de Segurança do Paciente', 'bi-clipboard2-check', NULL)`);
+    await run(`INSERT OR IGNORE INTO perfil_modulos (perfil_id, modulo_id) VALUES ('admin', 'auditorias')`);
+    for (const permissao of ['lancar_higiene_maos', 'visualizar_historico_higiene_maos', 'exportar_higiene_maos']) {
+      await run(`INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES ('admin', 'auditorias', ?)`, [permissao]);
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_auditorias_nisa')");
+  }
 }
 
 async function load() {
