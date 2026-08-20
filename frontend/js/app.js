@@ -323,7 +323,7 @@
 
   const DRAFT_STORAGE_VERSION = 2;
   const DRAFT_STORAGE_PREFIX = 'conecta_drafts_v2';
-  const EDITABLE_DRAFT_MODULES = ['passagem', 'livro', 'escala'];
+  const EDITABLE_DRAFT_MODULES = ['passagem', 'livro', 'escala', 'auditorias'];
   const draftDirtyModules = new Set();
   const draftSaveTimers = new Map();
   const draftHydratingModules = new Set();
@@ -1383,6 +1383,11 @@
       el.classList.toggle('d-none', !hasAccess);
     });
   }
+
+  window.conectaApp = {
+    activateWorkspace,
+    showModeChooser
+  };
 
 
 
@@ -7053,7 +7058,7 @@ const btnSalvar = document.getElementById('btn-salvar');
 
 
 const moduleHandlers = {
-    enterAuditoriasMode: () => {
+    auditorias: () => {
       const menu = document.getElementById('auditorias-sub-menu');
       if (menu) activateWorkspace('auditorias-submenu', menu);
     },

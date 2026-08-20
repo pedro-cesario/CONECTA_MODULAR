@@ -2305,7 +2305,7 @@ body {
 .auditoria-feedback.success, .auditoria-save-feedback { border: 1px solid #bbf7d0; background: #f0fdf4; color: #166534; }
 .auditoria-save-feedback { display: flex; align-items: center; flex-wrap: wrap; gap: 0.65rem; font-weight: 700; }
 .auditoria-save-feedback > div { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
-.auditoria-historico-list { width: min(1480px, 100%); margin: 0 auto; min-height: 400px; }
+.auditoria-historico-list { min-height: 400px; }
 .auditoria-historico-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--slate-200); }
 .auditoria-historico-item > div:first-child { display: flex; flex-direction: column; gap: 0.25rem; }
 .auditoria-historico-item small { color: var(--slate-500); }
@@ -2322,6 +2322,8 @@ body {
 .auditoria-detalhe-loading { color: var(--slate-500); font-size: 0.85rem; }
 .auditoria-consolidado-metricas { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 0.85rem; color: var(--slate-600); font-size: 0.82rem; }
 .auditoria-consolidado-metricas strong { color: var(--slate-800); }
+
+#workspace-auditoria-higiene-form .auditoria-section + .auditoria-section { margin-top: 1rem; }
 
 @media (max-width: 700px) { 
   .auditoria-historico-item { align-items: flex-start; flex-direction: column; } 
@@ -3674,18 +3676,24 @@ body {
   gap: 0.75rem;
 }
 
-#workspace-livro .livro-action-group {
+#workspace-livro .livro-action-group,
+#workspace-auditoria-higiene-form .livro-action-group,
+#workspace-auditoria-historico .livro-action-group {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   flex-wrap: wrap;
 }
 
-#workspace-livro .livro-action-group-end {
+#workspace-livro .livro-action-group-end,
+#workspace-auditoria-higiene-form .livro-action-group-end,
+#workspace-auditoria-historico .livro-action-group-end {
   justify-content: flex-end;
 }
 
-#workspace-livro .livro-action-bar button {
+#workspace-livro .livro-action-bar button,
+#workspace-auditoria-higiene-form .livro-action-bar button,
+#workspace-auditoria-historico .livro-action-bar button {
   min-height: 40px;
   border-radius: 0.65rem;
   font-size: 0.78rem;
@@ -7472,4 +7480,158 @@ input[type="password"] {
   text-align: left !important;
   margin-left: 0 !important;
   margin-right: auto !important;
+}
+
+
+/* =============================================================================
+   REFINAMENTOS VISUAIS E RESPONSIVIDADE - AUDITORIAS NISA
+   ============================================================================= */
+
+.auditoria-oportunidades {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.85rem;
+}
+
+.auditoria-oportunidade-card {
+  padding: 1.1rem 1.25rem;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auditoria-oportunidade-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.auditoria-oportunidade-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.auditoria-moment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: 20px;
+  background: #e0f2fe;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.auditoria-oportunidade-label {
+  font-weight: 600;
+  color: var(--slate-800);
+  font-size: 0.95rem;
+}
+
+.auditoria-historico-item {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auditoria-historico-item:hover {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.auditoria-historico-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.auditoria-historico-meta-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.auditoria-date-badge,
+.auditoria-setor-badge,
+.auditoria-turno-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.auditoria-date-badge { background: #f1f5f9; color: var(--slate-700); }
+.auditoria-setor-badge { background: #eff6ff; color: #1d4ed8; }
+.auditoria-turno-badge { background: #fef3c7; color: #92400e; }
+
+.auditoria-historico-people {
+  color: var(--slate-600);
+  font-size: 0.85rem;
+}
+
+.auditoria-historico-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.auditoria-result-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.auditoria-result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.compliance-high { background: #dcfce7; color: #15803d; }
+.compliance-medium { background: #fef9c3; color: #a16207; }
+.compliance-low { background: #fee2e2; color: #b91c1c; }
+
+.auditoria-count-label {
+  font-size: 0.82rem;
+  color: var(--slate-500);
+  font-weight: 600;
+}
+
+.auditoria-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.auditoria-detalhe-oportunidades span.conforme {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.auditoria-detalhe-oportunidades span.nao-conforme {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+@media (max-width: 768px) {
+  .auditoria-historico-meta-header { flex-direction: row; }
+  .auditoria-historico-actions { width: 100%; justify-content: space-between; margin-top: 0.5rem; }
 }
