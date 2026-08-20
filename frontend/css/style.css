@@ -7653,4 +7653,12 @@ input[type="password"] {
   flex: 1 1 0%;
   min-height: 0;
   overflow-y: auto;
+  /* Remove o centramento do .livro-preview para preencher toda a largura disponível */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
 }
