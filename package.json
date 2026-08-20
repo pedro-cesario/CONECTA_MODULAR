@@ -1,6 +1,6 @@
 {
   "name": "passagem-plantao",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Sistema de Passagem de Plantão de Enfermagem - Integração TASY Oracle",
   "main": "backend/server.js",
   "scripts": {
