@@ -5490,10 +5490,17 @@ function stopDashboardRefresh() {
         });
 
         if (hasUnsaved) {
-           if (typeof showModal === 'function') {
-             await showModal('warning', 'Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Clique em "Salvar / Finalizar Passagem" e escolha "Salvar e Continuar Passagem" para não perder os dados!');
-           }
-           return;
+          if (temPermissaoAtiva('passagem', 'lancar_passagem_lote')) {
+            if (typeof showModal === 'function') {
+              await showModal('warning', 'Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Clique em "Salvar / Finalizar Passagem" e escolha "Salvar e Continuar Passagem" para não perder os dados!');
+            }
+            return;
+          } else {
+            const descartar = await showConfirmModal('Atenção: Dados Não Salvos', 'Você preencheu informações neste setor. Deseja descartar as alterações e trocar de setor?');
+            if (!descartar) return;
+            state.savedTexts = {};
+            clearModuleDraft('passagem');
+          }
         }
 
         list.querySelectorAll('.setor-item').forEach(i => i.classList.remove('active'));
@@ -5516,6 +5523,10 @@ function stopDashboardRefresh() {
 
   
   function renderLoteChecksNaSidebar() {
+    if (!temPermissaoAtiva('passagem', 'lancar_passagem_lote')) {
+      document.querySelectorAll('.lote-check').forEach(el => el.remove());
+      return;
+    }
     document.querySelectorAll('.setor-item').forEach(item => {
       const cd = parseInt(item.dataset.cd, 10);
       let badge = item.querySelector('.lote-check');
