@@ -275,7 +275,6 @@
   }
 
   byId('btn-abrir-auditorias')?.addEventListener('click', showAuditorias);
-  byId('nav-auditorias')?.addEventListener('click', showAuditorias);
   byId('btn-auditorias-voltar-home')?.addEventListener('click', () => { if (window.conectaApp?.showModeChooser) { window.conectaApp.showModeChooser(); } else { hideAll(); byId('mode-selector')?.classList.remove('d-none'); } });
   byId('btn-auditorias-higiene-maos')?.addEventListener('click', showHigieneMenu);
   byId('btn-auditoria-higiene-voltar')?.addEventListener('click', showAuditorias);

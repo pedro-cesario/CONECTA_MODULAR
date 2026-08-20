@@ -7062,8 +7062,13 @@ const btnSalvar = document.getElementById('btn-salvar');
 
 const moduleHandlers = {
     auditorias: () => {
-      const menu = document.getElementById('auditorias-sub-menu');
-      if (menu) activateWorkspace('auditorias-submenu', menu);
+      const draft = getModuleDraft('auditorias');
+      if (draft?.activeScreen && typeof window.hydrateAuditoriaDraft === 'function') {
+        window.hydrateAuditoriaDraft(draft);
+      } else {
+        const menu = document.getElementById('auditorias-sub-menu');
+        if (menu) activateWorkspace('auditorias-submenu', menu);
+      }
     },
    passagem: () => {
      showPassagemSubMenu(); return; if (false) {
