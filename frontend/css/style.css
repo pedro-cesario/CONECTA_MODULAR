@@ -6729,37 +6729,34 @@ input[type="password"] {
 }
 
 /* =====================================================
-   TURNO BAR — DESTAQUE DE VALIDAÇÃO
+   TURNO BAR & BOTÃO SALVAR — DESTAQUE DE VALIDAÇÃO
    ===================================================== */
 
-.turno-bar--highlight {
-  outline: 2px solid var(--red-600);
-  outline-offset: 6px;
-  border-radius: var(--radius-md);
-  animation: turnoHighlightPulse 0.55s ease 0s 4;
-}
-
-@keyframes turnoHighlightPulse {
-  0%, 100% { outline-color: var(--red-600); }
-  50%       { outline-color: transparent; }
+.turno-bar--highlight,
+#main-footer-turno-wrapper.turno-bar--highlight,
+#turno-options-dinamico.turno-bar--highlight {
+  outline: 3px solid var(--red-600, #dc2626) !important;
+  outline-offset: 4px !important;
+  border-radius: 999px !important;
+  animation: validationPulseRed 0.55s ease 0s 4 !important;
 }
 
 .btn-save--highlight {
-  outline: 3px solid var(--primary) !important;
+  outline: 3px solid var(--red-600, #dc2626) !important;
   outline-offset: 4px !important;
   border-radius: 0.65rem !important;
-  animation: btnSaveHighlightPulse 0.55s ease 0s 4 !important;
+  animation: validationPulseRed 0.55s ease 0s 4 !important;
 }
 
-@keyframes btnSaveHighlightPulse {
+@keyframes validationPulseRed {
   0%, 100% {
-    outline-color: var(--primary);
-    box-shadow: 0 0 0 6px rgba(19, 79, 159, 0.4) !important;
+    outline-color: var(--red-600, #dc2626);
+    box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.45) !important;
     transform: scale(1.03);
   }
   50% {
     outline-color: transparent;
-    box-shadow: 0 4px 14px rgba(19, 79, 159, 0.3) !important;
+    box-shadow: none;
     transform: scale(1);
   }
 }
@@ -7280,15 +7277,6 @@ input[type="password"] {
   background: #ffffff !important;
   color: var(--primary) !important;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;
-}
-
-#main-footer-turno-wrapper.turno-bar--highlight,
-#turno-options-dinamico.turno-bar--highlight,
-.turno-bar--highlight {
-  outline: 2px solid var(--red-600) !important;
-  outline-offset: 4px !important;
-  border-radius: 999px !important;
-  animation: turnoHighlightPulse 0.55s ease 0s 4 !important;
 }
 
 #btn-salvar.btn-save {
