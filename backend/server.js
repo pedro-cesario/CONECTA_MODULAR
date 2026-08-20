@@ -117,6 +117,8 @@ app.use((req, res, next) => {
   let filePath;
   if (req.path === '/' || req.path === '') {
     filePath = path.join(__dirname, '../frontend/index.html');
+  } else if (req.path === '/studio' || req.path === '/builder') {
+    filePath = path.join(__dirname, '../frontend/builder.html');
   } else if (req.path.endsWith('.html')) {
     filePath = path.join(__dirname, '../frontend', req.path);
   } else {

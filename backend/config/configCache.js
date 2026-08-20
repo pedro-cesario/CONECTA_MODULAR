@@ -136,6 +136,165 @@ async function ensureAccessSchema() {
     }
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_auditorias_nisa')");
   }
+
+  await run(`CREATE TABLE IF NOT EXISTS studio_pages (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    descricao TEXT,
+    categoria TEXT DEFAULT 'custom',
+    layout_json TEXT NOT NULL,
+    html_output TEXT,
+    thumbnail TEXT,
+    is_native INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  const migrationStudio = await all("SELECT id FROM config_migrations WHERE id = '2026_08_studio_pages'");
+  if (migrationStudio.length === 0) {
+    const nativePages = [
+      {
+        id: 'passagem',
+        nome: 'Passagem de Plantão',
+        descricao: 'Tela padrão de passagem de plantão de enfermagem por setor ou em lote com intercorrências e turno.',
+        categoria: 'assistencial',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Passagem de Plantão',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Passagem de Plantão', subtitle: 'Enfermagem', showProfile: true, showDraft: true } },
+            { type: 'layout_sidebar_main', props: { sidebarWidth: '260px' }, children: [
+              { type: 'sidebar_setores', props: { title: 'Setores de Atendimento' } },
+              { type: 'main_content', children: [
+                { type: 'kpi_row', props: { items: [
+                  { label: 'Total de Leitos', value: '28', icon: 'bi-hospital', color: 'primary' },
+                  { label: 'Ocupados', value: '24', icon: 'bi-person-check', color: 'green' },
+                  { label: 'Pendências', value: '3', icon: 'bi-exclamation-triangle', color: 'amber' }
+                ]}},
+                { type: 'card_paciente', props: { nome: 'Maria Santos Oliveira', leito: 'Leito 102-A', registro: '94821', diagnostico: 'Pós-operatório imediato', risco: 'Alto Risco de Queda' } },
+                { type: 'card_paciente', props: { nome: 'João Carlos Pereira', leito: 'Leito 103-B', registro: '83920', diagnostico: 'Insuficiência Cardíaca Congestiva', risco: 'Broncoaspiração' } }
+              ]}
+            ]},
+            { type: 'footer_passagem', props: { showTurno: true, showSave: true, saveText: 'Salvar / Finalizar Passagem' } }
+          ]
+        })
+      },
+      {
+        id: 'dashboard_pa',
+        nome: 'Dashboard Pronto Atendimento',
+        descricao: 'Painel em tempo real de pacientes em espera, triagem, atendimento e tempo médio no P.A.',
+        categoria: 'gestao',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Dashboard P.A.',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Dashboard P.A.', subtitle: 'Pronto Atendimento', showProfile: true } },
+            { type: 'kpi_row', props: { items: [
+              { label: 'Fila de Espera', value: '14', icon: 'bi-hourglass-split', color: 'primary' },
+              { label: 'Em Atendimento', value: '6', icon: 'bi-heart-pulse', color: 'green' },
+              { label: 'Tempo Médio', value: '18 min', icon: 'bi-clock-history', color: 'amber' }
+            ]}},
+            { type: 'panel_white', props: { title: 'Fila de Atendimento em Tempo Real' }, children: [
+              { type: 'tabela_conecta', props: { headers: ['Senha/Paciente', 'Chegada', 'Classificação', 'Médico', 'Tempo Espera', 'Status'] } }
+            ]}
+          ]
+        })
+      },
+      {
+        id: 'pacientes',
+        nome: 'Dashboard de Pacientes',
+        descricao: 'Visão unificada do mapa de leitos com alertas clínicos, ocorrências e status dos setores.',
+        categoria: 'assistencial',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Dashboard de Pacientes',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Dashboard Pacientes', subtitle: 'Internação', showProfile: true } },
+            { type: 'grid_responsive', props: { columns: 3 }, children: [
+              { type: 'card_paciente', props: { nome: 'Carlos Eduardo Lima', leito: 'Leito 201', registro: '55102', diagnostico: 'Pneumonia Bacteriana', risco: 'Isolamento de Contato' } },
+              { type: 'card_paciente', props: { nome: 'Ana Beatriz Souza', leito: 'Leito 202', registro: '55109', diagnostico: 'Apendicectomia', risco: 'Estável' } },
+              { type: 'card_paciente', props: { nome: 'Roberto Albuquerque', leito: 'Leito 203', registro: '55115', diagnostico: 'Cetoacidose Diabética', risco: 'Alerta Glicemia' } }
+            ]}
+          ]
+        })
+      },
+      {
+        id: 'auditorias',
+        nome: 'Auditorias NISA',
+        descricao: 'Formulário e histórico de auditorias de Higiene das Mãos e Segurança do Paciente.',
+        categoria: 'qualidade',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Auditorias NISA',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Auditorias Assistenciais', subtitle: 'Núcleo de Segurança do Paciente', showProfile: true } },
+            { type: 'panel_white', props: { title: 'Formulário de Auditoria - Higiene das Mãos' }, children: [
+              { type: 'auditoria_oportunidades', props: { title: 'Oportunidades Observadas (Álcool / Sabonete / Perdida)' } }
+            ]},
+            { type: 'panel_white', props: { title: 'Histórico Recente de Auditorias' }, children: [
+              { type: 'auditoria_historico_item', props: { data: '2026-08-20', setor: 'Setor de Internação', turno: 'Dia', avaliador: 'Alexandre Braga', profissional: 'Ana Caroline', adesao: '80%' } }
+            ]}
+          ]
+        })
+      },
+      {
+        id: 'livro',
+        nome: 'Livro Administrativo',
+        descricao: 'Registro e acompanhamento diário de ocorrências administrativas, manutenção e gestão.',
+        categoria: 'administrativo',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Livro Administrativo',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Livro Administrativo', subtitle: 'Gestão Diária', showProfile: true } },
+            { type: 'panel_white', props: { title: 'Novo Registro de Ocorrência' }, children: [
+              { type: 'form_input', props: { label: 'Assunto / Título da Ocorrência', placeholder: 'Ex: Manutenção no Ar Condicionado...' } },
+              { type: 'form_textarea', props: { label: 'Descrição Detalhada', placeholder: 'Descreva os fatos ocorridos...' } },
+              { type: 'btn_primary', props: { text: 'Publicar Registro no Livro', icon: 'bi-send-fill' } }
+            ]}
+          ]
+        })
+      },
+      {
+        id: 'escala',
+        nome: 'Escala Médica e Enfermagem',
+        descricao: 'Quadro mensal de escalas por setor, turnos, folgas e substituições.',
+        categoria: 'gestao',
+        is_native: 1,
+        layout_json: JSON.stringify({
+          version: '1.0',
+          title: 'Escala Médica e Enfermagem',
+          type: 'native',
+          components: [
+            { type: 'topbar', props: { title: 'Escala Ativa', subtitle: 'Quadro de Plantões', showProfile: true } },
+            { type: 'panel_white', props: { title: 'Grade Mensal de Profissionais' }, children: [
+              { type: 'tabela_conecta', props: { headers: ['Profissional', 'Cargo / Função', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] } }
+            ]}
+          ]
+        })
+      }
+    ];
+
+    for (const p of nativePages) {
+      await run(
+        `INSERT OR REPLACE INTO studio_pages (id, nome, descricao, categoria, layout_json, is_native, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [p.id, p.nome, p.descricao, p.categoria, p.layout_json, p.is_native]
+      );
+    }
+
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_studio_pages')");
+  }
 }
 
 async function load() {
@@ -502,6 +661,50 @@ async function saveDashboardPAConfig(nr_sequencia_fila, ds_fila) {
   }
 }
 
+async function getStudioPages() {
+  return all('SELECT * FROM studio_pages ORDER BY is_native DESC, updated_at DESC');
+}
+
+async function getStudioPageById(id) {
+  const rows = await all('SELECT * FROM studio_pages WHERE id = ?', [id]);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+async function saveStudioPage({ id, nome, descricao = '', categoria = 'custom', layout_json, html_output = '', thumbnail = '', is_native = 0 }) {
+  if (!id || !nome || !layout_json) {
+    throw new Error('id, nome e layout_json são obrigatórios para salvar página no Studio');
+  }
+
+  const existing = await getStudioPageById(id);
+  if (existing) {
+    await run(
+      `UPDATE studio_pages 
+       SET nome = ?, descricao = ?, categoria = ?, layout_json = ?, html_output = ?, thumbnail = ?, updated_at = datetime('now')
+       WHERE id = ?`,
+      [nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, thumbnail, id]
+    );
+  } else {
+    await run(
+      `INSERT INTO studio_pages (id, nome, descricao, categoria, layout_json, html_output, thumbnail, is_native, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      [id, nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, thumbnail, is_native ? 1 : 0]
+    );
+  }
+  return getStudioPageById(id);
+}
+
+async function deleteStudioPage(id) {
+  const page = await getStudioPageById(id);
+  if (!page) {
+    throw new Error('Página não encontrada');
+  }
+  if (page.is_native === 1) {
+    throw new Error('Telas nativas do sistema não podem ser excluídas');
+  }
+  await run('DELETE FROM studio_pages WHERE id = ?', [id]);
+  return { success: true, id };
+}
+
 module.exports = {
   load,
   loadConfig: load,
@@ -540,5 +743,9 @@ module.exports = {
   getCachedPerfilPermissoes,
   getCachedPerfilModuloSetores,
   getSetoresPermitidos,
-  perfilPodeVisualizarSetor
+  perfilPodeVisualizarSetor,
+  getStudioPages,
+  getStudioPageById,
+  saveStudioPage,
+  deleteStudioPage
 };

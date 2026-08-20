@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conecta Studio — Editor Visual de Telas (Wix-style)</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/style.css?v=217" rel="stylesheet">
+  <link href="css/builder.css?v=1" rel="stylesheet">
+</head>
+<body class="studio-body">
+
+  <!-- TOPBAR -->
+  <header class="studio-topbar">
+    <div class="studio-topbar-left">
+      <a href="admin.html#studio" class="studio-back-btn">
+        <i class="bi bi-arrow-left"></i> Conecta Admin
+      </a>
+      <div class="studio-page-title-group">
+        <input type="text" class="studio-page-name-input" id="studio-page-name" value="Passagem de Plantão">
+        <span class="studio-page-badge" id="studio-page-badge">Nativa do Sistema</span>
+      </div>
+    </div>
+
+    <!-- Device Switcher -->
+    <div class="studio-devices">
+      <button type="button" class="studio-device-btn active" data-view="desktop" title="Desktop (100%)">
+        <i class="bi bi-display"></i> Desktop
+      </button>
+      <button type="button" class="studio-device-btn" data-view="laptop" title="Laptop 1366px">
+        <i class="bi bi-laptop"></i> 1366px
+      </button>
+      <button type="button" class="studio-device-btn" data-view="tablet" title="Tablet (768px)">
+        <i class="bi bi-tablet"></i> Tablet
+      </button>
+      <button type="button" class="studio-device-btn" data-view="mobile" title="Mobile (375px)">
+        <i class="bi bi-phone"></i> Mobile
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="studio-topbar-right">
+      <button type="button" class="studio-btn studio-btn-secondary" id="btn-undo" title="Desfazer (Ctrl+Z)">
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
+      <button type="button" class="studio-btn studio-btn-secondary" id="btn-redo" title="Refazer (Ctrl+Y)">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <button type="button" class="studio-btn studio-btn-secondary studio-btn-preview" id="btn-preview-toggle">
+        <i class="bi bi-eye"></i> Modo Teste / Preview
+      </button>
+      <button type="button" class="studio-btn studio-btn-secondary" id="btn-export-html">
+        <i class="bi bi-code-slash"></i> Ver Código HTML
+      </button>
+      <button type="button" class="studio-btn studio-btn-save" id="btn-save-page">
+        <i class="bi bi-floppy2-fill"></i> Salvar Tela
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="studio-workspace">
+
+    <!-- LEFT PALETTE (ELEMENTS) -->
+    <aside class="studio-palette">
+      <div class="studio-palette-header">
+        <h3><i class="bi bi-puzzle-fill"></i> Elementos Conecta</h3>
+        <div class="studio-search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" id="palette-search" placeholder="Filtrar componentes...">
+        </div>
+      </div>
+      <div class="studio-palette-content" id="palette-content">
+        <!-- Injetado dinamicamente pelo builder.js -->
+      </div>
+    </aside>
+
+    <!-- CENTER CANVAS -->
+    <main class="studio-canvas-container">
+      <div class="studio-viewport view-desktop" id="studio-viewport">
+        <div class="studio-canvas-root" id="studio-canvas-root">
+          <div class="studio-empty-canvas-guide">
+            <i class="bi bi-bounding-box-circles"></i>
+            <h4>Canvas Pronto para Montagem</h4>
+            <p>Arraste os componentes da barra lateral esquerda e solte aqui para montar a sua tela visualmente.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT INSPECTOR (PROPERTIES) -->
+    <aside class="studio-inspector">
+      <div class="studio-inspector-header">
+        <h3><i class="bi bi-sliders"></i> Propriedades do Bloco</h3>
+      </div>
+      
+      <div class="studio-inspector-tabs">
+        <button type="button" class="studio-inspector-tab-btn active" data-tab="content">Conteúdo</button>
+        <button type="button" class="studio-inspector-tab-btn" data-tab="style">Estilo Conecta</button>
+        <button type="button" class="studio-inspector-tab-btn" data-tab="actions">Modais & Ações</button>
+      </div>
+
+      <div class="studio-inspector-body">
+        
+        <!-- Tab 1: Conteúdo -->
+        <div class="studio-inspector-tab-content" id="inspector-tab-content">
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Texto / Título Principal</label>
+            <input type="text" class="studio-prop-input" id="prop-text" placeholder="Clique no texto para editar...">
+          </div>
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Dica de Edição Rápida</label>
+            <p class="small text-muted m-0">Você também pode dar um <strong>duplo clique</strong> em qualquer texto diretamente na tela para editar na hora!</p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Estilo Conecta -->
+        <div class="studio-inspector-tab-content" id="inspector-tab-style" style="display: none;">
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Cor de Fundo</label>
+            <input type="color" class="studio-prop-input" id="prop-bg" value="#ffffff" style="height: 38px; padding: 2px;">
+            <div class="studio-color-presets">
+              <span class="studio-color-swatch" style="background: #00387A;" title="Azul Conecta" onclick="document.getElementById('prop-bg').value='#00387A'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+              <span class="studio-color-swatch" style="background: #134F9F;" title="Azul Claro" onclick="document.getElementById('prop-bg').value='#134F9F'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+              <span class="studio-color-swatch" style="background: #ffffff;" title="Branco" onclick="document.getElementById('prop-bg').value='#ffffff'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+              <span class="studio-color-swatch" style="background: #f8fafc;" title="Slate 50" onclick="document.getElementById('prop-bg').value='#f8fafc'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+              <span class="studio-color-swatch" style="background: #fee2e2;" title="Alerta Vermelho" onclick="document.getElementById('prop-bg').value='#fee2e2'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+              <span class="studio-color-swatch" style="background: #dcfce7;" title="Sucesso Verde" onclick="document.getElementById('prop-bg').value='#dcfce7'; document.getElementById('prop-bg').dispatchEvent(new Event('input'));"></span>
+            </div>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Arredondamento de Borda</label>
+            <select class="studio-prop-select" id="prop-radius">
+              <option value="0">Quadrado (0px)</option>
+              <option value="0.5rem">Pequeno (0.5rem - 8px)</option>
+              <option value="0.65rem">Médio (0.65rem - 10px)</option>
+              <option value="1rem" selected>Padrão Conecta (1rem - 16px)</option>
+              <option value="999px">Pílula / Redondo (999px)</option>
+            </select>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Sombra</label>
+            <select class="studio-prop-select" id="prop-shadow">
+              <option value="none">Sem Sombra</option>
+              <option value="0 2px 8px rgba(15, 23, 42, 0.06)">Suave</option>
+              <option value="0 4px 18px rgba(15, 23, 42, 0.08)" selected>Padrão Conecta</option>
+              <option value="0 10px 30px rgba(15, 23, 42, 0.15)">Elevada</option>
+            </select>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Animação de Destaque</label>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="prop-pulse-toggle">
+              <label class="form-check-label small" for="prop-pulse-toggle" style="color: #e2e8f0;">Círculo Vermelho Pulsante</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Modais & Ações -->
+        <div class="studio-inspector-tab-content" id="inspector-tab-actions" style="display: none;">
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Título do Modal Vinculado</label>
+            <input type="text" class="studio-prop-input" id="prop-modal-title" placeholder="Ex: Atenção: Dados Não Salvos">
+          </div>
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Mensagem do Modal</label>
+            <textarea class="studio-prop-textarea" id="prop-modal-body" rows="3" placeholder="Ex: Você preencheu informações neste setor..."></textarea>
+          </div>
+          <div class="studio-prop-group">
+            <p class="small text-muted">No <strong>Modo Teste / Preview</strong>, ao clicar neste botão o Modal configurado será disparado na hora para você testar!</p>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- MODAL DE EXPORTAÇÃO HTML -->
+  <div class="studio-modal-overlay" id="studio-code-modal">
+    <div class="studio-modal">
+      <div class="studio-modal-header">
+        <h4><i class="bi bi-code-slash text-info"></i> Código HTML da Tela</h4>
+        <button type="button" class="studio-modal-close" data-modal-dismiss>&times;</button>
+      </div>
+      <div class="studio-modal-body">
+        <p class="small text-muted mb-2">Este código HTML limpo já utiliza os componentes e classes oficiais do Conecta HEAL e pode ser copiado diretamente para o projeto.</p>
+        <pre class="studio-code-preview" id="code-output-html"></pre>
+      </div>
+      <div class="studio-modal-footer">
+        <button type="button" class="studio-btn studio-btn-secondary" data-modal-dismiss>Fechar</button>
+        <button type="button" class="studio-btn studio-btn-primary" id="btn-copy-code">
+          <i class="bi bi-clipboard"></i> Copiar Código HTML
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE TESTE / PREVIEW INTERATIVO -->
+  <div class="studio-modal-overlay" id="studio-preview-dialog">
+    <div class="studio-modal" style="max-width: 480px;">
+      <div class="studio-modal-header">
+        <h4 id="studio-dialog-title"><i class="bi bi-info-circle-fill text-warning"></i> Mensagem</h4>
+        <button type="button" class="studio-modal-close" data-modal-dismiss>&times;</button>
+      </div>
+      <div class="studio-modal-body">
+        <p id="studio-dialog-body" class="m-0" style="font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;"></p>
+      </div>
+      <div class="studio-modal-footer">
+        <button type="button" class="studio-btn studio-btn-secondary" data-modal-dismiss>Cancelar</button>
+        <button type="button" class="studio-btn studio-btn-primary" data-modal-dismiss>OK / Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/builder.js?v=1"></script>
+</body>
+</html>

@@ -334,3 +334,88 @@ async function listarSessoes(req, res) {
     res.status(500).json({ success: false, message: 'Erro ao listar sessões', error: error.message });
   }
 }
+
+async function listarStudioPages(req, res) {
+  try {
+    const pages = await configCache.getStudioPages();
+    res.json({ success: true, data: pages });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar páginas do Studio:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function obterStudioPage(req, res) {
+  try {
+    const { id } = req.params;
+    const page = await configCache.getStudioPageById(id);
+    if (!page) {
+      return res.status(404).json({ success: false, message: 'Página não encontrada' });
+    }
+    res.json({ success: true, data: page });
+  } catch (err) {
+    console.error('[Admin] Erro ao obter página do Studio:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarStudioPage(req, res) {
+  try {
+    const { id, nome, descricao, categoria, layout_json, html_output, thumbnail, is_native } = req.body;
+    if (!id || !nome || !layout_json) {
+      return res.status(400).json({ success: false, message: 'id, nome e layout_json são obrigatórios' });
+    }
+    const page = await configCache.saveStudioPage({
+      id,
+      nome,
+      descricao,
+      categoria,
+      layout_json,
+      html_output,
+      thumbnail,
+      is_native: Number(is_native) || 0
+    });
+    res.json({ success: true, data: page });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar página do Studio:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function deletarStudioPage(req, res) {
+  try {
+    const { id } = req.params;
+    const result = await configCache.deleteStudioPage(id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Admin] Erro ao deletar página do Studio:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = {
+  listarPerfis,
+  salvarPerfil,
+  deletarPerfil,
+  listarModulos,
+  salvarModulo,
+  deletarModulo,
+  salvarPermissoesModulo,
+  listarSetoresPassagem,
+  obterCacheStatus,
+  recarregarCache,
+  listarGruposLdap,
+  listarPerfisTasy,
+  listarFilasEsperaTasy,
+  obterConfigDashboardPA,
+  salvarConfigDashboardPA,
+  obterConfigSistema,
+  salvarConfigSistema,
+  listarAgendasEct,
+  listarProcedimentosEct,
+  listarSessoes,
+  listarStudioPages,
+  obterStudioPage,
+  salvarStudioPage,
+  deletarStudioPage
+};

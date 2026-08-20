@@ -32,4 +32,10 @@ router.get('/ect/procedimentos', requireAuth, requireAdmin, adminController.list
 
 router.get('/sessoes', requireAuth, requireAdmin, adminController.listarSessoes);
 
+router.get('/studio/pages', requireAuth, requireAdmin, adminController.listarStudioPages);
+router.get('/studio/pages/:id', requireAuth, requireAdmin, adminController.obterStudioPage);
+router.post('/studio/pages', requireAuth, requireAdmin, adminController.salvarStudioPage);
+router.put('/studio/pages/:id', requireAuth, requireAdmin, adminController.salvarStudioPage);
+router.delete('/studio/pages/:id', requireAuth, requireAdmin, adminController.deletarStudioPage);
+
 module.exports = router;
