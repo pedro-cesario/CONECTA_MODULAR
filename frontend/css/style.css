@@ -5981,7 +5981,7 @@ input[type="password"] {
   min-width: 44px;
 }
 
-@media (min-width: 1366px) {
+@media (min-width: 1400px) {
   .topbar-nav:not(.d-none) {
     display: flex !important;
   }
@@ -6011,7 +6011,7 @@ input[type="password"] {
   }
 }
 
-@media (max-width: 1365px) {
+@media (max-width: 1399px) {
   .sidebar {
     position: fixed;
     left: 0;
@@ -6060,7 +6060,7 @@ input[type="password"] {
   }
 }
 
-@media (min-width: 1366px) {
+@media (min-width: 1400px) {
   .sidebar.collapsed .sidebar-header h3 {
     display: none;
   }
