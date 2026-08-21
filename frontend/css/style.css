@@ -3609,23 +3609,23 @@ body {
 }
 
 #workspace-livro .livro-page-status, #workspace-auditoria-higiene-form .livro-page-status, #workspace-auditoria-historico .livro-page-status {
-  padding: 0.55rem 0.95rem;
-  border: 1px solid var(--slate-200);
-  border-radius: 10px;
-  color: var(--slate-800);
-  background: #ffffff;
-  font-size: 0.88rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  color: #15803d;
+  background: #f0fdf4;
+  font-size: 0.78rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(22, 101, 52, 0.05);
 }
 
 #workspace-livro .livro-page-status i, #workspace-auditoria-higiene-form .livro-page-status i, #workspace-auditoria-historico .livro-page-status i {
-  color: var(--primary);
-  font-size: 1.05rem;
+  color: #16a34a;
+  font-size: 0.95rem;
 }
 
 #workspace-livro .livro-filter-panel, #workspace-auditoria-higiene-form .livro-filter-panel, #workspace-auditoria-historico .livro-filter-panel,
@@ -8014,25 +8014,25 @@ input[type="password"] {
 #workspace-auditoria-processos-paciente .livro-page-status,
 #workspace-auditoria-processos-form .livro-page-status,
 #workspace-auditoria-processos-historico .livro-page-status {
-  padding: 0.55rem 0.95rem;
-  border: 1px solid var(--slate-200);
-  border-radius: 10px;
-  color: var(--slate-800);
-  background: #ffffff;
-  font-size: 0.88rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  color: #15803d;
+  background: #f0fdf4;
+  font-size: 0.78rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(22, 101, 52, 0.05);
 }
 
 #workspace-auditoria-processos-paciente .livro-page-status i,
 #workspace-auditoria-processos-form .livro-page-status i,
 #workspace-auditoria-processos-historico .livro-page-status i {
-  color: var(--primary);
-  font-size: 1.05rem;
+  color: #16a34a;
+  font-size: 0.95rem;
 }
 
 #workspace-auditoria-processos-paciente .livro-section,
