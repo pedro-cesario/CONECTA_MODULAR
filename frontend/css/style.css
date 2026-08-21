@@ -8031,17 +8031,17 @@ input[type="password"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1.1rem;
-  background: var(--slate-50);
+  padding: 0.9rem 1.25rem;
+  background: #ffffff !important;
   border-bottom: 1px solid var(--slate-200);
 }
 
 #workspace-auditoria-processos-paciente .livro-section-header > span,
 #workspace-auditoria-processos-form .livro-section-header > span,
 #workspace-auditoria-processos-historico .livro-section-header > span {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: var(--slate-700);
+  color: var(--slate-800);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -8051,7 +8051,7 @@ input[type="password"] {
 #workspace-auditoria-processos-form .livro-section-header > span i,
 #workspace-auditoria-processos-historico .livro-section-header > span i {
   color: var(--primary);
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
 #workspace-auditoria-processos-paciente .livro-section-body,
@@ -8189,36 +8189,35 @@ input[type="password"] {
 
 /* ─── Campos Esmaltecidos (Glazed / Readonly Lock) ─────────────────────────── */
 .auditoria-glazed-section {
-  border: 1.5px solid #bfdbfe !important;
-  box-shadow: 0 6px 20px rgba(7, 84, 166, 0.07) !important;
+  border: 1px solid var(--slate-200) !important;
+  box-shadow: none !important;
 }
 
 .auditoria-glazed-section .livro-section-header {
-  background: linear-gradient(135deg, #0754A6 0%, #033d7a 100%) !important;
-  padding: 0.95rem 1.25rem !important;
-  border-bottom: 1px solid #022b56 !important;
+  background: #ffffff !important;
+  padding: 0.9rem 1.25rem !important;
+  border-bottom: 1px solid var(--slate-200) !important;
 }
 
 .auditoria-glazed-section .livro-section-header > span {
-  color: #ffffff !important;
-  font-size: 0.96rem !important;
-  font-weight: 800 !important;
+  color: var(--slate-800) !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
   letter-spacing: 0.01em !important;
 }
 
 .auditoria-glazed-section .livro-section-header > span i {
-  color: #93c5fd !important;
-  font-size: 1.18rem !important;
+  color: var(--primary) !important;
+  font-size: 1.05rem !important;
 }
 
 .auditoria-glazed-section .auditoria-locked-badge {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: blur(6px) !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
   font-size: 0.74rem !important;
-  padding: 0.25rem 0.7rem !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  padding: 0.22rem 0.65rem !important;
+  box-shadow: none !important;
 }
 
 .field-glazed label {
@@ -8592,8 +8591,8 @@ input[type="password"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1.25rem;
-  background: #f8fafc;
+  padding: 0.9rem 1.25rem;
+  background: #ffffff !important;
   border-bottom: 1px solid var(--slate-200);
 }
 
@@ -8602,7 +8601,7 @@ input[type="password"] {
   align-items: center;
   gap: 0.65rem;
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--slate-800);
 }
 
@@ -8611,9 +8610,10 @@ input[type="password"] {
   align-items: center;
   justify-content: center;
   padding: 0.2rem 0.55rem;
-  background: #2563eb;
-  color: white;
-  font-size: 0.72rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  font-size: 0.74rem;
   font-weight: 800;
   border-radius: 6px;
   letter-spacing: 0.03em;
