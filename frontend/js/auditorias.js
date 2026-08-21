@@ -310,16 +310,8 @@
   window.captureAuditoriaDraft = captureAuditoriaDraft;
   window.hydrateAuditoriaDraft = hydrateAuditoriaDraft;
 
-  // Ao abrir Auditorias via nav, verifica se há draft e restaura a tela
   function showAuditorias() {
-    const draft = typeof window.conectaApp?.getModuleDraft === 'function'
-      ? window.conectaApp.getModuleDraft('auditorias')
-      : null;
-    if (draft?.activeScreen) {
-      hydrateAuditoriaDraft(draft);
-    } else {
-      show('auditorias-sub-menu');
-    }
+    show('auditorias-sub-menu');
   }
 
   function showHigieneMenu() { show('auditoria-higiene-sub-menu'); }
