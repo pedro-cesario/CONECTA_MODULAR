@@ -107,7 +107,7 @@
         <span class="auditoria-moment-badge"><i class="bi bi-shield-check"></i> Momento ${index + 1}</span>
         <span class="auditoria-oportunidade-label">${escapeHtml(label)} <span class="required-star">*</span></span>
       </div>
-      <div class="livro-turno-options">${[['A', 'Álcool', 'bi-droplet-fill', 'opt-alcool'], ['S', 'Sabonete', 'bi-hand-index-thumb-fill', 'opt-sabonete'], ['P', 'Perdida', 'bi-x-circle-fill', 'opt-perdida']].map(([value, text, icon, cls]) => `<label class="livro-turno-option"><input type="radio" name="auditoria-${code}" value="${value}" class="${cls}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
+      <div class="auditoria-choice-group">${[['A', 'Álcool', 'bi-droplet-fill', 'opt-alcool'], ['S', 'Sabonete', 'bi-hand-index-thumb-fill', 'opt-sabonete'], ['P', 'Perdida', 'bi-x-circle-fill', 'opt-perdida']].map(([value, text, icon, cls]) => `<label class="auditoria-choice-btn ${cls}"><input type="radio" name="auditoria-${code}" value="${value}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
     </div>`).join('');
   }
 
@@ -481,15 +481,15 @@
           if (item.type === 'info') {
             return `<div class="auditoria-pergunta-item auditoria-info-item">
               <span class="auditoria-pergunta-texto">${escapeHtml(item.label)}</span>
-              <span class="auditoria-info-badge"><i class="bi bi-info-circle"></i> Formulário específico</span>
+              <span class="auditoria-info-badge"><i class="bi bi-info-circle-fill"></i> Formulário específico</span>
             </div>`;
           }
           return `<div class="auditoria-pergunta-item">
             <span class="auditoria-pergunta-texto">${escapeHtml(item.label)}</span>
-            <div class="livro-turno-options">
-              <label class="livro-turno-option"><input type="radio" name="proc-${meta.id}-${item.id}" value="S"><span><i class="bi bi-check-circle"></i> Sim</span></label>
-              <label class="livro-turno-option"><input type="radio" name="proc-${meta.id}-${item.id}" value="N"><span><i class="bi bi-x-circle"></i> Não</span></label>
-              <label class="livro-turno-option"><input type="radio" name="proc-${meta.id}-${item.id}" value="NA"><span><i class="bi bi-dash-circle"></i> NA</span></label>
+            <div class="auditoria-choice-group">
+              <label class="auditoria-choice-btn opt-sim"><input type="radio" name="proc-${meta.id}-${item.id}" value="S"><span><i class="bi bi-check-circle-fill"></i> Sim</span></label>
+              <label class="auditoria-choice-btn opt-nao"><input type="radio" name="proc-${meta.id}-${item.id}" value="N"><span><i class="bi bi-x-circle-fill"></i> Não</span></label>
+              <label class="auditoria-choice-btn opt-na"><input type="radio" name="proc-${meta.id}-${item.id}" value="NA"><span><i class="bi bi-dash-circle-fill"></i> NA</span></label>
             </div>
           </div>`;
         }).join('');
@@ -501,13 +501,18 @@
 
       // M07 has extra textarea for description
       const extraHtml = meta.id === 'M07' ? `<div class="auditoria-descricao-extra">
-        <label for="proc-desc-incidentes">Descrição</label>
-        <textarea id="proc-desc-incidentes" rows="3" placeholder="Descreva os incidentes ou EAs observados."></textarea>
+        <label for="proc-desc-incidentes"><i class="bi bi-exclamation-triangle"></i> Descrição dos Incidentes / Eventos Adversos</label>
+        <textarea id="proc-desc-incidentes" rows="3" placeholder="Descreva os incidentes ou EAs observados durante a internação."></textarea>
       </div>` : '';
 
-      return `<div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-flag"></i> ${escapeHtml(meta.label)}</span></div>
-        <div class="livro-section-body">${subgruposHtml}${extraHtml}</div>
+      return `<div class="auditoria-meta-card">
+        <div class="auditoria-meta-card-header">
+          <div class="auditoria-meta-card-title">
+            <span class="auditoria-meta-badge">${escapeHtml(meta.id)}</span>
+            <span>${escapeHtml(meta.label)}</span>
+          </div>
+        </div>
+        <div class="auditoria-meta-card-body">${subgruposHtml}${extraHtml}</div>
       </div>`;
     }).join('');
   }
@@ -565,33 +570,40 @@
     return `${idade} anos`;
   }
 
+  let listaPacientesOntem = [];
+
   function renderPacientesOntem(pacientes) {
     const list = byId('proc-pacientes-ontem-list');
+    const counter = byId('proc-pacientes-counter');
     if (!list) return;
+    if (counter) counter.textContent = `${pacientes ? pacientes.length : 0} paciente(s)`;
     if (!pacientes || pacientes.length === 0) {
-      list.innerHTML = '<div class="loading-placeholder"><i class="bi bi-person-x"></i> Nenhum paciente internado ontem encontrado.</div>';
+      list.innerHTML = '<div class="loading-placeholder" style="grid-column: 1 / -1;"><i class="bi bi-person-x"></i> Nenhum paciente encontrado.</div>';
       return;
     }
     list.innerHTML = pacientes.map(p => {
       const nome = escapeHtml(String(p.NM_PACIENTE || '').trim());
       const idade = formatarIdade(p.IDADE);
-      const leito = escapeHtml(String(p.UNIDADE_LEITO || '').trim());
-      const atendimento = escapeHtml(String(p.NR_ATENDIMENTO || '').trim());
+      const leito = escapeHtml(String(p.UNIDADE_LEITO || '-').trim());
+      const atendimento = escapeHtml(String(p.NR_ATENDIMENTO || '-').trim());
       const admissao = formatarDataBR(p.ADMISSAO);
       return `<div class="auditoria-paciente-card" data-nm="${escapeHtml(p.NM_PACIENTE || '')}" data-dtnasc="${escapeHtml(String(p.DT_NASCIMENTO || '').slice(0, 10))}" data-idade="${p.IDADE != null ? p.IDADE : ''}" data-admissao="${escapeHtml(String(p.ADMISSAO || '').slice(0, 10))}" data-leito="${escapeHtml(p.UNIDADE_LEITO || '')}" data-atend="${escapeHtml(String(p.NR_ATENDIMENTO || ''))}">
-        <div class="auditoria-paciente-card-icon"><i class="bi bi-person"></i></div>
-        <div class="auditoria-paciente-info">
-          <div class="paciente-name">${nome}</div>
-          <div class="paciente-meta">
-            <span><i class="bi bi-calendar3"></i> ${idade}</span>
-            <span><i class="bi bi-hospital"></i> ${leito}</span>
-            <span><i class="bi bi-hash"></i> ${atendimento}</span>
-            <span><i class="bi bi-calendar-check"></i> Admissão: ${admissao}</span>
-          </div>
+        <div class="auditoria-paciente-card-head">
+          <div class="auditoria-paciente-name">${nome}</div>
+          <span class="auditoria-badge-leito"><i class="bi bi-hospital"></i> ${leito}</span>
         </div>
-        <i class="bi bi-arrow-up-right" style="color: var(--slate-400); font-size: 1.1rem;"></i>
+        <div class="auditoria-paciente-meta-tags">
+          <span class="auditoria-meta-tag"><i class="bi bi-hash"></i> Atend. ${atendimento}</span>
+          <span class="auditoria-meta-tag"><i class="bi bi-person"></i> ${idade}</span>
+          <span class="auditoria-meta-tag"><i class="bi bi-calendar-check"></i> Adm: ${admissao}</span>
+        </div>
+        <div class="auditoria-paciente-card-foot">
+          <span>Iniciar Auditoria</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
       </div>`;
     }).join('');
+
     list.querySelectorAll('.auditoria-paciente-card').forEach(card => {
       card.addEventListener('click', () => {
         preencherFormComPaciente({
@@ -603,6 +615,35 @@
           NR_ATENDIMENTO: card.dataset.atend
         });
       });
+    });
+  }
+
+  function setupPacienteSearch() {
+    const searchInput = byId('proc-pacientes-search');
+    const clearBtn = byId('btn-proc-search-clear');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      if (clearBtn) clearBtn.classList.toggle('d-none', !q);
+      if (!q) {
+        renderPacientesOntem(listaPacientesOntem);
+        return;
+      }
+      const filtrados = listaPacientesOntem.filter(p => {
+        const nome = String(p.NM_PACIENTE || '').toLowerCase();
+        const leito = String(p.UNIDADE_LEITO || '').toLowerCase();
+        const atend = String(p.NR_ATENDIMENTO || '').toLowerCase();
+        return nome.includes(q) || leito.includes(q) || atend.includes(q);
+      });
+      renderPacientesOntem(filtrados);
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('d-none');
+      renderPacientesOntem(listaPacientesOntem);
+      searchInput.focus();
     });
   }
 
@@ -637,18 +678,22 @@
     show('workspace-auditoria-processos-paciente');
     clearMessage();
     clearFormProcessos();
+    const searchInput = byId('proc-pacientes-search');
+    const clearBtn = byId('btn-proc-search-clear');
+    if (searchInput) searchInput.value = '';
+    if (clearBtn) clearBtn.classList.add('d-none');
     const list = byId('proc-pacientes-ontem-list');
-    if (list) list.innerHTML = '<div class="loading-placeholder"><i class="bi bi-arrow-repeat spin"></i> Carregando pacientes...</div>';
+    if (list) list.innerHTML = '<div class="loading-placeholder" style="grid-column: 1 / -1;"><i class="bi bi-arrow-repeat spin"></i> Carregando pacientes...</div>';
     try {
       const result = await request('/api/auditorias/processos/pacientes-ontem?_=' + Date.now());
-      renderPacientesOntem(result.data || []);
+      listaPacientesOntem = result.data || [];
+      renderPacientesOntem(listaPacientesOntem);
     } catch (err) {
-      if (list) list.innerHTML = `<div class="loading-placeholder"><i class="bi bi-exclamation-triangle"></i> ${escapeHtml(err.message)}</div>`;
+      if (list) list.innerHTML = `<div class="loading-placeholder" style="grid-column: 1 / -1;"><i class="bi bi-exclamation-triangle"></i> ${escapeHtml(err.message)}</div>`;
     }
   }
 
   async function abrirPacienteAleatorio() {
-    const list = byId('proc-pacientes-ontem-list');
     try {
       const result = await request('/api/auditorias/processos/paciente-aleatorio?_=' + Date.now());
       if (result.data) {
@@ -911,5 +956,16 @@
     });
   }
 
+  const procForm = document.getElementById('workspace-auditoria-processos-form');
+  if (procForm) {
+    procForm.addEventListener('input', () => {
+      window.conectaApp?.markModuleDraftDirty?.('auditorias');
+    });
+    procForm.addEventListener('change', () => {
+      window.conectaApp?.markModuleDraftDirty?.('auditorias');
+    });
+  }
+
+  setupPacienteSearch();
   setTimeout(refreshAccess, 250);
 })();

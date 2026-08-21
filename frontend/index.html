@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/style.css?v=176" rel="stylesheet">
+  <link href="css/style.css?v=177" rel="stylesheet">
 </head>
 <body>
 
@@ -230,10 +230,10 @@
         <div class="livro-field"><label for="auditoria-data">Data <span class="required-star">*</span></label><input type="date" id="auditoria-data" required></div>
         <div class="livro-field"><label for="auditoria-setor">Setor <span class="required-star">*</span></label><select id="auditoria-setor" class="form-select" required><option value="">Selecione...</option></select></div>
         <div class="livro-field"><label for="auditoria-avaliador">Avaliador <span class="required-star">*</span></label><select id="auditoria-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
-          <div class="livro-field auditoria-profissional-field"><label for="auditoria-profissional">Categoria <span class="required-star">*</span></label><select id="auditoria-profissional" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field auditoria-profissional-field"><label for="auditoria-profissional">Categoria <span class="required-star">*</span></label><select id="auditoria-profissional" class="form-select" required><option value="">Selecione...</option></select></div>
       </div>
       <div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades</span></div>
+        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades Observadas</span></div>
         <div class="livro-section-body">
           <div id="auditoria-oportunidades" class="auditoria-oportunidades"></div>
         </div>
@@ -263,21 +263,44 @@
       <header class="livro-page-header">
         <div class="livro-page-heading">
           <button class="livro-page-back" id="btn-auditoria-processos-paciente-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
-          <span class="livro-page-icon"><i class="bi bi-clipboard2-check"></i></span>
-          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Selecionar Paciente</h2><p>Escolha o paciente para iniciar a auditoria de processos.</p></div>
+          <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Selecionar Paciente</h2><p>Escolha um paciente internado ontem ou utilize o sorteio aleatório para iniciar a auditoria.</p></div>
         </div>
       </header>
 
-      <div class="auditoria-paciente-actions">
-        <button class="btn-secondary" id="btn-auditoria-processos-aleatorio" type="button">
-          <i class="bi bi-shuffle"></i> Paciente Aleatório
+      <!-- Hero Card de Sorteio Aleatório -->
+      <div class="auditoria-hero-random">
+        <div class="auditoria-hero-content">
+          <div class="auditoria-hero-icon">
+            <i class="bi bi-shuffle"></i>
+          </div>
+          <div class="auditoria-hero-copy">
+            <h3>Sorteio Aleatório de Paciente</h3>
+            <p>Sorteie instantaneamente qualquer paciente internado nos setores assistenciais ativos para auditar.</p>
+          </div>
+        </div>
+        <button class="btn-hero-random" id="btn-auditoria-processos-aleatorio" type="button">
+          <i class="bi bi-dice-5-fill"></i> Sortear e Iniciar
         </button>
       </div>
 
-      <div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-calendar-event"></i> Internados ontem</span></div>
-        <div class="livro-section-body">
-          <div id="proc-pacientes-ontem-list" class="auditoria-pacientes-list">
+      <!-- Seção com Barra de Busca e Grid de Pacientes -->
+      <div class="livro-section auditoria-section auditoria-pacientes-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-calendar-event"></i> Pacientes Internados Ontem</span>
+          <span class="auditoria-pacientes-counter" id="proc-pacientes-counter">0 pacientes</span>
+        </div>
+        
+        <div class="auditoria-search-bar">
+          <div class="auditoria-search-input-wrap">
+            <i class="bi bi-search"></i>
+            <input type="text" id="proc-pacientes-search" placeholder="Filtrar por nome do paciente, leito ou atendimento..." autocomplete="off">
+            <button type="button" id="btn-proc-search-clear" class="btn-search-clear d-none" aria-label="Limpar busca"><i class="bi bi-x-circle-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="livro-section-body" style="padding-top: 0.5rem;">
+          <div id="proc-pacientes-ontem-list" class="auditoria-pacientes-grid">
             <div class="loading-placeholder"><i class="bi bi-arrow-repeat spin"></i> Carregando pacientes...</div>
           </div>
         </div>
@@ -295,54 +318,58 @@
         <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
       </header>
 
-      <!-- Dados do paciente -->
-      <div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-person"></i> Dados do Paciente</span></div>
+      <!-- Card 1: Identificação do Paciente & Leito (Campos Esmaltecidos / Readonly) -->
+      <div class="livro-section auditoria-section auditoria-glazed-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-person-vcard"></i> Identificação do Paciente & Internação</span>
+          <span class="auditoria-locked-badge"><i class="bi bi-lock-fill"></i> Dados vinculados</span>
+        </div>
         <div class="livro-section-body">
           <div class="auditoria-grid-3">
-            <div class="livro-field"><label for="proc-nm-paciente">Nome do Paciente <span class="required-star">*</span></label><input type="text" id="proc-nm-paciente" placeholder="Nome completo"></div>
-            <div class="livro-field"><label for="proc-dt-nascimento">Data de Nascimento</label><input type="date" id="proc-dt-nascimento"></div>
-            <div class="livro-field"><label for="proc-nr-idade">Idade</label><input type="text" id="proc-nr-idade" readonly placeholder="Calculada automaticamente"></div>
-
+            <div class="livro-field field-glazed">
+              <label for="proc-nm-paciente"><i class="bi bi-person"></i> Nome do Paciente</label>
+              <input type="text" id="proc-nm-paciente" readonly placeholder="Nome completo">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-dt-nascimento"><i class="bi bi-calendar-date"></i> Data de Nascimento</label>
+              <input type="date" id="proc-dt-nascimento" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-nr-idade"><i class="bi bi-hourglass-split"></i> Idade</label>
+              <input type="text" id="proc-nr-idade" readonly placeholder="Calculada automaticamente">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-dt-admissao"><i class="bi bi-calendar-check"></i> Admissão</label>
+              <input type="date" id="proc-dt-admissao" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-unidade-leito"><i class="bi bi-hospital"></i> Unidade / Leito</label>
+              <input type="text" id="proc-unidade-leito" readonly placeholder="Ex: UTI-Leito 03">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-nr-atendimento"><i class="bi bi-hash"></i> Atendimento</label>
+              <input type="text" id="proc-nr-atendimento" readonly placeholder="Nº do atendimento">
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Dados da internação -->
-      <div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-hospital"></i> Dados da Internação</span></div>
-        <div class="livro-section-body">
-          <div class="auditoria-grid-3">
-            <div class="livro-field"><label for="proc-dt-admissao">Admissão</label><input type="date" id="proc-dt-admissao"></div>
-            <div class="livro-field"><label for="proc-unidade-leito">Unidade e Leito</label><input type="text" id="proc-unidade-leito" placeholder="Ex: UTI-Leito 03"></div>
-            <div class="livro-field"><label for="proc-nr-atendimento">Atendimento</label><input type="text" id="proc-nr-atendimento" placeholder="Nº do atendimento"></div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Dados da auditoria -->
+      <!-- Card 2: Dados da Auditoria & Pergunta Inicial -->
       <div class="livro-section auditoria-section">
         <div class="livro-section-header"><span><i class="bi bi-clipboard-check"></i> Dados da Auditoria</span></div>
         <div class="livro-section-body">
-          <div class="auditoria-grid-3">
+          <div class="auditoria-grid-3" style="align-items: end;">
             <div class="livro-field"><label for="proc-dt-auditoria">Data <span class="required-star">*</span></label><input type="date" id="proc-dt-auditoria" required></div>
             <div class="livro-field"><label for="proc-setor">Setor <span class="required-star">*</span></label><select id="proc-setor" class="form-select" required><option value="">Selecione...</option></select></div>
             <div class="livro-field"><label for="proc-avaliador">Responsável <span class="required-star">*</span></label><select id="proc-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
           </div>
-        </div>
-      </div>
 
-      <!-- Pergunta inicial -->
-      <div class="livro-section auditoria-section">
-        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Pergunta Inicial</span></div>
-        <div class="livro-section-body">
-          <div class="auditoria-pergunta-item">
-            <span class="auditoria-pergunta-texto">O paciente está com acompanhante?</span>
-            <div class="livro-turno-options">
-              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="S"><span><i class="bi bi-check-circle"></i> Sim</span></label>
-              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="N"><span><i class="bi bi-x-circle"></i> Não</span></label>
-              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="NA"><span><i class="bi bi-dash-circle"></i> NA</span></label>
+          <div class="auditoria-pergunta-item auditoria-perg-inicial" style="margin-top: 1.25rem;">
+            <span class="auditoria-pergunta-texto"><i class="bi bi-people"></i> O paciente está com acompanhante?</span>
+            <div class="auditoria-choice-group">
+              <label class="auditoria-choice-btn opt-sim"><input type="radio" name="proc-perg-acompanhante" value="S"><span><i class="bi bi-check-circle-fill"></i> Sim</span></label>
+              <label class="auditoria-choice-btn opt-nao"><input type="radio" name="proc-perg-acompanhante" value="N"><span><i class="bi bi-x-circle-fill"></i> Não</span></label>
+              <label class="auditoria-choice-btn opt-na"><input type="radio" name="proc-perg-acompanhante" value="NA"><span><i class="bi bi-dash-circle-fill"></i> NA</span></label>
             </div>
           </div>
         </div>
@@ -1031,7 +1058,7 @@
   </div>
 
   <script src="js/app.js?v=102"></script>
-  <script src="js/auditorias.js?v=8"></script>
+  <script src="js/auditorias.js?v=9"></script>
 </body>
 </html>
 
