@@ -361,7 +361,7 @@ async function obterStudioPage(req, res) {
 
 async function salvarStudioPage(req, res) {
   try {
-    const { id, nome, descricao, categoria, layout_json, html_output, thumbnail, is_native } = req.body;
+    const { id, nome, descricao, categoria, layout_json, html_output, custom_css, thumbnail, is_native } = req.body;
     if (!id || !nome || !layout_json) {
       return res.status(400).json({ success: false, message: 'id, nome e layout_json são obrigatórios' });
     }
@@ -372,12 +372,13 @@ async function salvarStudioPage(req, res) {
       categoria,
       layout_json,
       html_output,
+      custom_css,
       thumbnail,
-      is_native: Number(is_native) || 0
+      is_native
     });
     res.json({ success: true, data: page });
   } catch (err) {
-    console.error('[Admin] Erro ao salvar página do Studio:', err);
+    console.error('[Admin] Erro ao salvar página no Studio:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 }

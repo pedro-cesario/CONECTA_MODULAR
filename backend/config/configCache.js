@@ -144,11 +144,17 @@ async function ensureAccessSchema() {
     categoria TEXT DEFAULT 'custom',
     layout_json TEXT NOT NULL,
     html_output TEXT,
+    custom_css TEXT,
     thumbnail TEXT,
     is_native INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   )`);
+
+  const studioCols = await all("PRAGMA table_info(studio_pages)");
+  if (!studioCols.some(c => c.name === 'custom_css')) {
+    try { await run("ALTER TABLE studio_pages ADD COLUMN custom_css TEXT DEFAULT ''"); } catch (e) {}
+  }
 
   const migrationStudio = await all("SELECT id FROM config_migrations WHERE id = '2026_08_studio_pages'");
   if (migrationStudio.length === 0) {
@@ -670,7 +676,7 @@ async function getStudioPageById(id) {
   return rows.length > 0 ? rows[0] : null;
 }
 
-async function saveStudioPage({ id, nome, descricao = '', categoria = 'custom', layout_json, html_output = '', thumbnail = '', is_native = 0 }) {
+async function saveStudioPage({ id, nome, descricao = '', categoria = 'custom', layout_json, html_output = '', custom_css = '', thumbnail = '', is_native = 0 }) {
   if (!id || !nome || !layout_json) {
     throw new Error('id, nome e layout_json são obrigatórios para salvar página no Studio');
   }
@@ -679,15 +685,15 @@ async function saveStudioPage({ id, nome, descricao = '', categoria = 'custom', 
   if (existing) {
     await run(
       `UPDATE studio_pages 
-       SET nome = ?, descricao = ?, categoria = ?, layout_json = ?, html_output = ?, thumbnail = ?, updated_at = datetime('now')
+       SET nome = ?, descricao = ?, categoria = ?, layout_json = ?, html_output = ?, custom_css = ?, thumbnail = ?, updated_at = datetime('now')
        WHERE id = ?`,
-      [nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, thumbnail, id]
+      [nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, custom_css, thumbnail, id]
     );
   } else {
     await run(
-      `INSERT INTO studio_pages (id, nome, descricao, categoria, layout_json, html_output, thumbnail, is_native, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      [id, nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, thumbnail, is_native ? 1 : 0]
+      `INSERT INTO studio_pages (id, nome, descricao, categoria, layout_json, html_output, custom_css, thumbnail, is_native, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      [id, nome, descricao, categoria, typeof layout_json === 'string' ? layout_json : JSON.stringify(layout_json), html_output, custom_css, thumbnail, is_native ? 1 : 0]
     );
   }
   return getStudioPageById(id);

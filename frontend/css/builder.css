@@ -715,3 +715,217 @@ body:not(.preview-active) .studio-canvas-node.studio-selected {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+/* ==========================================================================
+   RESIZE HANDLES (DRAG TO RESIZE)
+   ========================================================================== */
+
+.studio-canvas-node.studio-selected {
+  position: relative !important;
+}
+
+.studio-resize-handle {
+  position: absolute;
+  background: #38bdf8;
+  border: 1.5px solid #ffffff;
+  z-index: 100;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.studio-resize-handle-r {
+  top: 50%;
+  right: -5px;
+  width: 8px;
+  height: 28px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+  border-radius: 4px;
+}
+
+.studio-resize-handle-b {
+  bottom: -5px;
+  left: 50%;
+  width: 28px;
+  height: 8px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+  border-radius: 4px;
+}
+
+.studio-resize-handle-br {
+  bottom: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   VIEW MODES & INTEGRATED CODE EDITOR
+   ========================================================================== */
+
+.studio-view-modes {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--studio-border);
+}
+
+.studio-view-mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--studio-text-muted);
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.studio-view-mode-btn:hover {
+  color: #ffffff;
+}
+
+.studio-view-mode-btn.active {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.studio-code-editor-panel {
+  display: none;
+  background: #0b1120;
+  border-left: 1px solid var(--studio-border);
+  flex-direction: column;
+  height: calc(100vh - var(--studio-topbar-h));
+  z-index: 900;
+  overflow: hidden;
+}
+
+body.mode-split .studio-workspace {
+  display: grid;
+  grid-template-columns: var(--studio-sidebar-w) 1.2fr 1fr var(--studio-inspector-w);
+}
+
+body.mode-split .studio-code-editor-panel {
+  display: flex;
+  border-right: 1px solid var(--studio-border);
+}
+
+body.mode-code .studio-workspace {
+  display: grid;
+  grid-template-columns: var(--studio-sidebar-w) 1fr var(--studio-inspector-w);
+}
+
+body.mode-code .studio-canvas-container {
+  display: none;
+}
+
+body.mode-code .studio-code-editor-panel {
+  display: flex;
+  flex: 1;
+}
+
+.code-editor-header {
+  padding: 0.55rem 1rem;
+  background: #070d19;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.code-editor-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.code-editor-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.code-editor-tab-btn:hover {
+  color: #ffffff;
+}
+
+.code-editor-tab-btn.active {
+  background: #1e293b;
+  color: #38bdf8;
+  border-color: #334155;
+}
+
+.code-editor-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-editor-textarea {
+  width: 100%;
+  flex: 1;
+  background: #0b1120;
+  color: #e2e8f0;
+  font-family: 'Fira Code', 'Cascadia Code', Consolas, Monaco, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  padding: 1rem;
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.code-editor-footer {
+  padding: 0.45rem 1rem;
+  background: #070d19;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.73rem;
+  color: #64748b;
+}
+
+/* Preset buttons for width in Inspector */
+.studio-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.studio-preset-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--studio-border);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.studio-preset-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: #38bdf8;
+}
+

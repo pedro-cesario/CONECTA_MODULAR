@@ -41,6 +41,19 @@
       </button>
     </div>
 
+    <!-- Mode Switcher: Visual, Split, Code -->
+    <div class="studio-view-modes">
+      <button type="button" class="studio-view-mode-btn active" id="btn-mode-visual" title="Modo Visual (Arrasta e Solta)">
+        <i class="bi bi-layout-wtf"></i> Visual
+      </button>
+      <button type="button" class="studio-view-mode-btn" id="btn-mode-split" title="Modo Dividido (Visual + Código)">
+        <i class="bi bi-layout-split"></i> Split
+      </button>
+      <button type="button" class="studio-view-mode-btn" id="btn-mode-code" title="Modo Código Completo (HTML & CSS)">
+        <i class="bi bi-code-slash"></i> Código
+      </button>
+    </div>
+
     <!-- Action Buttons -->
     <div class="studio-topbar-right">
       <button type="button" class="studio-btn studio-btn-secondary" id="btn-undo" title="Desfazer (Ctrl+Z)">
@@ -91,6 +104,38 @@
       </div>
     </main>
 
+    <!-- LIVE CODE EDITOR PANEL (HTML & CSS) -->
+    <section class="studio-code-editor-panel" id="studio-code-editor-panel">
+      <div class="code-editor-header">
+        <div class="code-editor-tabs">
+          <button type="button" class="code-editor-tab-btn active" data-code-tab="html-all">
+            <i class="bi bi-filetype-html text-warning"></i> HTML da Tela
+          </button>
+          <button type="button" class="code-editor-tab-btn" data-code-tab="html-selected">
+            <i class="bi bi-bounding-box text-info"></i> HTML do Bloco
+          </button>
+          <button type="button" class="code-editor-tab-btn" data-code-tab="css-custom">
+            <i class="bi bi-filetype-css text-primary"></i> CSS Customizado
+          </button>
+        </div>
+        <div class="code-editor-tools">
+          <button type="button" class="studio-btn studio-btn-secondary" id="btn-format-code" title="Formatar Código">
+            <i class="bi bi-magic"></i> Formatar
+          </button>
+          <button type="button" class="studio-btn studio-btn-primary" id="btn-apply-code" title="Aplicar Alterações ao Canvas">
+            <i class="bi bi-play-fill"></i> Aplicar
+          </button>
+        </div>
+      </div>
+      <textarea class="code-editor-textarea" id="studio-code-editor-textarea" spellcheck="false" placeholder="Carregando código..."></textarea>
+      <div class="code-editor-footer">
+        <span id="code-editor-info">HTML em Tempo Real · Sincronização Ativa</span>
+        <label class="d-flex align-items-center gap-1 m-0 text-muted" style="cursor: pointer;">
+          <input type="checkbox" id="code-auto-apply" checked> Auto-aplicar ao digitar
+        </label>
+      </div>
+    </section>
+
     <!-- RIGHT INSPECTOR (PROPERTIES) -->
     <aside class="studio-inspector">
       <div class="studio-inspector-header">
@@ -99,8 +144,9 @@
       
       <div class="studio-inspector-tabs">
         <button type="button" class="studio-inspector-tab-btn active" data-tab="content">Conteúdo</button>
-        <button type="button" class="studio-inspector-tab-btn" data-tab="style">Estilo Conecta</button>
-        <button type="button" class="studio-inspector-tab-btn" data-tab="actions">Modais & Ações</button>
+        <button type="button" class="studio-inspector-tab-btn" data-tab="layout">Dimensões</button>
+        <button type="button" class="studio-inspector-tab-btn" data-tab="style">Estilo</button>
+        <button type="button" class="studio-inspector-tab-btn" data-tab="actions">Modais</button>
       </div>
 
       <div class="studio-inspector-body">
@@ -117,7 +163,56 @@
           </div>
         </div>
 
-        <!-- Tab 2: Estilo Conecta -->
+        <!-- Tab 2: Dimensões & Layout -->
+        <div class="studio-inspector-tab-content" id="inspector-tab-layout" style="display: none;">
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Largura (Width)</label>
+            <input type="text" class="studio-prop-input" id="prop-width" placeholder="Ex: 100%, 50%, 320px">
+            <div class="studio-preset-grid">
+              <button type="button" class="studio-preset-btn" data-width="100%">100%</button>
+              <button type="button" class="studio-preset-btn" data-width="75%">75%</button>
+              <button type="button" class="studio-preset-btn" data-width="50%">50%</button>
+              <button type="button" class="studio-preset-btn" data-width="33.33%">33% (1/3)</button>
+              <button type="button" class="studio-preset-btn" data-width="25%">25% (1/4)</button>
+              <button type="button" class="studio-preset-btn" data-width="auto">Auto</button>
+            </div>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Altura (Height)</label>
+            <input type="text" class="studio-prop-input" id="prop-height" placeholder="Ex: auto, 120px, 100%">
+            <div class="studio-preset-grid">
+              <button type="button" class="studio-preset-btn" data-height="auto">Auto</button>
+              <button type="button" class="studio-preset-btn" data-height="60px">60px</button>
+              <button type="button" class="studio-preset-btn" data-height="120px">120px</button>
+              <button type="button" class="studio-preset-btn" data-height="200px">200px</button>
+              <button type="button" class="studio-preset-btn" data-height="350px">350px</button>
+              <button type="button" class="studio-preset-btn" data-height="100%">100%</button>
+            </div>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Espaçamento Interno (Padding)</label>
+            <select class="studio-prop-select" id="prop-padding">
+              <option value="0">Sem Espaçamento (0px)</option>
+              <option value="0.5rem">Pequeno (0.5rem - 8px)</option>
+              <option value="1rem" selected>Padrão Conecta (1rem - 16px)</option>
+              <option value="1.5rem">Médio (1.5rem - 24px)</option>
+              <option value="2rem">Grande (2rem - 32px)</option>
+            </select>
+          </div>
+
+          <div class="studio-prop-group">
+            <label class="studio-prop-label">Colunas de Grid (para containers)</label>
+            <div class="studio-preset-grid">
+              <button type="button" class="studio-preset-btn" data-grid-cols="1">1 Coluna</button>
+              <button type="button" class="studio-preset-btn" data-grid-cols="2">2 Colunas</button>
+              <button type="button" class="studio-preset-btn" data-grid-cols="3">3 Colunas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Estilo Conecta -->
         <div class="studio-inspector-tab-content" id="inspector-tab-style" style="display: none;">
           <div class="studio-prop-group">
             <label class="studio-prop-label">Cor de Fundo</label>
@@ -162,7 +257,7 @@
           </div>
         </div>
 
-        <!-- Tab 3: Modais & Ações -->
+        <!-- Tab 4: Modais & Ações -->
         <div class="studio-inspector-tab-content" id="inspector-tab-actions" style="display: none;">
           <div class="studio-prop-group">
             <label class="studio-prop-label">Título do Modal Vinculado</label>

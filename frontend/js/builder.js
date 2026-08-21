@@ -2,6 +2,7 @@
  * ============================================================================
  * CONECTA STUDIO — BUILDER JS
  * Editor Visual Drag-and-Drop estilo WIX para Conecta HEAL
+ * 100% Fidelidade Visual, Drag-to-Resize & Editor de Código HTML/CSS Live
  * ============================================================================
  */
 
@@ -16,13 +17,18 @@
       nome: 'Nova Tela Conecta',
       descricao: 'Página criada no Conecta Studio',
       categoria: 'custom',
-      is_native: 0
+      is_native: 0,
+      custom_css: ''
     },
     selectedNode: null,
     history: [],
     historyIndex: -1,
     isPreview: false,
-    draggedType: null
+    draggedType: null,
+    viewMode: 'visual', // 'visual', 'split', 'code'
+    activeCodeTab: 'html-all', // 'html-all', 'html-selected', 'css-custom'
+    customCss: '',
+    isResizing: false
   };
 
   // --- COMPONENT TEMPLATES (CONECTA DESIGN SYSTEM) ---
@@ -32,24 +38,24 @@
       icon: 'bi-window-dock',
       category: 'layout',
       render: () => `
-        <header class="topbar studio-canvas-node" data-studio-type="topbar" style="border-radius: 0.75rem; margin-bottom: 1.25rem;">
-          <div class="topbar-left">
-            <span class="topbar-logo"><i class="bi bi-hospital"></i></span>
-            <div class="topbar-title">
-              <h1 contenteditable="false">Conecta HEAL</h1>
-              <small>Passagem de Plantão & Gestão</small>
-            </div>
+        <header class="topbar studio-canvas-node" data-studio-type="topbar" style="border-radius: 0.75rem; margin-bottom: 1.25rem; width: 100%;">
+          <div class="topbar-left" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <i class="bi bi-heart-pulse" style="font-size: 1.4rem; color: #ffffff;"></i>
+            <span class="topbar-title" style="font-weight: 800; font-size: 1.15rem; color: #ffffff;">Conecta HEAL</span>
           </div>
-          <div class="topbar-center">
-            <span class="topbar-badge" style="background: rgba(19, 79, 159, 0.1); color: var(--primary); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
-              <i class="bi bi-geo-alt-fill"></i> <span class="studio-text">Setor de Atendimento</span>
-            </span>
+          <div class="topbar-nav" style="display: flex; gap: 4px;">
+            <button class="topbar-nav-item active" style="padding: 6px 14px; border-radius: 6px; font-weight: 700; background: rgba(255,255,255,0.15); color: #ffffff; border: 0;">Passagem de Plantão</button>
+            <button class="topbar-nav-item" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; background: transparent; color: rgba(255,255,255,0.8); border: 0;">Livro Administrativo</button>
+            <button class="topbar-nav-item" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; background: transparent; color: rgba(255,255,255,0.8); border: 0;">Pronto Atendimento</button>
           </div>
-          <div class="topbar-right">
-            <span class="user-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.04); padding: 0.35rem 0.75rem; border-radius: 999px;">
-              <i class="bi bi-person-circle" style="font-size: 1.2rem; color: var(--primary);"></i>
-              <span style="font-size: 0.82rem; font-weight: 700;">Alexandre Braga</span>
+          <div class="topbar-right" style="display: flex; align-items: center; gap: 10px;">
+            <span class="user-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.35rem 0.85rem; border-radius: 999px; color: #ffffff;">
+              <i class="bi bi-person-circle" style="font-size: 1.1rem;"></i>
+              <span style="font-size: 0.82rem; font-weight: 700;">Alexandre Miranda</span>
             </span>
+            <button class="btn-logout" style="background: transparent; border: 0; color: rgba(255,255,255,0.7); font-size: 1.1rem; cursor: pointer;">
+              <i class="bi bi-box-arrow-right"></i>
+            </button>
           </div>
         </header>
       `
@@ -60,7 +66,7 @@
       icon: 'bi-square',
       category: 'layout',
       render: () => `
-        <div class="studio-canvas-node card-conecta studio-container-drop" data-studio-type="panel_white" style="background: #ffffff; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05); margin-bottom: 1.25rem; width: 100%;">
+        <div class="studio-canvas-node card-conecta studio-container-drop" data-studio-type="panel_white" style="background: #ffffff; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05); margin-bottom: 1.25rem; width: 100%; border: 1px solid #e2e8f0;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
             <h3 class="studio-text" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--primary);">Título da Seção / Painel</h3>
             <span class="badge bg-primary-subtle text-primary" style="font-weight: 700;">Ativo</span>
@@ -118,71 +124,58 @@
     },
 
     'card_paciente': {
-      name: 'Card de Paciente / Leito',
+      name: 'Card de Paciente Real',
       icon: 'bi-person-badge',
       category: 'components',
-      render: () => `
+      render: (nome = 'Maria Aparecida Santos', leito = 'Leito 101-A', reg = '94821', diag = 'Pós-operatório imediato de Artroplastia Total de Quadril') => `
         <div class="studio-canvas-node paciente-card" data-studio-type="card_paciente" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06); border: 1px solid #e2e8f0; margin-bottom: 1rem; width: 100%;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+          <div class="paciente-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
               <span class="leito-badge" style="background: var(--primary); color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem;">
-                Leito 104-A
+                ${leito}
               </span>
-              <strong class="studio-text" style="font-size: 1.05rem; color: #1e293b;">Maria Santos da Silva</strong>
+              <div>
+                <strong class="studio-text" style="font-size: 1.05rem; color: #1e293b; display: block;">${nome}</strong>
+                <small class="text-muted" style="font-size: 0.75rem;">Reg: ${reg} · Idade: 58 anos · Sexo: Feminino</small>
+              </div>
             </div>
-            <span class="badge bg-danger-subtle text-danger" style="font-weight: 700; font-size: 0.78rem;">
-              <i class="bi bi-exclamation-octagon-fill"></i> Alto Risco
-            </span>
+            <div style="display: flex; gap: 4px;">
+              <span class="badge bg-danger-subtle text-danger" style="font-weight: 700; font-size: 0.76rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i> Risco Queda
+              </span>
+              <span class="badge bg-primary-subtle text-primary" style="font-weight: 700; font-size: 0.76rem;">Estável</span>
+            </div>
           </div>
-          <p class="studio-text" style="color: #64748b; font-size: 0.88rem; margin: 0 0 0.75rem;">
-            <strong>Diagnóstico:</strong> Pós-operatório imediato · Sem alergias conhecidas
-          </p>
-          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <span class="badge bg-secondary-subtle text-secondary">Acompanhante Presente</span>
-            <span class="badge bg-warning-subtle text-warning-emphasis">Jejum</span>
-            <span class="badge bg-danger-subtle text-danger">Queda</span>
+          <div class="paciente-body" style="font-size: 0.88rem; line-height: 1.45; color: #475569; margin-bottom: 0.75rem;">
+            <p class="m-0 mb-1"><strong>Diagnóstico:</strong> <span class="studio-text">${diag}</span></p>
+            <p class="m-0" style="color: #64748b; font-size: 0.82rem;"><strong>Prescrição:</strong> Cefazolina 1g EV 8/8h · Dipirona 1g EV se dor · Enoxaparina 40mg SC</p>
+          </div>
+          <div class="paciente-tags" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+            <span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;"><i class="bi bi-droplet"></i> Acesso Venoso</span>
+            <span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;"><i class="bi bi-activity"></i> Dreno Portovac</span>
+            <span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;"><i class="bi bi-shield-exclamation"></i> Jejum</span>
+          </div>
+          <div class="paciente-intercorrencia" style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0.5rem; padding: 0.65rem;">
+            <label style="font-weight: 700; font-size: 0.78rem; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+              <i class="bi bi-chat-left-dots text-primary"></i> Intercorrência do Plantão
+            </label>
+            <textarea class="form-control form-control-sm" rows="2" placeholder="Descreva intercorrências deste paciente no plantão..." style="font-size: 0.82rem; background: #ffffff;"></textarea>
           </div>
         </div>
       `
     },
 
     'turno_bar': {
-      name: 'Barra de Turno / Período',
+      name: 'Barra de Turno Dinâmica',
       icon: 'bi-sun-fill',
       category: 'components',
       render: () => `
         <div class="studio-canvas-node turno-bar" data-studio-type="turno_bar" style="display: inline-flex; align-items: center; background: rgba(19, 79, 159, 0.08); padding: 4px; border-radius: 999px; margin-bottom: 1rem;">
           <button type="button" class="btn btn-sm btn-white shadow-sm" style="border-radius: 999px; font-weight: 700; color: var(--primary); background: #ffffff; padding: 0.4rem 1.15rem; border: 0;">
-            <i class="bi bi-sun-fill text-warning"></i> Diurno (Dia)
+            <i class="bi bi-sun-fill text-warning"></i> Dia (07h às 19h)
           </button>
           <button type="button" class="btn btn-sm" style="border-radius: 999px; font-weight: 600; color: #64748b; padding: 0.4rem 1.15rem; border: 0; background: transparent;">
-            <i class="bi bi-moon-stars-fill text-primary"></i> Noturno (Noite)
-          </button>
-        </div>
-      `
-    },
-
-    'btn_primary': {
-      name: 'Botão Salvar / Primário',
-      icon: 'bi-check2-circle',
-      category: 'components',
-      render: () => `
-        <div class="studio-canvas-node" data-studio-type="btn_primary" style="display: inline-block; margin-bottom: 0.5rem;">
-          <button class="btn btn-save btn-save--highlight" style="background: linear-gradient(145deg, var(--primary), var(--primary-light)); color: #ffffff; font-weight: 700; padding: 0.65rem 1.5rem; border-radius: 0.65rem; border: 0; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(19, 79, 159, 0.3);">
-            <i class="bi bi-check2-all"></i> <span class="studio-text">Salvar / Finalizar Passagem</span>
-          </button>
-        </div>
-      `
-    },
-
-    'btn_secondary': {
-      name: 'Botão Secundário / Ação',
-      icon: 'bi-hand-index-thumb',
-      category: 'components',
-      render: () => `
-        <div class="studio-canvas-node" data-studio-type="btn_secondary" style="display: inline-block; margin-bottom: 0.5rem;">
-          <button class="btn btn-outline-secondary" style="font-weight: 600; padding: 0.6rem 1.25rem; border-radius: 0.65rem; display: inline-flex; align-items: center; gap: 0.45rem;">
-            <i class="bi bi-arrow-repeat"></i> <span class="studio-text">Atualizar Dados</span>
+            <i class="bi bi-moon-stars-fill text-primary"></i> Noite (19h às 07h)
           </button>
         </div>
       `
@@ -192,14 +185,14 @@
       name: 'Card de Métrica / KPI',
       icon: 'bi-speedometer2',
       category: 'components',
-      render: () => `
-        <div class="studio-canvas-node kpi-card" data-studio-type="kpi_card" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; width: 100%;">
-          <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(19, 79, 159, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            <i class="bi bi-hospital"></i>
+      render: (label = 'Total Pacientes', val = '24', icon = 'bi-people-fill', color = 'var(--primary)') => `
+        <div class="studio-canvas-node kpi-card" data-studio-type="kpi_card" style="background: #ffffff; border-radius: 1rem; padding: 1.15rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; width: 100%;">
+          <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(19, 79, 159, 0.1); color: ${color}; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+            <i class="bi ${icon}"></i>
           </div>
           <div>
-            <small class="studio-text" style="color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em;">Total de Leitos</small>
-            <h2 class="studio-text" style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #1e293b;">28 <span style="font-size: 0.85rem; font-weight: 600; color: #16a34a;">+2 hoje</span></h2>
+            <span class="studio-text text-muted small" style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">${label}</span>
+            <h3 class="studio-text m-0" style="font-size: 1.55rem; font-weight: 800; color: #1e293b;">${val}</h3>
           </div>
         </div>
       `
@@ -207,78 +200,67 @@
 
     'intercorrencia_box': {
       name: 'Bloco de Intercorrências',
-      icon: 'bi-card-checklist',
+      icon: 'bi-exclamation-diamond',
       category: 'components',
       render: () => `
-        <div class="studio-canvas-node" data-studio-type="intercorrencia_box" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; margin-bottom: 1rem; width: 100%;">
-          <h4 class="studio-text" style="font-size: 0.95rem; font-weight: 800; color: var(--primary); margin-bottom: 0.85rem;">
-            <i class="bi bi-pencil-square"></i> Registro de Ocorrências do Plantão
-          </h4>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.85rem;">
-            <label style="font-size: 0.82rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" class="form-check-input" checked> Queda
-            </label>
-            <label style="font-size: 0.82rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" class="form-check-input"> Jejum
-            </label>
-            <label style="font-size: 0.82rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" class="form-check-input"> Broncoaspiração
-            </label>
+        <div class="studio-canvas-node intercorrencia-box" data-studio-type="intercorrencia_box" style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; color: #b45309;">
+            <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.1rem;"></i>
+            <strong class="studio-text" style="font-size: 0.95rem;">Registro de Ocorrências e Pendências do Plantão</strong>
           </div>
-          <textarea class="form-control" rows="3" placeholder="Digite as observações e ocorrências detalhadas..." style="border-radius: 0.65rem; font-size: 0.88rem;"></textarea>
+          <textarea class="form-control" rows="3" placeholder="Digite intercorrências gerais, intercorrências do setor ou recados para o próximo turno..." style="background: #ffffff; font-size: 0.88rem;"></textarea>
         </div>
       `
     },
 
     'auditoria_nisa_card': {
-      name: 'Auditoria Higiene das Mãos',
+      name: 'Card Auditoria NISA (3 Colunas)',
       icon: 'bi-clipboard2-pulse',
       category: 'components',
       render: () => `
-        <div class="studio-canvas-node card-auditoria" data-studio-type="auditoria_nisa_card" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; margin-bottom: 1rem; width: 100%;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <strong class="studio-text" style="color: var(--primary); font-size: 0.95rem;">Oportunidade 1: Antes de tocar o paciente</strong>
-            <span class="badge bg-success-subtle text-success">Conforme</span>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem;">
-            <button class="btn btn-sm btn-outline-primary active" style="font-weight: 700;">Álcool</button>
-            <button class="btn btn-sm btn-outline-primary" style="font-weight: 700;">Sabonete</button>
-            <button class="btn btn-sm btn-outline-danger" style="font-weight: 700;">Perdida</button>
+        <div class="studio-canvas-node auditoria-card" data-studio-type="auditoria_nisa_card" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; width: 100%;">
+          <h5 class="studio-text" style="font-weight: 800; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.85rem;">
+            1. Antes do contato com o paciente
+          </h5>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+            <button class="btn btn-outline-primary btn-sm" style="border-radius: 0.5rem; font-weight: 700;">Álcool</button>
+            <button class="btn btn-outline-info btn-sm" style="border-radius: 0.5rem; font-weight: 700;">Sabonete</button>
+            <button class="btn btn-outline-danger btn-sm" style="border-radius: 0.5rem; font-weight: 700;">Perdida</button>
           </div>
         </div>
       `
     },
 
     'tabela_conecta': {
-      name: 'Tabela Formatada Conecta',
+      name: 'Tabela Padrão Conecta',
       icon: 'bi-table',
       category: 'components',
       render: () => `
-        <div class="studio-canvas-node table-responsive" data-studio-type="tabela_conecta" style="background: #ffffff; border-radius: 1rem; padding: 1rem; border: 1px solid #e2e8f0; margin-bottom: 1.25rem; width: 100%;">
-          <table class="table table-hover align-middle m-0" style="font-size: 0.88rem;">
-            <thead style="background: rgba(19, 79, 159, 0.05); color: var(--primary);">
+        <div class="studio-canvas-node table-responsive" data-studio-type="tabela_conecta" style="background: #ffffff; border-radius: 1rem; padding: 1rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); border: 1px solid #e2e8f0; margin-bottom: 1.25rem; width: 100%;">
+          <table class="table table-hover align-middle m-0" style="font-size: 0.85rem;">
+            <thead class="table-light">
               <tr>
-                <th style="font-weight: 800; border-radius: 0.5rem 0 0 0.5rem;">Paciente / Leito</th>
-                <th style="font-weight: 800;">Admissão</th>
-                <th style="font-weight: 800;">Especialidade</th>
-                <th style="font-weight: 800;">Status</th>
-                <th style="font-weight: 800; border-radius: 0 0.5rem 0.5rem 0;">Ações</th>
+                <th style="font-weight: 700; color: var(--primary);">Paciente / Leito</th>
+                <th style="font-weight: 700; color: var(--primary);">Hora Chegada</th>
+                <th style="font-weight: 700; color: var(--primary);">Classificação</th>
+                <th style="font-weight: 700; color: var(--primary);">Médico Responsável</th>
+                <th style="font-weight: 700; color: var(--primary);">Status</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Ana Maria Ramos</strong><br><small class="text-muted">Leito 201</small></td>
-                <td>20/08 08:30</td>
-                <td>Clínica Médica</td>
-                <td><span class="badge bg-success-subtle text-success">Estável</span></td>
-                <td><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></button></td>
+                <td><strong>Ana Paula Ferreira</strong><br><small class="text-muted">Leito 204</small></td>
+                <td>14:32</td>
+                <td><span class="badge bg-danger">Manchester Vermelho</span></td>
+                <td>Dr. Marcelo Tavares</td>
+                <td><span class="badge bg-warning-subtle text-warning-emphasis">Em Atendimento</span></td>
               </tr>
               <tr>
-                <td><strong>Carlos Silva Ribeiro</strong><br><small class="text-muted">Leito 202</small></td>
-                <td>20/08 11:15</td>
-                <td>Cirurgia Geral</td>
-                <td><span class="badge bg-warning-subtle text-warning-emphasis">Pendente Exame</span></td>
-                <td><button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></button></td>
+                <td><strong>Roberto Albuquerque</strong><br><small class="text-muted">Leito 206</small></td>
+                <td>15:10</td>
+                <td><span class="badge bg-warning text-dark">Manchester Amarelo</span></td>
+                <td>Dra. Camila Nogueira</td>
+                <td><span class="badge bg-success-subtle text-success">Aguardando Exame</span></td>
               </tr>
             </tbody>
           </table>
@@ -292,23 +274,23 @@
       category: 'forms',
       render: () => `
         <div class="studio-canvas-node mb-3" data-studio-type="form_input" style="width: 100%;">
-          <label class="form-label studio-text" style="font-size: 0.82rem; font-weight: 700; color: #475569;">Rótulo do Campo</label>
-          <input type="text" class="form-control" placeholder="Digite o valor aqui..." style="border-radius: 0.65rem; font-size: 0.88rem;">
+          <label class="studio-text form-label" style="font-weight: 700; font-size: 0.85rem; color: #475569;">Nome do Campo <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" placeholder="Digite aqui..." style="border-radius: 0.5rem; font-size: 0.88rem;">
         </div>
       `
     },
 
     'form_select': {
-      name: 'Menu Seleção / Dropdown',
+      name: 'Campo de Seleção / Dropdown',
       icon: 'bi-menu-button-wide',
       category: 'forms',
       render: () => `
         <div class="studio-canvas-node mb-3" data-studio-type="form_select" style="width: 100%;">
-          <label class="form-label studio-text" style="font-size: 0.82rem; font-weight: 700; color: #475569;">Selecione a Opção</label>
-          <select class="form-select" style="border-radius: 0.65rem; font-size: 0.88rem;">
-            <option selected>Opção 1 (Padrão)</option>
-            <option>Opção 2</option>
-            <option>Opção 3</option>
+          <label class="studio-text form-label" style="font-weight: 700; font-size: 0.85rem; color: #475569;">Selecione uma Opção</label>
+          <select class="form-select" style="border-radius: 0.5rem; font-size: 0.88rem;">
+            <option value="">Selecione...</option>
+            <option value="1">Opção Principal 1</option>
+            <option value="2">Opção Principal 2</option>
           </select>
         </div>
       `
@@ -316,116 +298,258 @@
 
     'modal_trigger_btn': {
       name: 'Botão Disparador de Modal',
-      icon: 'bi-window-stack',
-      category: 'modals',
+      icon: 'bi-chat-square-dots-fill',
+      category: 'forms',
       render: () => `
-        <div class="studio-canvas-node" data-studio-type="modal_trigger_btn" data-modal-title="Atenção: Confirmação" data-modal-body="Deseja realmente executar esta ação no Conecta?" style="display: inline-block; margin-bottom: 0.5rem;">
-          <button class="btn btn-warning" style="font-weight: 700; padding: 0.6rem 1.25rem; border-radius: 0.65rem; color: #1e293b; display: inline-flex; align-items: center; gap: 0.45rem;">
-            <i class="bi bi-exclamation-triangle-fill"></i> <span class="studio-text">Abrir Modal de Aviso</span>
+        <div class="studio-canvas-node" data-studio-type="modal_trigger_btn" data-modal-title="Atenção: Ação Necessária" data-modal-body="Esta ação requer confirmação do usuário." style="display: inline-block; margin-bottom: 0.5rem;">
+          <button class="btn btn-warning" style="font-weight: 700; padding: 0.6rem 1.25rem; border-radius: 0.65rem; display: inline-flex; align-items: center; gap: 0.45rem;">
+            <i class="bi bi-chat-square-text-fill"></i> <span class="studio-text">Abrir Modal de Aviso</span>
           </button>
         </div>
       `
     },
 
     'footer_conecta': {
-      name: 'Footer Barra Inferior',
-      icon: 'bi-layout-three-columns',
+      name: 'Rodapé Fixo Conecta com Turno',
+      icon: 'bi-layout-text-sidebar-reverse',
       category: 'layout',
       render: () => `
-        <footer class="studio-canvas-node" data-studio-type="footer_conecta" style="background: #ffffff; border-radius: 1rem; padding: 1rem 1.5rem; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; width: 100%; box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.04);">
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <span style="font-size: 0.85rem; color: #64748b;"><strong>Conecta HEAL</strong> v2.1</span>
+        <div class="studio-canvas-node main-footer" data-studio-type="footer_conecta" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.5rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: space-between; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); margin-top: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div class="main-footer-left">
+            <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
+              <strong style="color: var(--primary);">3</strong> paciente(s) · <strong style="color: var(--primary);">1</strong> intercorrência(s)
+            </span>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <button class="btn btn-secondary btn-sm" style="border-radius: 0.5rem; font-weight: 600;">Cancelar</button>
-            <button class="btn btn-primary btn-sm btn-save--highlight" style="border-radius: 0.5rem; font-weight: 700; background: var(--primary);"><i class="bi bi-check2"></i> Salvar</button>
+          <div class="main-footer-center" style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-weight: 700; font-size: 0.85rem; color: #334155;"><i class="bi bi-clock-history text-primary"></i> Plantão:</span>
+            <div class="turno-options" style="display: inline-flex; background: rgba(19, 79, 159, 0.08); padding: 3px; border-radius: 999px;">
+              <button class="btn btn-sm btn-white shadow-sm" style="border-radius: 999px; font-weight: 700; color: var(--primary); background: #ffffff; border: 0; padding: 0.25rem 0.85rem;">Dia (07h às 19h)</button>
+              <button class="btn btn-sm" style="border-radius: 999px; font-weight: 600; color: #64748b; background: transparent; border: 0; padding: 0.25rem 0.85rem;">Noite (19h às 07h)</button>
+            </div>
           </div>
-        </footer>
+          <div class="main-footer-right" style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline-secondary btn-sm" style="border-radius: 0.5rem; font-weight: 600;"><i class="bi bi-trash3"></i> Limpar Tela</button>
+            <button class="btn btn-save btn-save--highlight btn-sm" style="background: linear-gradient(145deg, var(--primary), var(--primary-light)); color: #ffffff; font-weight: 700; border-radius: 0.5rem; border: 0; padding: 0.4rem 1rem;">
+              <i class="bi bi-check-circle"></i> Salvar / Finalizar Passagem
+            </button>
+          </div>
+        </div>
       `
     }
   };
 
+  // --- 100% AUTHENTIC NATIVE SCREENS ---
+  const DEFAULT_TEMPLATES = {
+    'passagem': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="app-container studio-canvas-node" data-studio-type="app_container" style="display: flex; gap: 1rem; width: 100%; min-height: 520px;">
+        <aside class="sidebar studio-canvas-node" data-studio-type="sidebar" style="width: 260px; background: #ffffff; border-radius: 1rem; padding: 1.15rem; box-shadow: 0 4px 18px rgba(15,23,42,0.06); border: 1px solid #e2e8f0; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.65rem;">
+            <i class="bi bi-building" style="font-size: 1.2rem; color: var(--primary);"></i>
+            <h4 class="m-0" style="font-weight: 800; font-size: 1.05rem; color: #1e293b;">Setores</h4>
+          </div>
+          <div class="list-group list-group-flush" style="font-size: 0.85rem;">
+            <a href="#" class="list-group-item list-group-item-action active" style="border-radius: 0.65rem; font-weight: 700; background: var(--primary); color: #ffffff; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="bi bi-hospital"></i> Internação 1</span>
+              <span class="badge bg-white text-primary" style="font-weight: 800;">12</span>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="bi bi-heart-pulse"></i> U.T.I. Geral</span>
+              <span class="badge bg-secondary-subtle text-secondary">8</span>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="bi bi-scissors"></i> Centro Cirúrgico</span>
+              <span class="badge bg-secondary-subtle text-secondary">4</span>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="bi bi-activity"></i> P.A. Adulto</span>
+              <span class="badge bg-secondary-subtle text-secondary">14</span>
+            </a>
+          </div>
+        </aside>
+
+        <main class="main-content" style="flex: 1; min-width: 0;">
+          <header style="background: #ffffff; border-radius: 1rem; padding: 1rem 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(15,23,42,0.04); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 800; color: var(--primary);">Passagem de Plantão · Internação 1</span>
+              <h2 class="m-0" style="font-weight: 800; font-size: 1.35rem; color: #1e293b;">Pacientes do Setor</h2>
+            </div>
+            <span class="badge bg-primary-subtle text-primary" style="font-weight: 700; font-size: 0.82rem;"><i class="bi bi-shield-check"></i> Plantão Aberto</span>
+          </header>
+
+          ${COMPONENT_DEFINITIONS['card_paciente'].render('Maria Aparecida Santos', 'Leito 101-A', '94821', 'Pós-operatório imediato de Artroplastia Total de Quadril')}
+          ${COMPONENT_DEFINITIONS['card_paciente'].render('João Carlos Pereira', 'Leito 102-B', '83920', 'Insuficiência Cardíaca Congestiva Descompensada')}
+          ${COMPONENT_DEFINITIONS['card_paciente'].render('Francisca Silveira Souza', 'Leito 103-A', '77412', 'Pneumonia Comunitária Grave')}
+
+          ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
+          ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+        </main>
+      </div>
+    `,
+
+    'dashboard_pa': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="row g-3 mb-3" style="width: 100%;">
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Fila de Espera P.A.', '14', 'bi-hourglass-split', '#0284c7')}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Em Atendimento', '6', 'bi-heart-pulse-fill', '#16a34a')}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Tempo Médio de Espera', '18 min', 'bi-clock-history', '#d97706')}</div>
+      </div>
+      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'pacientes': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="studio-canvas-node card p-3 border-0 shadow-sm mb-3" style="background: #ffffff; border-radius: 1rem; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h4 class="m-0" style="font-weight: 800; color: var(--primary);"><i class="bi bi-hospital"></i> Mapa Geral de Leitos</h4>
+          <span class="badge bg-success-subtle text-success" style="font-weight: 700;">28 / 30 Leitos Ocupados (93%)</span>
+        </div>
+      </div>
+      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Carlos Eduardo Lima', 'Leito 201', '55102', 'Pneumonia Bacteriana')}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Ana Beatriz Souza', 'Leito 202', '55109', 'Apendicectomia')}</div>
+        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Roberto Albuquerque', 'Leito 203', '55115', 'Cetoacidose Diabética')}</div>
+      </div>
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'auditorias': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
+        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 1rem;"><i class="bi bi-shield-check"></i> Nova Auditoria de Higiene das Mãos</h4>
+        <div class="row g-3 mb-2">
+          <div class="col-md-4">
+            <label class="form-label small font-weight-bold">Data da Observação</label>
+            <input type="date" class="form-control form-control-sm" value="2026-08-20">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small font-weight-bold">Setor Auditado</label>
+            <select class="form-select form-select-sm"><option>Setor de Internação 1</option><option>U.T.I. Geral</option></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small font-weight-bold">Avaliador</label>
+            <select class="form-select form-select-sm"><option>Alexandre Miranda</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="row g-3 mb-3" style="width: 100%;">
+        <div class="col-md-6">${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}</div>
+        <div class="col-md-6">${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}</div>
+      </div>
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'livro': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
+        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 1rem;"><i class="bi bi-journal-medical"></i> Livro Administrativo · Composição do Plantão</h4>
+        <div class="row g-3">
+          <div class="col-md-3"><label class="small font-weight-bold">Setor</label><select class="form-select form-select-sm"><option>Internação 1</option></select></div>
+          <div class="col-md-3"><label class="small font-weight-bold">Data</label><input type="date" class="form-control form-control-sm" value="2026-08-20"></div>
+          <div class="col-md-3">${COMPONENT_DEFINITIONS['turno_bar'].render()}</div>
+          <div class="col-md-3"><label class="small font-weight-bold">Enfermeiro Responsável</label><select class="form-select form-select-sm"><option>Enf. Mariana Costa</option></select></div>
+        </div>
+      </div>
+      ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `,
+
+    'escala': () => `
+      ${COMPONENT_DEFINITIONS['topbar'].render()}
+      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
+        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;"><i class="bi bi-people-fill"></i> Gestão de Escalas Ativas</h4>
+        <p class="text-muted small m-0">Escala de enfermagem e equipe multidisciplinar.</p>
+      </div>
+      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
+      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
+    `
+  };
+
   // --- INITIALIZATION ---
-  document.addEventListener('DOMContentLoaded', async () => {
+  window.addEventListener('DOMContentLoaded', () => {
     initUrlParams();
-    initPalette();
+    renderPalette();
     initCanvasEvents();
     initInspector();
     initTopActions();
-    await loadPageData();
+    initViewModes();
+    initCodeEditor();
+    loadPageData();
   });
 
   function initUrlParams() {
     const params = new URLSearchParams(window.location.search);
-    const pageId = params.get('page');
-    if (pageId) {
-      state.pageId = pageId;
-    }
+    state.pageId = params.get('page');
   }
 
-  // --- PALETTE RENDER & DRAG ---
-  function initPalette() {
+  // --- PALETTE RENDERING ---
+  function renderPalette() {
     const container = document.getElementById('palette-content');
     if (!container) return;
 
     const categories = {
-      'layout': { title: 'Layout & Estrutura', icon: 'bi-grid-1x2' },
-      'components': { title: 'Componentes Conecta', icon: 'bi-box-seam' },
-      'forms': { title: 'Formulários & Entradas', icon: 'bi-ui-radios' },
-      'modals': { title: 'Modais & Ações', icon: 'bi-window-fullscreen' }
+      'layout': { title: 'Estrutura & Layout', items: [] },
+      'components': { title: 'Componentes Conecta', items: [] },
+      'forms': { title: 'Formulários & Ações', items: [] }
     };
 
-    let html = '';
-    for (const [catKey, catInfo] of Object.entries(categories)) {
-      const items = Object.entries(COMPONENT_DEFINITIONS).filter(([_, def]) => def.category === catKey);
-      if (items.length === 0) continue;
+    Object.keys(COMPONENT_DEFINITIONS).forEach(key => {
+      const comp = COMPONENT_DEFINITIONS[key];
+      if (categories[comp.category]) {
+        categories[comp.category].items.push({ id: key, ...comp });
+      }
+    });
 
+    let html = '';
+    Object.keys(categories).forEach(catKey => {
+      const cat = categories[catKey];
       html += `
-        <div class="studio-palette-section">
-          <div class="studio-section-title"><i class="bi ${catInfo.icon}"></i> ${catInfo.title}</div>
-          <div class="studio-components-grid">
-            ${items.map(([typeKey, def]) => `
-              <div class="studio-draggable-item" draggable="true" data-type="${typeKey}">
-                <i class="bi ${def.icon}"></i>
-                <span>${def.name}</span>
+        <div class="studio-palette-group">
+          <div class="studio-palette-group-title">${cat.title}</div>
+          <div class="studio-palette-items">
+            ${cat.items.map(item => `
+              <div class="studio-palette-item" draggable="true" data-type="${item.id}" title="Arraste para o canvas">
+                <i class="bi ${item.icon}"></i>
+                <span>${item.name}</span>
               </div>
             `).join('')}
           </div>
         </div>
       `;
-    }
+    });
 
     container.innerHTML = html;
 
-    // Drag events from palette
-    container.querySelectorAll('.studio-draggable-item').forEach(el => {
-      el.addEventListener('dragstart', (e) => {
-        state.draggedType = el.getAttribute('data-type');
+    // Drag start on palette items
+    container.querySelectorAll('.studio-palette-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        state.draggedType = item.getAttribute('data-type');
         e.dataTransfer.setData('text/plain', state.draggedType);
         e.dataTransfer.effectAllowed = 'copy';
       });
 
-      // Also 1-click to append
-      el.addEventListener('click', () => {
-        const type = el.getAttribute('data-type');
-        appendComponentToCanvas(type);
+      // Quick click to insert
+      item.addEventListener('click', () => {
+        const type = item.getAttribute('data-type');
+        insertComponent(type);
       });
     });
 
-    // Search filter
+    // Palette search filter
     const searchInput = document.getElementById('palette-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
-        container.querySelectorAll('.studio-draggable-item').forEach(item => {
-          const text = item.innerText.toLowerCase();
-          item.style.display = text.includes(term) ? 'flex' : 'none';
+        container.querySelectorAll('.studio-palette-item').forEach(el => {
+          const text = el.innerText.toLowerCase();
+          el.style.display = text.includes(term) ? 'flex' : 'none';
         });
       });
     }
   }
 
-  // --- CANVAS & DROP EVENTS ---
+  // --- CANVAS & DRAG/DROP ENGINE ---
   function initCanvasEvents() {
     const canvas = document.getElementById('studio-canvas-root');
     if (!canvas) return;
@@ -433,29 +557,34 @@
     canvas.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
-      highlightDropzone(e.target);
+      const target = e.target.closest('.studio-child-zone, .studio-canvas-node, .studio-canvas-root');
+      if (target) target.classList.add('drag-over');
     });
 
     canvas.addEventListener('dragleave', (e) => {
-      removeDropzoneHighlight();
+      const target = e.target.closest('.studio-child-zone, .studio-canvas-node, .studio-canvas-root');
+      if (target) target.classList.remove('drag-over');
     });
 
     canvas.addEventListener('drop', (e) => {
       e.preventDefault();
-      removeDropzoneHighlight();
+      canvas.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
       const type = e.dataTransfer.getData('text/plain') || state.draggedType;
-      if (type && COMPONENT_DEFINITIONS[type]) {
-        insertComponentAtDrop(type, e.target);
-        saveHistoryState();
-      }
+      if (!type || !COMPONENT_DEFINITIONS[type]) return;
+
+      insertComponentAtDrop(type, e.target);
+      saveHistoryState();
+      syncCodeEditor();
     });
 
-    // Node selection
+    // Click to select node
     canvas.addEventListener('click', (e) => {
       if (state.isPreview) {
         handlePreviewClick(e);
         return;
       }
+      if (state.isResizing) return;
+
       const node = e.target.closest('.studio-canvas-node');
       if (node) {
         e.stopPropagation();
@@ -465,38 +594,30 @@
       }
     });
 
-    // Inline text editing
+    // Double click to edit text inline
     canvas.addEventListener('dblclick', (e) => {
       if (state.isPreview) return;
-      const textEl = e.target.closest('.studio-text, h1, h2, h3, h4, h5, p, span, small, strong, label, button');
-      if (textEl) {
-        textEl.setAttribute('contenteditable', 'true');
-        textEl.focus();
-        textEl.addEventListener('blur', () => {
-          textEl.removeAttribute('contenteditable');
+      const textTarget = e.target.closest('.studio-text, h1, h2, h3, h4, h5, p, span, strong, label');
+      if (textTarget) {
+        e.stopPropagation();
+        textTarget.setAttribute('contenteditable', 'true');
+        textTarget.focus();
+        textTarget.classList.add('studio-inline-editing');
+
+        const finishEditing = () => {
+          textTarget.removeAttribute('contenteditable');
+          textTarget.classList.remove('studio-inline-editing');
           saveHistoryState();
-          syncInspectorWithSelectedNode();
-        }, { once: true });
+          syncCodeEditor();
+          textTarget.removeEventListener('blur', finishEditing);
+        };
+        textTarget.addEventListener('blur', finishEditing);
       }
     });
   }
 
-  function highlightDropzone(target) {
-    const zone = target.closest('.studio-child-zone, #studio-canvas-root');
-    if (zone) {
-      zone.classList.add('drag-over');
-    }
-  }
-
-  function removeDropzoneHighlight() {
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-  }
-
-  function appendComponentToCanvas(type) {
+  function insertComponent(type) {
     const canvas = document.getElementById('studio-canvas-root');
-    if (!canvas || !COMPONENT_DEFINITIONS[type]) return;
-
-    // Remove empty guide if present
     const emptyGuide = canvas.querySelector('.studio-empty-canvas-guide');
     if (emptyGuide) emptyGuide.remove();
 
@@ -511,6 +632,7 @@
     targetContainer.appendChild(newNode);
     selectNode(newNode);
     saveHistoryState();
+    syncCodeEditor();
   }
 
   function insertComponentAtDrop(type, target) {
@@ -537,14 +659,16 @@
     selectNode(newNode);
   }
 
-  // --- SELECTION & FLOATING ACTIONS ---
+  // --- SELECTION, FLOATING ACTIONS & DRAG-TO-RESIZE ---
   function selectNode(node) {
     deselectNode();
     state.selectedNode = node;
     node.classList.add('studio-selected');
 
     createFloatingActionBar(node);
+    createResizeHandles(node);
     syncInspectorWithSelectedNode();
+    if (state.activeCodeTab === 'html-selected') syncCodeEditor();
   }
 
   function deselectNode() {
@@ -553,6 +677,7 @@
     }
     state.selectedNode = null;
     removeFloatingActionBar();
+    removeResizeHandles();
     resetInspector();
   }
 
@@ -581,6 +706,7 @@
       if (node.previousElementSibling) {
         node.parentNode.insertBefore(node, node.previousElementSibling);
         saveHistoryState();
+        syncCodeEditor();
       }
     });
 
@@ -589,18 +715,20 @@
       if (node.nextElementSibling) {
         node.parentNode.insertBefore(node.nextElementSibling, node);
         saveHistoryState();
+        syncCodeEditor();
       }
     });
 
     document.getElementById('btn-node-dup').addEventListener('click', (e) => {
       e.stopPropagation();
+      removeFloatingActionBar();
+      removeResizeHandles();
       const clone = node.cloneNode(true);
       clone.classList.remove('studio-selected');
-      const oldBar = clone.querySelector('#studio-floating-bar');
-      if (oldBar) oldBar.remove();
       node.parentNode.insertBefore(clone, node.nextSibling);
       selectNode(clone);
       saveHistoryState();
+      syncCodeEditor();
     });
 
     document.getElementById('btn-node-del').addEventListener('click', (e) => {
@@ -608,12 +736,86 @@
       node.remove();
       deselectNode();
       saveHistoryState();
+      syncCodeEditor();
     });
   }
 
   function removeFloatingActionBar() {
     const existing = document.getElementById('studio-floating-bar');
     if (existing) existing.remove();
+  }
+
+  // --- RESIZE HANDLES (DRAG-TO-RESIZE) ---
+  function createResizeHandles(node) {
+    removeResizeHandles();
+
+    const handleR = document.createElement('div');
+    handleR.className = 'studio-resize-handle studio-resize-handle-r';
+    handleR.title = 'Arrastar para alterar largura';
+
+    const handleB = document.createElement('div');
+    handleB.className = 'studio-resize-handle studio-resize-handle-b';
+    handleB.title = 'Arrastar para alterar altura';
+
+    const handleBR = document.createElement('div');
+    handleBR.className = 'studio-resize-handle studio-resize-handle-br';
+    handleBR.title = 'Arrastar para alterar tamanho';
+
+    node.appendChild(handleR);
+    node.appendChild(handleB);
+    node.appendChild(handleBR);
+
+    initResizeHandleEvents(handleR, node, 'r');
+    initResizeHandleEvents(handleB, node, 'b');
+    initResizeHandleEvents(handleBR, node, 'br');
+  }
+
+  function removeResizeHandles() {
+    document.querySelectorAll('.studio-resize-handle').forEach(h => h.remove());
+  }
+
+  function initResizeHandleEvents(handle, node, direction) {
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      state.isResizing = true;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = node.getBoundingClientRect().width;
+      const startHeight = node.getBoundingClientRect().height;
+
+      const onMouseMove = (moveEvent) => {
+        if (!state.isResizing) return;
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+
+        if (direction === 'r' || direction === 'br') {
+          const newWidth = Math.max(80, startWidth + deltaX);
+          node.style.width = `${Math.round(newWidth)}px`;
+          const propWidth = document.getElementById('prop-width');
+          if (propWidth) propWidth.value = `${Math.round(newWidth)}px`;
+        }
+
+        if (direction === 'b' || direction === 'br') {
+          const newHeight = Math.max(40, startHeight + deltaY);
+          node.style.height = `${Math.round(newHeight)}px`;
+          const propHeight = document.getElementById('prop-height');
+          if (propHeight) propHeight.value = `${Math.round(newHeight)}px`;
+        }
+      };
+
+      const onMouseUp = () => {
+        state.isResizing = false;
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        saveHistoryState();
+        syncCodeEditor();
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    });
   }
 
   // --- INSPECTOR PANEL ---
@@ -630,7 +832,7 @@
       });
     });
 
-    // Content inputs
+    // Content input
     const textInput = document.getElementById('prop-text');
     if (textInput) {
       textInput.addEventListener('input', (e) => {
@@ -638,8 +840,73 @@
         const textTarget = state.selectedNode.querySelector('.studio-text') || state.selectedNode;
         textTarget.innerText = e.target.value;
         saveHistoryState();
+        syncCodeEditor();
       });
     }
+
+    // Width & Height inputs
+    const propWidth = document.getElementById('prop-width');
+    if (propWidth) {
+      propWidth.addEventListener('input', (e) => {
+        if (!state.selectedNode) return;
+        state.selectedNode.style.width = e.target.value;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    }
+
+    document.querySelectorAll('[data-width]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!state.selectedNode) return;
+        const val = btn.getAttribute('data-width');
+        state.selectedNode.style.width = val;
+        if (propWidth) propWidth.value = val;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    });
+
+    const propHeight = document.getElementById('prop-height');
+    if (propHeight) {
+      propHeight.addEventListener('input', (e) => {
+        if (!state.selectedNode) return;
+        state.selectedNode.style.height = e.target.value;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    }
+
+    document.querySelectorAll('[data-height]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!state.selectedNode) return;
+        const val = btn.getAttribute('data-height');
+        state.selectedNode.style.height = val;
+        if (propHeight) propHeight.value = val;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    });
+
+    const propPadding = document.getElementById('prop-padding');
+    if (propPadding) {
+      propPadding.addEventListener('change', (e) => {
+        if (!state.selectedNode) return;
+        state.selectedNode.style.padding = e.target.value;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    }
+
+    document.querySelectorAll('[data-grid-cols]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!state.selectedNode) return;
+        const cols = btn.getAttribute('data-grid-cols');
+        state.selectedNode.style.display = 'grid';
+        state.selectedNode.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        saveHistoryState();
+        syncCodeEditor();
+      });
+    });
 
     // Style inputs
     const bgInput = document.getElementById('prop-bg');
@@ -648,6 +915,7 @@
         if (!state.selectedNode) return;
         state.selectedNode.style.backgroundColor = e.target.value;
         saveHistoryState();
+        syncCodeEditor();
       });
     }
 
@@ -657,6 +925,7 @@
         if (!state.selectedNode) return;
         state.selectedNode.style.borderRadius = e.target.value;
         saveHistoryState();
+        syncCodeEditor();
       });
     }
 
@@ -666,6 +935,7 @@
         if (!state.selectedNode) return;
         state.selectedNode.style.boxShadow = e.target.value;
         saveHistoryState();
+        syncCodeEditor();
       });
     }
 
@@ -679,6 +949,7 @@
           state.selectedNode.classList.remove('btn-save--highlight');
         }
         saveHistoryState();
+        syncCodeEditor();
       });
     }
 
@@ -691,6 +962,7 @@
         state.selectedNode.setAttribute('data-modal-title', modalTitle.value);
         state.selectedNode.setAttribute('data-modal-body', modalBody.value);
         saveHistoryState();
+        syncCodeEditor();
       };
       modalTitle.addEventListener('input', updateModalProps);
       modalBody.addEventListener('input', updateModalProps);
@@ -705,6 +977,12 @@
     if (textInput && textTarget) {
       textInput.value = textTarget.innerText.trim();
     }
+
+    const propWidth = document.getElementById('prop-width');
+    if (propWidth) propWidth.value = state.selectedNode.style.width || '';
+
+    const propHeight = document.getElementById('prop-height');
+    if (propHeight) propHeight.value = state.selectedNode.style.height || '';
 
     const pulseToggle = document.getElementById('prop-pulse-toggle');
     if (pulseToggle) {
@@ -721,8 +999,188 @@
   function resetInspector() {
     const textInput = document.getElementById('prop-text');
     if (textInput) textInput.value = '';
+    const propWidth = document.getElementById('prop-width');
+    if (propWidth) propWidth.value = '';
+    const propHeight = document.getElementById('prop-height');
+    if (propHeight) propHeight.value = '';
     const pulseToggle = document.getElementById('prop-pulse-toggle');
     if (pulseToggle) pulseToggle.checked = false;
+  }
+
+  // --- VIEW MODES & LIVE CODE EDITOR ---
+  function initViewModes() {
+    const btnVisual = document.getElementById('btn-mode-visual');
+    const btnSplit = document.getElementById('btn-mode-split');
+    const btnCode = document.getElementById('btn-mode-code');
+
+    const setMode = (mode) => {
+      state.viewMode = mode;
+      document.body.classList.remove('mode-split', 'mode-code');
+      [btnVisual, btnSplit, btnCode].forEach(b => { if (b) b.classList.remove('active'); });
+
+      if (mode === 'split') {
+        document.body.classList.add('mode-split');
+        if (btnSplit) btnSplit.classList.add('active');
+      } else if (mode === 'code') {
+        document.body.classList.add('mode-code');
+        if (btnCode) btnCode.classList.add('active');
+      } else {
+        if (btnVisual) btnVisual.classList.add('active');
+      }
+      syncCodeEditor();
+    };
+
+    if (btnVisual) btnVisual.addEventListener('click', () => setMode('visual'));
+    if (btnSplit) btnSplit.addEventListener('click', () => setMode('split'));
+    if (btnCode) btnCode.addEventListener('click', () => setMode('code'));
+  }
+
+  function initCodeEditor() {
+    const textarea = document.getElementById('studio-code-editor-textarea');
+    const autoApplyCheckbox = document.getElementById('code-auto-apply');
+    const btnApply = document.getElementById('btn-apply-code');
+    const btnFormat = document.getElementById('btn-format-code');
+
+    // Code tabs
+    document.querySelectorAll('.code-editor-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.code-editor-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.activeCodeTab = btn.getAttribute('data-code-tab');
+        syncCodeEditor();
+      });
+    });
+
+    // Auto apply debounce
+    let debounceTimer;
+    if (textarea) {
+      textarea.addEventListener('input', () => {
+        if (autoApplyCheckbox && autoApplyCheckbox.checked) {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            applyCodeEditorChanges();
+          }, 350);
+        }
+      });
+
+      // Tab key support
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + 2;
+        }
+      });
+    }
+
+    if (btnApply) {
+      btnApply.addEventListener('click', () => {
+        applyCodeEditorChanges();
+      });
+    }
+
+    if (btnFormat) {
+      btnFormat.addEventListener('click', () => {
+        if (textarea) {
+          textarea.value = formatCode(textarea.value, state.activeCodeTab === 'css-custom' ? 'css' : 'html');
+        }
+      });
+    }
+  }
+
+  function cleanHtml(rawHtml) {
+    const temp = document.createElement('div');
+    temp.innerHTML = rawHtml;
+    temp.querySelectorAll('#studio-floating-bar, .studio-resize-handle').forEach(el => el.remove());
+    temp.querySelectorAll('.studio-selected, .drag-over').forEach(el => el.classList.remove('studio-selected', 'drag-over'));
+    return temp.innerHTML.trim();
+  }
+
+  function syncCodeEditor() {
+    const textarea = document.getElementById('studio-code-editor-textarea');
+    const info = document.getElementById('code-editor-info');
+    const canvas = document.getElementById('studio-canvas-root');
+    if (!textarea || !canvas) return;
+
+    if (state.activeCodeTab === 'html-all') {
+      textarea.value = cleanHtml(canvas.innerHTML);
+      if (info) info.innerText = 'HTML Completo da Tela · Edição ao Vivo';
+    } else if (state.activeCodeTab === 'html-selected') {
+      if (state.selectedNode) {
+        textarea.value = cleanHtml(state.selectedNode.outerHTML);
+        if (info) info.innerText = 'HTML do Bloco Selecionado';
+      } else {
+        textarea.value = '<!-- Nenhum bloco selecionado. Clique em um elemento no canvas para editar seu HTML. -->';
+        if (info) info.innerText = 'Selecione um bloco no canvas';
+      }
+    } else if (state.activeCodeTab === 'css-custom') {
+      textarea.value = state.customCss || '/* Escreva regras CSS customizadas aqui */';
+      if (info) info.innerText = 'CSS Customizado da Página';
+    }
+  }
+
+  function applyCodeEditorChanges() {
+    const textarea = document.getElementById('studio-code-editor-textarea');
+    const canvas = document.getElementById('studio-canvas-root');
+    if (!textarea || !canvas) return;
+
+    const val = textarea.value.trim();
+
+    if (state.activeCodeTab === 'html-all') {
+      removeFloatingActionBar();
+      removeResizeHandles();
+      canvas.innerHTML = val;
+      deselectNode();
+      saveHistoryState();
+    } else if (state.activeCodeTab === 'html-selected') {
+      if (state.selectedNode && state.selectedNode.parentNode) {
+        removeFloatingActionBar();
+        removeResizeHandles();
+        const temp = document.createElement('div');
+        temp.innerHTML = val;
+        const newNode = temp.firstElementChild;
+        if (newNode) {
+          state.selectedNode.parentNode.replaceChild(newNode, state.selectedNode);
+          selectNode(newNode);
+          saveHistoryState();
+        }
+      }
+    } else if (state.activeCodeTab === 'css-custom') {
+      state.customCss = val;
+      state.pageData.custom_css = val;
+      injectCustomCss(val);
+      saveHistoryState();
+    }
+  }
+
+  function injectCustomCss(cssText) {
+    let styleEl = document.getElementById('studio-live-custom-css');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'studio-live-custom-css';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = cssText || '';
+  }
+
+  function formatCode(code, type = 'html') {
+    if (type === 'css') return code;
+    let formatted = '';
+    let pad = 0;
+    const tokens = code.replace(/>\s*</g, '><').split(/(?=<)|(?<=>)/);
+    tokens.forEach(node => {
+      if (!node.trim()) return;
+      if (node.match(/^<\/\w/)) {
+        if (pad > 0) pad -= 1;
+      }
+      formatted += '  '.repeat(pad) + node.trim() + '\n';
+      if (node.match(/^<\w[^>]*[^\/]>/) && !node.startsWith('<!') && !node.match(/<(img|hr|br|input)/i)) {
+        pad += 1;
+      }
+    });
+    return formatted.trim();
   }
 
   // --- PREVIEW INTERACTIVE MODE & MODALS ---
@@ -735,16 +1193,12 @@
       return;
     }
 
-    // Toggle checkboxes
     const cb = e.target.closest('input[type="checkbox"]');
-    if (cb) {
-      cb.checked = !cb.checked;
-    }
+    if (cb) cb.checked = !cb.checked;
 
-    // Turno button active toggle
-    const turnoBtn = e.target.closest('.turno-bar button');
+    const turnoBtn = e.target.closest('.turno-bar button, .turno-options button');
     if (turnoBtn) {
-      const parent = turnoBtn.closest('.turno-bar');
+      const parent = turnoBtn.parentElement;
       parent.querySelectorAll('button').forEach(b => {
         b.classList.remove('btn-white', 'shadow-sm');
         b.style.background = 'transparent';
@@ -769,8 +1223,8 @@
     const canvas = document.getElementById('studio-canvas-root');
     if (!canvas) return;
 
-    // Clean floating bar from snapshot
     removeFloatingActionBar();
+    removeResizeHandles();
 
     const snapshot = canvas.innerHTML;
     state.history = state.history.slice(0, state.historyIndex + 1);
@@ -788,6 +1242,7 @@
       const canvas = document.getElementById('studio-canvas-root');
       canvas.innerHTML = state.history[state.historyIndex];
       deselectNode();
+      syncCodeEditor();
     }
   }
 
@@ -797,6 +1252,7 @@
       const canvas = document.getElementById('studio-canvas-root');
       canvas.innerHTML = state.history[state.historyIndex];
       deselectNode();
+      syncCodeEditor();
     }
   }
 
@@ -848,13 +1304,8 @@
     const btnExport = document.getElementById('btn-export-html');
     if (btnExport) {
       btnExport.addEventListener('click', () => {
-        removeFloatingActionBar();
         const canvas = document.getElementById('studio-canvas-root');
-        const clone = canvas.cloneNode(true);
-        // Clean studio helper classes
-        clone.querySelectorAll('.studio-selected, .drag-over').forEach(el => el.classList.remove('studio-selected', 'drag-over'));
-        const htmlCode = clone.innerHTML.trim();
-        
+        const htmlCode = cleanHtml(canvas.innerHTML);
         document.getElementById('code-output-html').innerText = htmlCode;
         document.getElementById('studio-code-modal').classList.add('open');
       });
@@ -894,79 +1345,6 @@
     }
   }
 
-  // --- DEFAULT TEMPLATES ---
-  const DEFAULT_TEMPLATES = {
-    'passagem': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm border-0 studio-canvas-node" style="border-radius: 1rem; background: #ffffff;">
-            <h5 class="studio-text" style="font-weight: 800; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.85rem;">
-              <i class="bi bi-hospital"></i> Setores
-            </h5>
-            <div class="list-group list-group-flush small">
-              <a href="#" class="list-group-item list-group-item-action active" style="border-radius: 0.5rem; font-weight: 700; background: var(--primary);"><i class="bi bi-geo-alt"></i> Setor de Internação 1</a>
-              <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.5rem; font-weight: 600;"><i class="bi bi-geo-alt"></i> U.T.I. Geral</a>
-              <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.5rem; font-weight: 600;"><i class="bi bi-geo-alt"></i> Centro Cirúrgico</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-9">
-          <div class="row g-3 mb-3">
-            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-            <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-          </div>
-          ${COMPONENT_DEFINITIONS['card_paciente'].render()}
-          ${COMPONENT_DEFINITIONS['card_paciente'].render()}
-          ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
-        </div>
-      </div>
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'dashboard_pa': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="row g-3 mb-3" style="width: 100%;">
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render()}</div>
-      </div>
-      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'pacientes': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render()}</div>
-      </div>
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'auditorias': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      ${COMPONENT_DEFINITIONS['panel_white'].render()}
-      ${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'livro': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      ${COMPONENT_DEFINITIONS['panel_white'].render()}
-      ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'escala': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `
-  };
-
   // --- SAVE & LOAD FROM BACKEND ---
   async function loadPageData() {
     const canvas = document.getElementById('studio-canvas-root');
@@ -985,6 +1363,7 @@
       if (pageNameInput) pageNameInput.value = state.pageData.nome;
       if (pageBadge) pageBadge.innerText = 'Personalizada';
       saveHistoryState();
+      syncCodeEditor();
       return;
     }
 
@@ -1001,10 +1380,15 @@
             canvas.innerHTML = state.pageData.html_output;
           } else if (DEFAULT_TEMPLATES[state.pageId]) {
             canvas.innerHTML = DEFAULT_TEMPLATES[state.pageId]().trim();
-          } else if (state.pageData.layout_json) {
-            renderLayoutFromJson(state.pageData.layout_json);
           }
+
+          if (state.pageData.custom_css) {
+            state.customCss = state.pageData.custom_css;
+            injectCustomCss(state.customCss);
+          }
+
           saveHistoryState();
+          syncCodeEditor();
           return;
         }
       }
@@ -1023,44 +1407,28 @@
           state.pageData = parsed;
           if (pageNameInput) pageNameInput.value = parsed.nome;
           canvas.innerHTML = parsed.html_output || '';
+          if (parsed.custom_css) {
+            state.customCss = parsed.custom_css;
+            injectCustomCss(parsed.custom_css);
+          }
         } catch (e) {}
       }
     }
     saveHistoryState();
-  }
-
-  function renderLayoutFromJson(layoutStr) {
-    const canvas = document.getElementById('studio-canvas-root');
-    try {
-      const layout = typeof layoutStr === 'string' ? JSON.parse(layoutStr) : layoutStr;
-      if (layout && layout.components && Array.isArray(layout.components)) {
-        canvas.innerHTML = '';
-        layout.components.forEach(comp => {
-          const typeKey = comp.type;
-          if (COMPONENT_DEFINITIONS[typeKey]) {
-            const temp = document.createElement('div');
-            temp.innerHTML = COMPONENT_DEFINITIONS[typeKey].render().trim();
-            canvas.appendChild(temp.firstElementChild);
-          }
-        });
-      }
-    } catch (e) {
-      console.error('[Studio] Erro ao interpretar layout_json:', e);
-    }
+    syncCodeEditor();
   }
 
   async function savePageData() {
     const btnSave = document.getElementById('btn-save-page');
     const canvas = document.getElementById('studio-canvas-root');
     removeFloatingActionBar();
+    removeResizeHandles();
 
-    const clone = canvas.cloneNode(true);
-    clone.querySelectorAll('.studio-selected, .drag-over').forEach(el => el.classList.remove('studio-selected', 'drag-over'));
-    const htmlOutput = clone.innerHTML.trim();
-
+    const htmlOutput = cleanHtml(canvas.innerHTML);
     state.pageData.html_output = htmlOutput;
+    state.pageData.custom_css = state.customCss;
     state.pageData.layout_json = JSON.stringify({
-      version: '1.0',
+      version: '2.0',
       id: state.pageData.id,
       nome: state.pageData.nome,
       updated_at: new Date().toISOString()
@@ -1084,7 +1452,6 @@
       btnSave.innerHTML = '<i class="bi bi-check-circle-fill"></i> Salvo Localmente!';
     }
 
-    // Local storage backup
     localStorage.setItem(`conecta_studio_${state.pageData.id}`, JSON.stringify(state.pageData));
 
     setTimeout(() => {
