@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/style.css?v=167" rel="stylesheet">
+  <link href="css/style.css?v=171" rel="stylesheet">
 </head>
 <body>
 
@@ -168,6 +168,33 @@
             <span class="livro-choice-card-copy"><strong>Higiene de Mãos</strong><small>Registre oportunidades observadas e resultados de adesão.</small></span>
             <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
           </button>
+          <button class="livro-choice-card" id="btn-auditorias-processos" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clipboard2-check"></i></span>
+            <span class="livro-choice-card-copy"><strong>Auditoria de Processos</strong><small>Avalie metas de segurança do paciente conforme FO NSP 016.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditoria-processos-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-voltar" type="button" aria-label="Voltar às auditorias"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-choice-eyebrow">Auditorias</span><h1>Auditoria de Processos</h1><p>Registre uma nova avaliação ou consulte o histórico.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditoria-processos-nova" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-pencil-square"></i></span>
+            <span class="livro-choice-card-copy"><strong>Nova Auditoria</strong><small>Preencha dados do paciente, internação e avalie as metas.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-auditoria-processos-historico" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clock-history"></i></span>
+            <span class="livro-choice-card-copy"><strong>Histórico</strong><small>Recupere auditorias persistidas e gere XLSX ou PDF novamente.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
         </div>
       </div>
     </section>
@@ -229,6 +256,135 @@
     <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-historico">
       <header class="livro-page-header"><div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-historico-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-clock-history"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Histórico de Higiene de Mãos</h2><p>Auditorias persistidas no Oracle e disponíveis para nova exportação.</p></div></div><div class="auditoria-view-toggle"><button class="btn-secondary active" id="btn-auditoria-visao-individual" type="button"><i class="bi bi-person-lines-fill"></i> Individual</button><button class="btn-secondary" id="btn-auditoria-visao-consolidada" type="button"><i class="bi bi-bar-chart-line"></i> Consolidado</button></div></header>
       <div class="livro-preview auditoria-historico-list" id="auditoria-historico-list"><div class="loading-placeholder">Carregando auditorias...</div></div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Seleção de Paciente ────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-paciente">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-paciente-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Selecionar Paciente</h2><p>Escolha o paciente para iniciar a auditoria de processos.</p></div>
+        </div>
+      </header>
+
+      <div class="auditoria-paciente-actions">
+        <button class="btn-secondary" id="btn-auditoria-processos-aleatorio" type="button">
+          <i class="bi bi-shuffle"></i> Paciente Aleatório
+        </button>
+      </div>
+
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-calendar-event"></i> Internados ontem</span></div>
+        <div class="livro-section-body">
+          <div id="proc-pacientes-ontem-list" class="auditoria-pacientes-list">
+            <div class="loading-placeholder"><i class="bi bi-arrow-repeat spin"></i> Carregando pacientes...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Formulário ──────────────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-form">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-form-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Nova Auditoria de Processos</h2><p>Avalie as metas de segurança do paciente conforme FO NSP 016.</p></div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <!-- Dados do paciente -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-person"></i> Dados do Paciente</span></div>
+        <div class="livro-section-body">
+          <div class="auditoria-grid-3">
+            <div class="livro-field"><label for="proc-nm-paciente">Nome do Paciente <span class="required-star">*</span></label><input type="text" id="proc-nm-paciente" placeholder="Nome completo"></div>
+            <div class="livro-field"><label for="proc-dt-nascimento">Data de Nascimento</label><input type="date" id="proc-dt-nascimento"></div>
+            <div class="livro-field"><label for="proc-nr-idade">Idade</label><input type="text" id="proc-nr-idade" readonly placeholder="Calculada automaticamente"></div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Dados da internação -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-hospital"></i> Dados da Internação</span></div>
+        <div class="livro-section-body">
+          <div class="auditoria-grid-3">
+            <div class="livro-field"><label for="proc-dt-admissao">Admissão</label><input type="date" id="proc-dt-admissao"></div>
+            <div class="livro-field"><label for="proc-unidade-leito">Unidade e Leito</label><input type="text" id="proc-unidade-leito" placeholder="Ex: UTI-Leito 03"></div>
+            <div class="livro-field"><label for="proc-nr-atendimento">Atendimento</label><input type="text" id="proc-nr-atendimento" placeholder="Nº do atendimento"></div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Dados da auditoria -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-clipboard-check"></i> Dados da Auditoria</span></div>
+        <div class="livro-section-body">
+          <div class="auditoria-grid-3">
+            <div class="livro-field"><label for="proc-dt-auditoria">Data <span class="required-star">*</span></label><input type="date" id="proc-dt-auditoria" required></div>
+            <div class="livro-field"><label for="proc-setor">Setor <span class="required-star">*</span></label><select id="proc-setor" class="form-select" required><option value="">Selecione...</option></select></div>
+            <div class="livro-field"><label for="proc-avaliador">Responsável <span class="required-star">*</span></label><select id="proc-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pergunta inicial -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Pergunta Inicial</span></div>
+        <div class="livro-section-body">
+          <div class="auditoria-pergunta-item">
+            <span class="auditoria-pergunta-texto">O paciente está com acompanhante?</span>
+            <div class="livro-turno-options">
+              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="S"><span><i class="bi bi-check-circle"></i> Sim</span></label>
+              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="N"><span><i class="bi bi-x-circle"></i> Não</span></label>
+              <label class="livro-turno-option"><input type="radio" name="proc-perg-acompanhante" value="NA"><span><i class="bi bi-dash-circle"></i> NA</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container dinâmico para metas -->
+      <div id="proc-metas-container"></div>
+
+      <!-- Observações -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div>
+        <div class="livro-section-body"><textarea id="proc-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div>
+      </div>
+
+      <div class="auditoria-feedback d-none" id="proc-feedback" role="status"></div>
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-auditoria-processos-ver-historico" type="button">
+            <i class="bi bi-search"></i> Ver auditorias realizadas
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-auditoria-processos-cancelar" type="button">Cancelar</button>
+          <button class="btn-save" id="btn-auditoria-processos-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Histórico ───────────────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-historico">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-historico-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clock-history"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Histórico de Auditoria de Processos</h2><p>Auditorias persistidas no Oracle e disponíveis para nova exportação.</p></div>
+        </div>
+        <div class="auditoria-view-toggle">
+          <button class="btn-secondary active" id="btn-auditoria-processos-visao-individual" type="button"><i class="bi bi-person-lines-fill"></i> Individual</button>
+          <button class="btn-secondary" id="btn-auditoria-processos-visao-consolidada" type="button"><i class="bi bi-bar-chart-line"></i> Consolidado</button>
+        </div>
+      </header>
+      <div class="livro-preview auditoria-historico-list" id="auditoria-processos-historico-list"><div class="loading-placeholder">Carregando auditorias...</div></div>
     </section>
 
     <section class="livro-sub-menu d-none" id="livro-sub-menu">
@@ -874,7 +1030,7 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=99"></script>
+  <script src="js/app.js?v=102"></script>
   <script src="js/auditorias.js?v=8"></script>
 </body>
 </html>
