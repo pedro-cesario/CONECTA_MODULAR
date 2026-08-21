@@ -8188,6 +8188,39 @@ input[type="password"] {
    ============================================================================= */
 
 /* ─── Campos Esmaltecidos (Glazed / Readonly Lock) ─────────────────────────── */
+.auditoria-glazed-section {
+  border: 1.5px solid #bfdbfe !important;
+  box-shadow: 0 6px 20px rgba(7, 84, 166, 0.07) !important;
+}
+
+.auditoria-glazed-section .livro-section-header {
+  background: linear-gradient(135deg, #0754A6 0%, #033d7a 100%) !important;
+  padding: 0.95rem 1.25rem !important;
+  border-bottom: 1px solid #022b56 !important;
+}
+
+.auditoria-glazed-section .livro-section-header > span {
+  color: #ffffff !important;
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.auditoria-glazed-section .livro-section-header > span i {
+  color: #93c5fd !important;
+  font-size: 1.18rem !important;
+}
+
+.auditoria-glazed-section .auditoria-locked-badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(6px) !important;
+  font-size: 0.74rem !important;
+  padding: 0.25rem 0.7rem !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
 .field-glazed label {
   color: var(--primary) !important;
   font-weight: 700 !important;
@@ -8381,8 +8414,8 @@ input[type="password"] {
 }
 
 .auditoria-paciente-card {
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  background: linear-gradient(145deg, #f0f7ff 0%, #e2eeff 100%);
+  border: 1.5px solid #bfdbfe;
   border-radius: 1rem;
   padding: 1.1rem 1.25rem;
   display: flex;
@@ -8391,13 +8424,14 @@ input[type="password"] {
   gap: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
 }
 
 .auditoria-paciente-card:hover {
-  border-color: #3b82f6;
+  background: #ffffff;
+  border-color: #2563eb;
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
 }
 
 .auditoria-paciente-card-head {
@@ -8408,9 +8442,9 @@ input[type="password"] {
 }
 
 .auditoria-paciente-name {
-  font-size: 0.96rem;
+  font-size: 0.98rem;
   font-weight: 800;
-  color: var(--slate-900);
+  color: #0f172a;
   line-height: 1.35;
 }
 
@@ -8418,13 +8452,13 @@ input[type="password"] {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.22rem 0.6rem;
+  padding: 0.25rem 0.65rem;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: 6px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #dbeafe;
+  background: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -8438,18 +8472,19 @@ input[type="password"] {
 .auditoria-meta-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.22rem 0.55rem;
+  gap: 0.35rem;
+  padding: 0.24rem 0.6rem;
   font-size: 0.76rem;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 6px;
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .auditoria-meta-tag i {
-  color: #64748b;
+  color: #2563eb;
 }
 
 .auditoria-paciente-card-foot {
@@ -8457,14 +8492,14 @@ input[type="password"] {
   align-items: center;
   justify-content: space-between;
   padding-top: 0.65rem;
-  border-top: 1px solid #f1f5f9;
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: #2563eb;
+  border-top: 1px solid #c7dcfb;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #1d4ed8;
 }
 
 .auditoria-paciente-card:hover .auditoria-paciente-card-foot {
-  color: #1d4ed8;
+  color: #1e40af;
 }
 
 /* ─── Segmented Switches Semânticos (Respostas Sim/Não/NA/Sabonete/Álcool) ─── */
