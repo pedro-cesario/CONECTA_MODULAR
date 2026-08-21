@@ -2301,10 +2301,11 @@
               if (!confirm(`Deseja realmente excluir a tela personalizada "${nome}"?`)) return;
 
               try {
-                const delRes = await api.delete(`${apiConfig.baseUrl}/admin/studio/pages/${id}`);
+                const delRes = await api.del(`${apiConfig.baseUrl}/admin/studio/pages/${id}`);
                 if (delRes.success) {
                   await loadStudioPages();
                 }
+
               } catch (e) {
                 console.error('Erro ao excluir tela:', e);
               }

@@ -23,14 +23,9 @@ async function listarOpcoes() {
                      WHERE cd_setor_atendimento = :cd_setor_atendimento
                        AND ie_situacao = 'A'
                      ORDER BY obter_nome_usuario(nm_usuario), nm_usuario`, { cd_setor_atendimento: 48 });
-    const profissionais = await conn.execute(`SELECT cd_pessoa_fisica, nm_usuario,
-                           obter_nome_usuario(nm_usuario) AS nome
-                      FROM usuario
-                     WHERE ie_tipo_evolucao IN (3, 13)
-                       AND ie_situacao = 'A'
-                     ORDER BY obter_nome_usuario(nm_usuario), nm_usuario`);
+    const categorias = await conn.execute(`SELECT DS_VALOR_DOMINIO FROM VALOR_DOMINIO WHERE CD_DOMINIO = 72 AND IE_SITUACAO = 'A' ORDER BY DS_VALOR_DOMINIO`);
 
-    return { setores: setores.rows || [], avaliadores: avaliadores.rows || [], profissionais: profissionais.rows || [] };
+    return { setores: setores.rows || [], avaliadores: avaliadores.rows || [], profissionais: categorias.rows || [] };
   } finally {
     await conn.close();
   }
@@ -47,16 +42,12 @@ async function validarReferencias(conn, dados) {
                    WHERE cd_pessoa_fisica = :cd_pessoa_fisica
                      AND cd_setor_atendimento = :cd_setor_atendimento
                      AND ie_situacao = 'A'`, { cd_pessoa_fisica: dados.cd_avaliador, cd_setor_atendimento: 48 });
-  const profissional = await conn.execute(`SELECT cd_pessoa_fisica, obter_nome_usuario(nm_usuario) AS nome
-                    FROM usuario
-                   WHERE cd_pessoa_fisica = :cd_pessoa_fisica
-                     AND ie_tipo_evolucao IN (3, 13)
-                     AND ie_situacao = 'A'`, { cd_pessoa_fisica: dados.cd_profissional });
+  const categoria = await conn.execute(`SELECT DS_VALOR_DOMINIO FROM VALOR_DOMINIO WHERE CD_DOMINIO = 72 AND IE_SITUACAO = 'A' AND DS_VALOR_DOMINIO = :ds_cargo`, { ds_cargo: dados.cd_profissional });
 
   if (!setor.rows?.[0]) throw new Error('Setor inválido ou inativo.');
   if (!avaliador.rows?.[0]) throw new Error('Avaliador inválido ou inativo.');
-  if (!profissional.rows?.[0]) throw new Error('Profissional inválido ou inativo.');
-  return { setor: setor.rows[0], avaliador: avaliador.rows[0], profissional: profissional.rows[0] };
+  if (!categoria.rows?.[0]) throw new Error('Categoria inválida.');
+  return { setor: setor.rows[0], avaliador: avaliador.rows[0], profissional: { NOME: categoria.rows[0].DS_VALOR_DOMINIO } };
 }
 
 async function salvarHigieneMaos(dados, nmUsuario) {
@@ -93,7 +84,7 @@ async function salvarHigieneMaos(dados, nmUsuario) {
       VALUES (:nr_sequencia, :nr_seq_auditoria, :cd_pessoa_fisica, :nm_profissional, SYSDATE, SYSDATE, 'A')`, {
       nr_sequencia: nrAuditoriaProfissional,
       nr_seq_auditoria: nrAuditoria,
-      cd_pessoa_fisica: dados.cd_profissional,
+      cd_pessoa_fisica: null, /* We now save Categoria string in nm_profissional */
       nm_profissional: referencias.profissional.NOME
     });
 

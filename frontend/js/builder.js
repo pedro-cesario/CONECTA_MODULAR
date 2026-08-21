@@ -340,131 +340,687 @@
 
   // --- 100% AUTHENTIC NATIVE SCREENS ---
   const DEFAULT_TEMPLATES = {
-    'passagem': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="app-container studio-canvas-node" data-studio-type="app_container" style="display: flex; gap: 1rem; width: 100%; min-height: 520px;">
-        <aside class="sidebar studio-canvas-node" data-studio-type="sidebar" style="width: 260px; background: #ffffff; border-radius: 1rem; padding: 1.15rem; box-shadow: 0 4px 18px rgba(15,23,42,0.06); border: 1px solid #e2e8f0; flex-shrink: 0;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.65rem;">
-            <i class="bi bi-building" style="font-size: 1.2rem; color: var(--primary);"></i>
-            <h4 class="m-0" style="font-weight: 800; font-size: 1.05rem; color: #1e293b;">Setores</h4>
-          </div>
-          <div class="list-group list-group-flush" style="font-size: 0.85rem;">
-            <a href="#" class="list-group-item list-group-item-action active" style="border-radius: 0.65rem; font-weight: 700; background: var(--primary); color: #ffffff; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="bi bi-hospital"></i> Internação 1</span>
-              <span class="badge bg-white text-primary" style="font-weight: 800;">12</span>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="bi bi-heart-pulse"></i> U.T.I. Geral</span>
-              <span class="badge bg-secondary-subtle text-secondary">8</span>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="bi bi-scissors"></i> Centro Cirúrgico</span>
-              <span class="badge bg-secondary-subtle text-secondary">4</span>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action" style="border-radius: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 4px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="bi bi-activity"></i> P.A. Adulto</span>
-              <span class="badge bg-secondary-subtle text-secondary">14</span>
-            </a>
-          </div>
-        </aside>
-
-        <main class="main-content" style="flex: 1; min-width: 0;">
-          <header style="background: #ffffff; border-radius: 1rem; padding: 1rem 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(15,23,42,0.04); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 800; color: var(--primary);">Passagem de Plantão · Internação 1</span>
-              <h2 class="m-0" style="font-weight: 800; font-size: 1.35rem; color: #1e293b;">Pacientes do Setor</h2>
+  'passagem': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
             </div>
-            <span class="badge bg-primary-subtle text-primary" style="font-weight: 700; font-size: 0.82rem;"><i class="bi bi-shield-check"></i> Plantão Aberto</span>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<div class="app-container " id="workspace-passagem" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <aside class="sidebar" id="sidebar-setores">
+        <div class="sidebar-header" style="justify-content: flex-start; gap: 12px;">
+          <button class="livro-page-back" id="btn-voltar-passagem-principal" type="button" aria-label="Voltar">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <h3 style="margin: 0;"><i class="bi bi-building"></i> Setores</h3>
+        </div>
+        <div class="sidebar-body" id="setores-list">
+          <div class="loading-placeholder">
+            <i class="bi bi-arrow-repeat spin"></i> Carregando setores...
+          </div>
+        </div>
+      </aside>
+
+      <button class="sidebar-backdrop " id="sidebar-backdrop" type="button" aria-label="Fechar menu de setores"></button>
+
+      <button class="sidebar-toggle-btn " id="btn-expand-sidebar" type="button" title="Abrir setores" aria-controls="sidebar-setores" aria-expanded="false" aria-label="Abrir setores">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <main class="main-content studio-child-zone" id="main-area">
+        <div id="pacientes-area" class="pacientes-area">
+          <header class="livro-page-header" id="passagem-page-header">
+            <div class="livro-page-heading">
+              <button class="livro-page-back" id="btn-passagem-voltar-header" type="button" aria-label="Voltar ao menu de Passagem de Plantão">
+                <i class="bi bi-arrow-left"></i>
+              </button>
+              <span class="livro-page-icon"><i class="bi bi-arrow-left-right"></i></span>
+              <div>
+                <span class="livro-page-eyebrow">Passagem de Plantão</span>
+                <h2>Lançar nova passagem</h2>
+                <p id="passagem-context">Selecione o setor e o turno para carregar os pacientes.</p>
+              </div>
+            </div>
           </header>
-
-          ${COMPONENT_DEFINITIONS['card_paciente'].render('Maria Aparecida Santos', 'Leito 101-A', '94821', 'Pós-operatório imediato de Artroplastia Total de Quadril')}
-          ${COMPONENT_DEFINITIONS['card_paciente'].render('João Carlos Pereira', 'Leito 102-B', '83920', 'Insuficiência Cardíaca Congestiva Descompensada')}
-          ${COMPONENT_DEFINITIONS['card_paciente'].render('Francisca Silveira Souza', 'Leito 103-A', '77412', 'Pneumonia Comunitária Grave')}
-
-          ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
-          ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-        </main>
-      </div>
-    `,
-
-    'dashboard_pa': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="row g-3 mb-3" style="width: 100%;">
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Fila de Espera P.A.', '14', 'bi-hourglass-split', '#0284c7')}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Em Atendimento', '6', 'bi-heart-pulse-fill', '#16a34a')}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['kpi_card'].render('Tempo Médio de Espera', '18 min', 'bi-clock-history', '#d97706')}</div>
-      </div>
-      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
-
-    'pacientes': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="studio-canvas-node card p-3 border-0 shadow-sm mb-3" style="background: #ffffff; border-radius: 1rem; width: 100%;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <h4 class="m-0" style="font-weight: 800; color: var(--primary);"><i class="bi bi-hospital"></i> Mapa Geral de Leitos</h4>
-          <span class="badge bg-success-subtle text-success" style="font-weight: 700;">28 / 30 Leitos Ocupados (93%)</span>
+          <div class="empty-state d-none" id="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-arrow-left-circle"></i>
+            </div>
+            <h4>Selecione um setor</h4>
+            <p>Escolha um setor na barra lateral para carregar os pacientes.</p>
+          </div>
+          <div id="pacientes-list" class="pacientes-list "></div>
         </div>
-      </div>
-      <div class="row g-3" style="width: 100%; margin-bottom: 1.25rem;">
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Carlos Eduardo Lima', 'Leito 201', '55102', 'Pneumonia Bacteriana')}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Ana Beatriz Souza', 'Leito 202', '55109', 'Apendicectomia')}</div>
-        <div class="col-md-4">${COMPONENT_DEFINITIONS['card_paciente'].render('Roberto Albuquerque', 'Leito 203', '55115', 'Cetoacidose Diabética')}</div>
-      </div>
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
 
-    'auditorias': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
-        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 1rem;"><i class="bi bi-shield-check"></i> Nova Auditoria de Higiene das Mãos</h4>
-        <div class="row g-3 mb-2">
-          <div class="col-md-4">
-            <label class="form-label small font-weight-bold">Data da Observação</label>
-            <input type="date" class="form-control form-control-sm" value="2026-08-20">
+        <div class="main-footer " id="main-footer">
+          <div class="main-footer-left">
+            <div class="footer-info">
+              <span id="pacientes-count">0</span> paciente(s) · <span id="intercorrencias-count">0</span> intercorrência(s)
+            </div>
           </div>
-          <div class="col-md-4">
-            <label class="form-label small font-weight-bold">Setor Auditado</label>
-            <select class="form-select form-select-sm"><option>Setor de Internação 1</option><option>U.T.I. Geral</option></select>
+
+          <div class="main-footer-center" id="main-footer-turno-wrapper">
+            <div class="turno-label" id="turno-label-dinamico">
+              <i class="bi bi-clock-history"></i> Plantão: <span class="required-star">*</span>
+            </div>
+            <div class="turno-options" id="turno-options-dinamico">
+              <!-- As opções de turno serão injetadas via JS baseado no perfil -->
+            </div>
           </div>
-          <div class="col-md-4">
-            <label class="form-label small font-weight-bold">Avaliador</label>
-            <select class="form-select form-select-sm"><option>Alexandre Miranda</option></select>
+
+          <div class="main-footer-right">
+            <button class="btn-clear-patients" id="btn-clear-patients" type="button" title="Limpar pacientes da tela">
+              <i class="bi bi-trash3"></i> Limpar Tela
+            </button>
+            <button class="btn-save" id="btn-salvar" type="button">
+              <i class="bi bi-check-circle"></i> Salvar / Finalizar Passagem
+            </button>
           </div>
         </div>
+      </main>
+    </div>
+</div>
+`,
+  'dashboard_pa': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
       </div>
-      <div class="row g-3 mb-3" style="width: 100%;">
-        <div class="col-md-6">${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}</div>
-        <div class="col-md-6">${COMPONENT_DEFINITIONS['auditoria_nisa_card'].render()}</div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
       </div>
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<section class="dashboard-workspace " id="workspace-dashboard" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <div class="dashboard-header-panel">
+        <div class="dashboard-header-main">
+          <div class="dashboard-brand">
+            <div class="dashboard-logo">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div>
+              <h2>Dashboard de Pacientes</h2>
+              <span>Conecta Heal</span>
+            </div>
+          </div>
 
-    'livro': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
-        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 1rem;"><i class="bi bi-journal-medical"></i> Livro Administrativo · Composição do Plantão</h4>
-        <div class="row g-3">
-          <div class="col-md-3"><label class="small font-weight-bold">Setor</label><select class="form-select form-select-sm"><option>Internação 1</option></select></div>
-          <div class="col-md-3"><label class="small font-weight-bold">Data</label><input type="date" class="form-control form-control-sm" value="2026-08-20"></div>
-          <div class="col-md-3">${COMPONENT_DEFINITIONS['turno_bar'].render()}</div>
-          <div class="col-md-3"><label class="small font-weight-bold">Enfermeiro Responsável</label><select class="form-select form-select-sm"><option>Enf. Mariana Costa</option></select></div>
+          <div class="dashboard-stats" id="dashboard-stats-cards">
+            <div class="dashboard-stat">
+              <span>Total Pacientes</span>
+              <strong id="dashboard-total">0</strong>
+            </div>
+            <div class="dashboard-stat dashboard-stat-red">
+              <span>Prescrição de Agora</span>
+              <strong id="dashboard-medicacao">0</strong>
+            </div>
+            <div class="dashboard-stat dashboard-stat-yellow">
+              <span>Checagens Pendentes</span>
+              <strong id="dashboard-checagens">0</strong>
+            </div>
+          </div>
+
+          <div class="dashboard-controls">
+            <select id="dashboard-setor" class="form-select dashboard-setor-select">
+              <option value="">Selecione o setor...</option>
+            </select>
+            <div class="dashboard-clock">
+              <span class="dashboard-turno-inline" id="dashboard-turno-label">Turno</span>
+              <span class="dot-sep">·</span>
+              <div class="dashboard-clock-text">
+                <strong id="dashboard-clock-time">--:--:--</strong>
+                <span id="dashboard-clock-date">--/--/----</span>
+              </div>
+              <button class="dashboard-refresh-btn" id="btn-dashboard-refresh" type="button" title="Atualizar">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-update-bar">
+          <span><span class="dashboard-pulse"></span> Atualização automática a cada 30 segundos</span>
+          <span id="dashboard-last-update">Aguardando setor...</span>
         </div>
       </div>
-      ${COMPONENT_DEFINITIONS['intercorrencia_box'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `,
 
-    'escala': () => `
-      ${COMPONENT_DEFINITIONS['topbar'].render()}
-      <div class="studio-canvas-node card-conecta mb-3" style="background: #ffffff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; width: 100%;">
-        <h4 style="font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;"><i class="bi bi-people-fill"></i> Gestão de Escalas Ativas</h4>
-        <p class="text-muted small m-0">Escala de enfermagem e equipe multidisciplinar.</p>
+      <div class="dashboard-feedback" id="dashboard-feedback">
+        <i class="bi bi-building"></i>
+        <span>Selecione um setor para visualizar os pacientes.</span>
       </div>
-      ${COMPONENT_DEFINITIONS['tabela_conecta'].render()}
-      ${COMPONENT_DEFINITIONS['footer_conecta'].render()}
-    `
-  };
+
+      <div class="dashboard-patients-grid" id="dashboard-pacientes-grid"></div>
+    </section>
+</div>
+`,
+  'pacientes': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<section class="dashboard-workspace " id="workspace-dashboard-internacao" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <div class="dashboard-header-panel">
+        <div class="dashboard-header-main">
+          <div class="dashboard-brand">
+            <div class="dashboard-logo">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div>
+              <h2>Pronto Atendimento</h2>
+              <span>Conecta Heal</span>
+            </div>
+          </div>
+
+          <div class="dashboard-pa-stats" id="dashboard-pa-stats-cards">
+            <div class="dashboard-stat dashboard-stat-primary">
+              <span>Total Pacientes</span>
+              <strong id="pa-total-count">0</strong>
+            </div>
+          </div>
+
+          <div class="dashboard-controls">
+            <div class="dashboard-clock">
+              <span class="dashboard-turno-inline" id="dashboard-internacao-turno-label">Turno</span>
+              <span class="dot-sep">·</span>
+              <div class="dashboard-clock-text">
+                <strong id="dashboard-internacao-clock-time">--:--:--</strong>
+                <span id="dashboard-internacao-clock-date">--/--/----</span>
+              </div>
+              <button class="dashboard-refresh-btn" id="btn-dashboard-internacao-refresh" type="button" title="Atualizar">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-update-bar">
+          <span><span class="dashboard-pulse"></span> Atualização automática a cada 30 segundos</span>
+          <span id="dashboard-internacao-last-update">Aguardando carregamento...</span>
+        </div>
+      </div>
+
+      <div class="dashboard-feedback " id="dashboard-pa-feedback">
+        <i class="bi bi-arrow-repeat spin"></i>
+        <span>Carregando...</span>
+      </div>
+
+      <div class="dashboard-pa-patients-grid" id="dashboard-pa-patients-grid"></div>
+    </section>
+</div>
+`,
+  'livro': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<section class="livro-workspace livro-stitch-page " id="workspace-livro" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-livro-voltar" type="button" aria-label="Voltar ao menu do Livro Administrativo">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-journal-medical"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">Escala assistencial</span>
+            <h2>Lançar / Editar Livro Administrativo</h2>
+            <p>Organize a equipe e registre as informações do plantão.</p>
+          </div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <div class="livro-filter-panel" aria-label="Identificação do plantão">
+        <div class="livro-field">
+          <label for="livro-setor">Setor <span class="required-star">*</span></label>
+          <select id="livro-setor" class="form-select">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="livro-field">
+          <label for="livro-data-plantao">Data do plantão</label>
+          <input type="date" id="livro-data-plantao">
+        </div>
+        <div class="livro-field">
+          <span class="livro-field-label">Turno <span class="required-star">*</span></span>
+          <div class="livro-turno-options">
+            <label class="livro-turno-option">
+              <input type="radio" name="livro-turno" value="M" checked>
+              <span><i class="bi bi-sun"></i> Diurno</span>
+            </label>
+            <label class="livro-turno-option">
+              <input type="radio" name="livro-turno" value="N">
+              <span><i class="bi bi-moon"></i> Noturno</span>
+            </label>
+          </div>
+        </div>
+        <div class="livro-field">
+          <label for="livro-enfermeiro">Enfermeiro responsável <span class="required-star">*</span></label>
+          <select id="livro-enfermeiro" class="form-select">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="livro-sections-grid">
+        <div class="livro-section " id="livro-secao-ect-pre">
+          <div class="livro-section-header">
+            <span><i class="bi bi-person-workspace"></i> Pré-Procedimento</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-pre" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-pre-list"></div>
+        </div>
+
+        <div class="livro-section " id="livro-secao-ect-sala">
+          <div class="livro-section-header">
+            <span><i class="bi bi-hospital"></i> Sala de Procedimento</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-sala" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-sala-list"></div>
+        </div>
+
+        <div class="livro-section " id="livro-secao-ect-recuperacao">
+          <div class="livro-section-header">
+            <span><i class="bi bi-heart-pulse"></i> Sala de Recuperação</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-recuperacao" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-recuperacao-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-tecnicos">
+          <div class="livro-section-header">
+            <span><i class="bi bi-people"></i> Técnicos do plantão</span>
+            <button class="btn-sm btn-secondary" id="btn-add-tecnico" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-tecnicos-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-patio">
+          <div class="livro-section-header">
+            <span><i class="bi bi-signpost-split"></i> Pátio</span>
+            <button class="btn-sm btn-secondary" id="btn-add-patio" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-patio-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-circulante">
+          <div class="livro-section-header">
+            <span><i class="bi bi-arrow-repeat"></i> Circulante</span>
+            <button class="btn-sm btn-secondary" id="btn-add-circulante" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-circulante-list"></div>
+        </div>
+
+        <div class="livro-section livro-section-alert" id="livro-secao-faltas">
+          <div class="livro-section-header">
+            <span><i class="bi bi-calendar-x"></i> Faltas e folgas</span>
+            <button class="btn-sm btn-secondary" id="btn-add-falta" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-faltas-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-avaliacao-externa">
+          <div class="livro-section-header">
+            <span><i class="bi bi-box-arrow-up-right"></i> Avaliação externa</span>
+            <button class="btn-sm btn-secondary" id="btn-add-avaliacao-externa" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body">
+            <div id="livro-avaliacao-externa-list"></div>
+          </div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-obs">
+          <div class="livro-section-header">
+            <span><i class="bi bi-chat-left-text"></i> Observações do plantão</span>
+          </div>
+          <div class="livro-section-body">
+            <textarea id="livro-observacoes" rows="4" placeholder="Registre aqui informações gerais e pontos de atenção do plantão"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="livro-preview" id="livro-preview">
+        <div class="loading-placeholder">Nenhuma escala carregada para visualização.</div>
+      </div>
+
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary " id="btn-livro-historico" type="button">
+            <i class="bi bi-clock-history"></i> Histórico <span id="livro-historico-count"></span>
+          </button>
+          <button class="btn-secondary" id="btn-livro-buscar" type="button">
+            <i class="bi bi-search"></i> Ver livros liberados para impressão
+          </button>
+          <button class="btn-secondary " id="btn-livro-editar" type="button" title="Carregar a escala em modo edição">
+            <i class="bi bi-pencil-square"></i> Editar esta escala
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-livro-limpar" type="button">
+            <i class="bi bi-eraser"></i> Limpar
+          </button>
+          <button class="btn-save" id="btn-livro-salvar" type="button">
+            <i class="bi bi-check2-circle"></i> Salvar escala
+          </button>
+        </div>
+      </div>
+    </section>
+</div>
+`,
+  'escala': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<section class="livro-workspace escala-stitch-page " id="workspace-escala" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <header class="livro-page-header" id="escala-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-escala-voltar" type="button" aria-label="Voltar ao menu principal">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-calendar3"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">GESTÃO ASSISTENCIAL</span>
+            <h2>Gestão de Escalas — Psicologia</h2>
+            <p>Gestão e visualização de turnos da equipe multidisciplinar.</p>
+          </div>
+        </div>
+        <div class="escala-header-actions">
+        </div>
+      </header>
+
+      <div class="escala-filter-panel">
+        <div class="livro-field"><label for="escala-mes">Mês de referência</label><input type="month" id="escala-mes"></div>
+        <div class="livro-field"><label>Filtrar por turno</label><div class="escala-turno-filter"><button data-turno="" class="active" type="button">Todos</button><button data-turno="M" type="button">Manhã</button><button data-turno="N" type="button">Tarde</button></div></div>
+      </div>
+      <button class="btn-secondary escala-more-weeks" id="btn-escala-semanas-passadas" type="button"><i class="bi bi-chevron-up"></i> Carregar semanas passadas</button>
+      <div class="escala-week-list" id="escala-week-list"></div>
+      <button class="btn-secondary escala-more-weeks" id="btn-escala-mais-semanas" type="button"><i class="bi bi-chevron-down"></i> Carregar mais semanas</button>
+
+      <div class="livro-actions livro-action-bar escala-action-bar">
+        <div class="livro-action-group escala-action-filter">
+          <label for="escala-filtro-profissional">Filtrar profissional</label>
+          <div class="escala-search"><i class="bi bi-search"></i><input id="escala-filtro-profissional" type="search" placeholder="Buscar nome..."></div>
+        </div>
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-escala-imprimir" type="button"><i class="bi bi-printer"></i> Imprimir escala liberada</button>
+          <button class="btn-secondary livro-clear-btn" id="btn-escala-limpar" type="button"><i class="bi bi-eraser"></i> Limpar</button>
+          <button class="btn-save" id="btn-escala-publicar" type="button"><i class="bi bi-check2-circle"></i> Salvar/Publicar escala</button>
+        </div>
+      </div>
+    </section>
+</div>
+`,
+  'auditorias': () => `
+<div class="screen active studio-canvas-node" data-studio-type="screen" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+<nav class="topbar studio-canvas-node" data-studio-type="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item" id="nav-auditorias" type="button">Auditorias</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+<section class="livro-workspace livro-stitch-page " id="workspace-auditoria-higiene-form" class="app-container studio-canvas-node active" data-studio-type="app_container">
+      <header class="livro-page-header">
+        <div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-form-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-hand-index-thumb"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Nova Auditoria de Higiene de Mãos</h2><p>Registre a observação e as oportunidades avaliadas.</p></div></div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+      <div class="livro-filter-panel auditoria-form-grid" aria-label="Informações da observação">
+        <div class="livro-field"><label for="auditoria-data">Data <span class="required-star">*</span></label><input type="date" id="auditoria-data" required></div>
+        <div class="livro-field"><label for="auditoria-setor">Setor <span class="required-star">*</span></label><select id="auditoria-setor" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field"><label for="auditoria-avaliador">Avaliador <span class="required-star">*</span></label><select id="auditoria-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field auditoria-profissional-field"><label for="auditoria-profissional">Categoria <span class="required-star">*</span></label><select id="auditoria-profissional" class="form-select" required><option value="">Selecione...</option></select></div>
+      </div>
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades</span></div>
+        <div class="livro-section-body">
+          <div id="auditoria-oportunidades" class="auditoria-oportunidades"></div>
+        </div>
+      </div>
+      <div class="livro-section auditoria-section"><div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div><div class="livro-section-body"><textarea id="auditoria-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div></div>
+      <div class="auditoria-feedback d-none" id="auditoria-feedback" role="status"></div>
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-auditoria-ver-historico" type="button">
+            <i class="bi bi-search"></i> Ver auditorias realizadas
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-auditoria-cancelar" type="button">Cancelar</button>
+          <button class="btn-save" id="btn-auditoria-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button>
+        </div>
+      </div>
+    </section>
+</div>
+`,
+};
+;;
 
   // --- INITIALIZATION ---
   window.addEventListener('DOMContentLoaded', () => {

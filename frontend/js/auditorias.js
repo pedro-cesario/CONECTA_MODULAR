@@ -49,13 +49,50 @@
     window.scrollTo(0, 0);
   }
   function message(text, type = 'error') {
-    const feedback = byId('auditoria-feedback');
-    if (!feedback) return;
-    feedback.textContent = text;
-    feedback.className = `auditoria-feedback ${type}`;
-    feedback.classList.remove('d-none');
+    const overlay = byId('modal-overlay');
+    if (!overlay) {
+      alert(text);
+      return;
+    }
+    const iconEl = byId('modal-icon');
+    const titleEl = byId('modal-title');
+    const msgEl = byId('modal-message');
+
+    if (iconEl) {
+      iconEl.className = 'modal-icon ' + type;
+      iconEl.style.color = '';
+      iconEl.style.background = '';
+      if (type === 'success') {
+        iconEl.innerHTML = '<i class="bi bi-check-lg"></i>';
+      } else if (type === 'warning') {
+        iconEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+      } else {
+        iconEl.innerHTML = '<i class="bi bi-x-lg"></i>';
+      }
+    }
+    if (titleEl) {
+      titleEl.textContent = type === 'success' ? 'Sucesso!' : type === 'warning' ? 'Atenção' : 'Atenção';
+    }
+    if (msgEl) msgEl.textContent = text;
+
+    overlay.classList.remove('d-none');
+    document.body.classList.add('modal-open');
+    const close = () => {
+      overlay.classList.add('d-none');
+      document.body.classList.remove('modal-open');
+    };
+    const closeBtn = byId('modal-close');
+    if (closeBtn) closeBtn.onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
   }
-  function clearMessage() { byId('auditoria-feedback')?.classList.add('d-none'); }
+  function clearMessage() {
+    byId('auditoria-feedback')?.classList.add('d-none');
+    const overlay = byId('modal-overlay');
+    if (overlay && !overlay.classList.contains('d-none')) {
+      overlay.classList.add('d-none');
+      document.body.classList.remove('modal-open');
+    }
+  }
   function isoToday() { return new Date().toISOString().slice(0, 10); }
 
   function renderOportunidades() {
@@ -66,7 +103,7 @@
         <span class="auditoria-moment-badge"><i class="bi bi-shield-check"></i> Momento ${index + 1}</span>
         <span class="auditoria-oportunidade-label">${escapeHtml(label)} <span class="required-star">*</span></span>
       </div>
-      <div class="livro-turno-options">${[['A', 'Álcool', 'bi-droplet-fill'], ['S', 'Sabonete', 'bi-hand-index-thumb-fill'], ['P', 'Perdida', 'bi-x-circle-fill']].map(([value, text, icon]) => `<label class="livro-turno-option"><input type="radio" name="auditoria-${code}" value="${value}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
+      <div class="livro-turno-options">${[['A', 'Álcool', 'bi-droplet-fill', 'opt-alcool'], ['S', 'Sabonete', 'bi-hand-index-thumb-fill', 'opt-sabonete'], ['P', 'Perdida', 'bi-x-circle-fill', 'opt-perdida']].map(([value, text, icon, cls]) => `<label class="livro-turno-option"><input type="radio" name="auditoria-${code}" value="${value}" class="${cls}"><span><i class="bi ${icon}"></i> ${text}</span></label>`).join('')}</div>
     </div>`).join('');
   }
 
@@ -78,18 +115,35 @@
 
   async function loadOptions() {
     if (optionsLoaded) return;
-    const result = await request('/api/auditorias/higiene-maos/opcoes');
+    const result = await request('/api/auditorias/higiene-maos/opcoes?_=' + Date.now());
     fillSelect('auditoria-setor', result.data.setores || [], 'Selecione...');
     fillSelect('auditoria-avaliador', result.data.avaliadores || [], 'Selecione...');
-    fillSelect('auditoria-profissional', result.data.profissionais || [], 'Selecione...');
+    const select = byId('auditoria-profissional');
+    if (select) {
+      select.innerHTML = '<option value="">Selecione...</option>' + (result.data.profissionais || []).map(row => `<option value="${escapeHtml(row.DS_VALOR_DOMINIO)}">${escapeHtml(row.DS_VALOR_DOMINIO)}</option>`).join('');
+    }
     optionsLoaded = true;
+  }
+
+  function clearForm() {
+    byId('auditoria-data').value = isoToday();
+    const setor = byId('auditoria-setor');
+    if (setor) setor.value = '';
+    const avaliador = byId('auditoria-avaliador');
+    if (avaliador) avaliador.value = '';
+    const prof = byId('auditoria-profissional');
+    if (prof) prof.value = '';
+    const obs = byId('auditoria-observacoes');
+    if (obs) obs.value = '';
+    document.querySelectorAll('#auditoria-oportunidades input[type="radio"]').forEach(r => { r.checked = false; });
+    window.conectaApp?.clearModuleDraft?.('auditorias');
   }
 
   async function openForm() {
     show('workspace-auditoria-higiene-form');
     clearMessage();
-    byId('auditoria-data').value = isoToday();
     renderOportunidades();
+    clearForm();
     try { await loadOptions(); } catch (err) { message(err.message); }
   }
 
@@ -103,7 +157,7 @@
       cd_setor_atendimento: Number(byId('auditoria-setor').value),
       cd_avaliador: Number(byId('auditoria-avaliador').value),
       ie_turno: new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'D' : 'N',
-      cd_profissional: Number(byId('auditoria-profissional').value),
+      cd_profissional: byId('auditoria-profissional').value,
       ds_observacao: byId('auditoria-observacoes').value,
       oportunidades: oportunidadesPayload
     };
@@ -122,22 +176,14 @@
       button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Salvando...';
       const result = await request('/api/auditorias/higiene-maos', { method: 'POST', body: JSON.stringify(payload) });
       auditId = result.data.nr_sequencia;
-      const overlay = byId('modal-overlay');
-      if (overlay) {
-        byId('modal-icon').className = 'modal-icon success';
-        byId('modal-icon').innerHTML = '<i class="bi bi-check-lg"></i>';
-        byId('modal-title').textContent = 'Sucesso!';
-        byId('modal-message').textContent = result.message || 'Auditoria salva com sucesso.';
-        overlay.classList.remove('d-none');
-        document.body.classList.add('modal-open');
-        const close = () => { overlay.classList.add('d-none'); document.body.classList.remove('modal-open'); };
-        byId('modal-close').onclick = close;
-        overlay.onclick = e => { if (e.target === overlay) close(); };
-      } else {
-        message(result.message || 'Auditoria salva com sucesso.', 'success');
-      }
-    } catch (err) { message(err.message); }
-    finally { button.disabled = false; button.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar'; }
+      clearForm();
+      message(result.message || 'Auditoria salva com sucesso.', 'success');
+    } catch (err) {
+      message(err.message || 'Erro ao salvar auditoria.', 'error');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar';
+    }
   }
 
   function formatPercentual(conformes, total) {
@@ -288,12 +334,14 @@
   byId('btn-abrir-auditorias')?.addEventListener('click', showAuditorias);
   byId('btn-auditorias-voltar-home')?.addEventListener('click', () => { if (window.conectaApp?.showModeChooser) { window.conectaApp.showModeChooser(); } else { hideAll(); byId('mode-selector')?.classList.remove('d-none'); } });
   byId('btn-auditorias-higiene-maos')?.addEventListener('click', showHigieneMenu);
+  byId('btn-auditoria-higiene-maos')?.addEventListener('click', showHigieneMenu);
   byId('btn-auditoria-higiene-voltar')?.addEventListener('click', showAuditorias);
   byId('btn-auditoria-nova')?.addEventListener('click', openForm);
   byId('btn-auditoria-historico')?.addEventListener('click', loadHistorico);
   byId('btn-auditoria-visao-individual')?.addEventListener('click', () => loadHistorico('individual'));
   byId('btn-auditoria-visao-consolidada')?.addEventListener('click', () => loadHistorico('consolidado'));
   byId('btn-auditoria-form-voltar')?.addEventListener('click', showHigieneMenu);
+  byId('btn-auditoria-ver-historico')?.addEventListener('click', () => loadHistorico());
   byId('btn-auditoria-cancelar')?.addEventListener('click', showHigieneMenu);
   byId('btn-auditoria-salvar')?.addEventListener('click', save);
   byId('btn-auditoria-historico-voltar')?.addEventListener('click', showHigieneMenu);

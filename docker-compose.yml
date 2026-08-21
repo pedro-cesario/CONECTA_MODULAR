@@ -25,6 +25,7 @@ services:
       - ./auth.sqlite:/home/node/app/auth.sqlite
       - ./data:/home/node/app/data
       - ./frontend:/home/node/app/frontend
+      - ./backend:/home/node/app/backend
     depends_on:
       redis:
         condition: service_healthy

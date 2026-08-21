@@ -1395,7 +1395,8 @@
     activateWorkspace,
     showModeChooser,
     getModuleDraft,
-    markModuleDraftDirty
+    markModuleDraftDirty,
+    clearModuleDraft
   };
 
 
@@ -7059,9 +7060,19 @@ const btnSalvar = document.getElementById('btn-salvar');
     }
   });
 
-  document.getElementById('btn-livro-buscar').addEventListener('click', async () => {
-    ensureLivroEditable();
-    await loadLivroAdministrativoByDate(getLivroDataSelecionada());
+  document.getElementById('btn-livro-buscar')?.addEventListener('click', () => {
+    const dataSelecionada = (typeof getLivroDataSelecionada === 'function' ? getLivroDataSelecionada() : '') || (typeof getTodayIsoDate === 'function' ? getTodayIsoDate() : new Date().toISOString().slice(0, 10));
+    activateWorkspace('print', workspacePrint);
+    const dataInput = document.getElementById('print-data-plantao');
+    if (dataInput) dataInput.value = dataSelecionada;
+    const turnoSelect = document.getElementById('print-turno');
+    const setorSelect = document.getElementById('print-setor');
+    if (turnoSelect) turnoSelect.value = '';
+    if (setorSelect) setorSelect.innerHTML = '<option value="">Todos os setores</option>';
+    state.printHtmlBody = null;
+    state.printEscalasAll = [];
+    state.printEscalasFiltradas = [];
+    setTimeout(() => { if (typeof buscarEscalasLiberadas === 'function') buscarEscalasLiberadas(); }, 100);
   });
 
   document.getElementById('btn-livro-limpar')?.addEventListener('click', async () => {

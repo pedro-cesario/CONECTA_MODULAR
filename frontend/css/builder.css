@@ -369,6 +369,10 @@ body.studio-body {
 /* Device sizes */
 .studio-viewport.view-desktop {
   width: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .studio-viewport.view-laptop {
@@ -387,9 +391,17 @@ body.studio-body {
 /* Canvas Droppable Surface */
 .studio-canvas-root {
   flex: 1;
-  min-height: 500px;
-  padding: 1rem;
+  min-height: 100%;
+  padding: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Override 100vh of real app inside canvas */
+.studio-canvas-root .screen {
+  height: 100% !important;
+  min-height: 100% !important;
 }
 
 /* Dropzone markers */
