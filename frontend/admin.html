@@ -1545,7 +1545,10 @@
                     ${[
                       ['lancar_higiene_maos', 'Lançar auditoria de Higiene de Mãos'],
                       ['visualizar_historico_higiene_maos', 'Visualizar histórico'],
-                      ['exportar_higiene_maos', 'Exportar XLSX e PDF']
+                      ['exportar_higiene_maos', 'Exportar XLSX e PDF'],
+                      ['lancar_auditoria_processos', 'Lançar Auditoria de Processos'],
+                      ['visualizar_historico_auditoria_processos', 'Visualizar histórico (Processos)'],
+                      ['exportar_auditoria_processos', 'Exportar XLSX e PDF (Processos)']
                     ].map(([value, label]) => `<div class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" id="perm-${perfilId}-auditorias-${value}" value="${value}" data-auditoria-permissao disabled><label class="form-check-label text-muted" for="perm-${perfilId}-auditorias-${value}"><small>${label}</small></label></div>`).join('')}
                   </div>
                 </div>

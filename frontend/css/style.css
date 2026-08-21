@@ -3846,7 +3846,8 @@ body {
   background: #fff;
 }
 
-#workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar {
+#workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar,
+#workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar {
   position: sticky;
   z-index: 12;
   bottom: 1rem;
@@ -3866,7 +3867,10 @@ body {
 
 #workspace-livro .livro-action-group,
 #workspace-auditoria-higiene-form .livro-action-group,
-#workspace-auditoria-historico .livro-action-group {
+#workspace-auditoria-historico .livro-action-group,
+#workspace-auditoria-processos-paciente .livro-action-group,
+#workspace-auditoria-processos-form .livro-action-group,
+#workspace-auditoria-processos-historico .livro-action-group {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -3875,20 +3879,31 @@ body {
 
 #workspace-livro .livro-action-group-end,
 #workspace-auditoria-higiene-form .livro-action-group-end,
-#workspace-auditoria-historico .livro-action-group-end {
+#workspace-auditoria-historico .livro-action-group-end,
+#workspace-auditoria-processos-paciente .livro-action-group-end,
+#workspace-auditoria-processos-form .livro-action-group-end,
+#workspace-auditoria-processos-historico .livro-action-group-end {
   justify-content: flex-end;
 }
 
 #workspace-livro .livro-action-bar button,
 #workspace-auditoria-higiene-form .livro-action-bar button,
-#workspace-auditoria-historico .livro-action-bar button {
+#workspace-auditoria-historico .livro-action-bar button,
+#workspace-auditoria-processos-paciente .livro-action-bar button,
+#workspace-auditoria-processos-form .livro-action-bar button,
+#workspace-auditoria-processos-historico .livro-action-bar button {
   min-height: 40px;
   border-radius: 0.65rem;
   font-size: 0.78rem;
 }
 
 #workspace-livro .livro-clear-btn,
-#workspace-escala .livro-clear-btn {
+#workspace-escala .livro-clear-btn,
+#workspace-auditoria-higiene-form .livro-clear-btn,
+#workspace-auditoria-historico .livro-clear-btn,
+#workspace-auditoria-processos-paciente .livro-clear-btn,
+#workspace-auditoria-processos-form .livro-clear-btn,
+#workspace-auditoria-processos-historico .livro-clear-btn {
   color: #9f1239;
   border-color: #fecdd3;
   background: #fff7f8;
@@ -4181,14 +4196,25 @@ body {
     grid-column: 1;
   }
 
-  #workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar {
+  #workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar,
+  #workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar {
     position: static;
     align-items: stretch;
     flex-direction: column;
   }
 
   #workspace-livro .livro-action-group,
-  #workspace-livro .livro-action-group-end {
+  #workspace-livro .livro-action-group-end,
+  #workspace-auditoria-higiene-form .livro-action-group,
+  #workspace-auditoria-higiene-form .livro-action-group-end,
+  #workspace-auditoria-historico .livro-action-group,
+  #workspace-auditoria-historico .livro-action-group-end,
+  #workspace-auditoria-processos-paciente .livro-action-group,
+  #workspace-auditoria-processos-paciente .livro-action-group-end,
+  #workspace-auditoria-processos-form .livro-action-group,
+  #workspace-auditoria-processos-form .livro-action-group-end,
+  #workspace-auditoria-processos-historico .livro-action-group,
+  #workspace-auditoria-processos-historico .livro-action-group-end {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -6675,6 +6701,7 @@ input[type="password"] {
 #workspace-livro .livro-sections-grid,
 #workspace-livro > .livro-preview,
 #workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar,
+#workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar,
 #workspace-print .print-page-header,
 #workspace-print .print-filter-panel,
 #workspace-passagens-anteriores .livro-filter-panel,
@@ -7868,4 +7895,290 @@ input[type="password"] {
   display: grid !important;
   grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.1fr) !important;
   gap: 0.9rem !important;
+}
+
+/* ─── Processos: estilos visuais (herda padrão Higiene de Mãos) ──────────── */
+#workspace-auditoria-processos-paciente.livro-stitch-page,
+#workspace-auditoria-processos-form.livro-stitch-page,
+#workspace-auditoria-processos-historico.livro-stitch-page {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: clamp(1rem, 2vw, 1.75rem) clamp(1rem, 2.5vw, 2.5rem) 2.25rem;
+  background: var(--slate-50);
+}
+
+#workspace-auditoria-processos-paciente .livro-page-header,
+#workspace-auditoria-processos-form .livro-page-header,
+#workspace-auditoria-processos-historico .livro-page-header {
+  width: min(1480px, 100%);
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-heading,
+#workspace-auditoria-processos-form .livro-page-heading,
+#workspace-auditoria-processos-historico .livro-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-heading h2,
+#workspace-auditoria-processos-form .livro-page-heading h2,
+#workspace-auditoria-processos-historico .livro-page-heading h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--slate-800);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-heading p,
+#workspace-auditoria-processos-form .livro-page-heading p,
+#workspace-auditoria-processos-historico .livro-page-heading p {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: var(--slate-500);
+  line-height: 1.45;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-heading .livro-page-eyebrow,
+#workspace-auditoria-processos-form .livro-page-heading .livro-page-eyebrow,
+#workspace-auditoria-processos-historico .livro-page-heading .livro-page-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.1rem;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-heading .livro-page-icon,
+#workspace-auditoria-processos-form .livro-page-heading .livro-page-icon,
+#workspace-auditoria-processos-historico .livro-page-heading .livro-page-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--primary-50);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-back,
+#workspace-auditoria-processos-form .livro-page-back,
+#workspace-auditoria-processos-historico .livro-page-back {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  background: white;
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+#workspace-auditoria-processos-paciente .livro-page-back:hover,
+#workspace-auditoria-processos-form .livro-page-back:hover,
+#workspace-auditoria-processos-historico .livro-page-back:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+  color: var(--primary);
+}
+
+#workspace-auditoria-processos-paciente .livro-page-status,
+#workspace-auditoria-processos-form .livro-page-status,
+#workspace-auditoria-processos-historico .livro-page-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--green-600);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#workspace-auditoria-processos-paciente .livro-section,
+#workspace-auditoria-processos-form .livro-section,
+#workspace-auditoria-processos-historico .livro-section {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+#workspace-auditoria-processos-paciente .livro-section-header,
+#workspace-auditoria-processos-form .livro-section-header,
+#workspace-auditoria-processos-historico .livro-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
+}
+
+#workspace-auditoria-processos-paciente .livro-section-header > span,
+#workspace-auditoria-processos-form .livro-section-header > span,
+#workspace-auditoria-processos-historico .livro-section-header > span {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#workspace-auditoria-processos-paciente .livro-section-header > span i,
+#workspace-auditoria-processos-form .livro-section-header > span i,
+#workspace-auditoria-processos-historico .livro-section-header > span i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+#workspace-auditoria-processos-paciente .livro-section-body,
+#workspace-auditoria-processos-form .livro-section-body,
+#workspace-auditoria-processos-historico .livro-section-body {
+  padding: 1rem 1.1rem;
+}
+
+#workspace-auditoria-processos-paciente .livro-field,
+#workspace-auditoria-processos-form .livro-field,
+#workspace-auditoria-processos-historico .livro-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+#workspace-auditoria-processos-paciente .livro-field label,
+#workspace-auditoria-processos-form .livro-field label,
+#workspace-auditoria-processos-historico .livro-field label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--slate-600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#workspace-auditoria-processos-paciente .livro-field input,
+#workspace-auditoria-processos-form .livro-field input,
+#workspace-auditoria-processos-historico .livro-field input,
+#workspace-auditoria-processos-paciente .livro-field select,
+#workspace-auditoria-processos-form .livro-field select,
+#workspace-auditoria-processos-historico .livro-field select {
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--slate-200);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  color: var(--slate-800);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+#workspace-auditoria-processos-paciente .livro-field input:focus,
+#workspace-auditoria-processos-form .livro-field input:focus,
+#workspace-auditoria-processos-historico .livro-field input:focus,
+#workspace-auditoria-processos-paciente .livro-field select:focus,
+#workspace-auditoria-processos-form .livro-field select:focus,
+#workspace-auditoria-processos-historico .livro-field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(19,79,159,0.1);
+  outline: none;
+}
+
+#workspace-auditoria-processos-paciente .livro-turno-options,
+#workspace-auditoria-processos-form .livro-turno-options,
+#workspace-auditoria-processos-historico .livro-turno-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#workspace-auditoria-processos-paciente .livro-turno-option,
+#workspace-auditoria-processos-form .livro-turno-option,
+#workspace-auditoria-processos-historico .livro-turno-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border: 1.5px solid var(--slate-200);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  cursor: pointer;
+  transition: all var(--transition);
+  background: white;
+  white-space: nowrap;
+}
+
+#workspace-auditoria-processos-paciente .livro-turno-option:hover,
+#workspace-auditoria-processos-form .livro-turno-option:hover,
+#workspace-auditoria-processos-historico .livro-turno-option:hover {
+  border-color: var(--primary-300);
+  color: var(--primary);
+}
+
+#workspace-auditoria-processos-paciente .livro-turno-option input:checked + span,
+#workspace-auditoria-processos-form .livro-turno-option input:checked + span,
+#workspace-auditoria-processos-historico .livro-turno-option input:checked + span {
+  background: var(--primary-50);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(19,79,159,0.1);
+}
+
+#workspace-auditoria-processos-paciente > .livro-preview,
+#workspace-auditoria-processos-form > .livro-preview,
+#workspace-auditoria-processos-historico > .livro-preview {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow-y: auto;
+}
+
+#workspace-auditoria-processos-paciente .auditoria-section + .auditoria-section,
+#workspace-auditoria-processos-form .auditoria-section + .auditoria-section {
+  margin-top: 1rem;
+}
+
+/* Processos histórico: flex layout igual ao Higiene */
+#workspace-auditoria-processos-historico {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+#workspace-auditoria-processos-historico .livro-page-header {
+  flex-shrink: 0;
+}
+#workspace-auditoria-processos-historico .auditoria-historico-list {
+  flex: 1 1 0% !important;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto !important;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 1rem;
 }

@@ -55,6 +55,17 @@ router.get('/auditorias/higiene-maos/:id/xlsx', requireAuth, auditoriaController
 router.get('/auditorias/higiene-maos/:id/pdf', requireAuth, auditoriaController.baixarPdf);
 router.get('/auditorias/higiene-maos/:id', requireAuth, auditoriaController.obterAuditoria);
 
+// Auditoria de Processos
+router.get('/auditorias/processos/pacientes-ontem', requireAuth, auditoriaController.listarPacientesOntem);
+router.get('/auditorias/processos/paciente-aleatorio', requireAuth, auditoriaController.pacienteAleatorio);
+router.get('/auditorias/processos/opcoes', requireAuth, auditoriaController.listarOpcoesProcessos);
+router.post('/auditorias/processos', requireAuth, auditoriaController.salvarAuditoriaProcessos);
+router.get('/auditorias/processos/historico', requireAuth, auditoriaController.listarHistoricoProcessos);
+router.get('/auditorias/processos/historico/consolidado', requireAuth, auditoriaController.listarHistoricoProcessosConsolidado);
+router.get('/auditorias/processos/:id/xlsx', requireAuth, auditoriaController.baixarXlsxProcessos);
+router.get('/auditorias/processos/:id/pdf', requireAuth, auditoriaController.baixarPdfProcessos);
+router.get('/auditorias/processos/:id', requireAuth, auditoriaController.obterProcessos);
+
 // Pacientes (protegido)
 router.post('/pacientes', requireAuth, pacienteController.listarPacientes);
 router.get('/pacientes-setor/:cd_setor', requireAuth, pacienteController.listarPacientesSetor);

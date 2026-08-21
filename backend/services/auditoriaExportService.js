@@ -67,4 +67,69 @@ function gerarPdf(auditoria, res) {
   doc.end();
 }
 
-module.exports = { gerarXlsx, gerarPdf };
+// ─── Auditoria de Processos ───────────────────────────────────────────────
+
+async function gerarXlsxProcessos(auditoria) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Conecta HEAL';
+  workbook.created = new Date();
+  const geral = workbook.addWorksheet('Auditoria');
+  geral.columns = [{ width: 24 }, { width: 52 }];
+  geral.addRow(['Auditoria', 'Auditoria de Processos']);
+  geral.addRow(['Data', auditoria.DT_AUDITORIA]);
+  geral.addRow(['Setor', auditoria.NM_SETOR]);
+  geral.addRow(['Responsável', auditoria.NM_AVALIADOR]);
+  geral.addRow(['Paciente', auditoria.NM_PACIENTE]);
+  geral.addRow(['Idade', auditoria.NR_IDADE != null ? `${auditoria.NR_IDADE} anos` : '-']);
+  geral.addRow(['Unidade/Leito', auditoria.DS_UNIDADE_LEITO || '-']);
+  geral.addRow(['Atendimento', auditoria.NR_ATENDIMENTO || '-']);
+  geral.addRow(['Observações', auditoria.DS_OBSERVACAO || '']);
+  geral.getColumn(1).font = { bold: true };
+
+  const respostas = workbook.addWorksheet('Respostas');
+  respostas.columns = [{ header: 'Grupo', width: 12 }, { header: 'Subgrupo', width: 22 }, { header: 'Item', width: 40 }, { header: 'Resposta', width: 16 }, { header: 'Descrição', width: 40 }];
+  respostas.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  respostas.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0754A6' } };
+  (auditoria.respostas || []).forEach(item => respostas.addRow([item.CD_GRUPO, item.CD_SUBGRUPO || '', item.CD_ITEM, item.resposta_label || item.IE_RESPOSTA, item.DS_DESCRICAO || '']));
+
+  return workbook.xlsx.writeBuffer();
+}
+
+function gerarPdfProcessos(auditoria, res) {
+  const doc = new PDFDocument({ margin: 48, size: 'A4' });
+  doc.pipe(res);
+  doc.fillColor('#0754A6').fontSize(18).font('Helvetica-Bold').text('Auditoria de Processos');
+  doc.moveDown(0.4).fillColor('#475569').fontSize(10).font('Helvetica').text('Conecta HEAL · Núcleo de Segurança do Paciente - NISA');
+  doc.moveDown();
+  const dados = [
+    ['Data', auditoria.DT_AUDITORIA], ['Setor', auditoria.NM_SETOR], ['Responsável', auditoria.NM_AVALIADOR],
+    ['Paciente', auditoria.NM_PACIENTE], ['Idade', auditoria.NR_IDADE != null ? `${auditoria.NR_IDADE} anos` : '-'],
+    ['Unidade/Leito', auditoria.DS_UNIDADE_LEITO || '-'], ['Atendimento', auditoria.NR_ATENDIMENTO || '-']
+  ];
+  dados.forEach(([label, value]) => {
+    doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(10).text(`${label}: `, { continued: true });
+    doc.font('Helvetica').text(value || '-');
+  });
+  doc.moveDown().font('Helvetica-Bold').fontSize(12).fillColor('#0754A6').text('Respostas');
+  doc.moveDown(0.5);
+  const x = 48; let rowY = doc.y; const widths = [80, 160, 80];
+  doc.rect(x, rowY, widths.reduce((a, b) => a + b, 0), 20).fill('#0754A6');
+  doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9);
+  doc.text('Grupo', x + 6, rowY + 6, { width: widths[0] - 12 });
+  doc.text('Item', x + widths[0] + 6, rowY + 6, { width: widths[1] - 12 });
+  doc.text('Resposta', x + widths[0] + widths[1] + 6, rowY + 6, { width: widths[2] - 12 });
+  rowY += 20;
+  (auditoria.respostas || []).forEach((item, index) => {
+    const height = 22;
+    if (rowY > 750) { doc.addPage(); rowY = 48; }
+    doc.rect(x, rowY, widths.reduce((a, b) => a + b, 0), height).fill(index % 2 ? '#F8FAFC' : '#FFFFFF').stroke('#CBD5E1');
+    doc.fillColor('#0F172A').font('Helvetica').fontSize(8.5);
+    doc.text(item.CD_GRUPO || '', x + 6, rowY + 5, { width: widths[0] - 12 });
+    doc.text(item.CD_ITEM || '', x + widths[0] + 6, rowY + 5, { width: widths[1] - 12 });
+    doc.text(item.resposta_label || item.IE_RESPOSTA || '', x + widths[0] + widths[1] + 6, rowY + 5, { width: widths[2] - 12 });
+    rowY += height;
+  });
+  doc.end();
+}
+
+module.exports = { gerarXlsx, gerarPdf, gerarXlsxProcessos, gerarPdfProcessos };

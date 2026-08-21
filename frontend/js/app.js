@@ -51,7 +51,7 @@
       allowedProfiles: [],
       buttonId: 'btn-abrir-auditorias',
       topbarButtonId: 'nav-auditorias',
-      activeModes: ['auditorias-submenu', 'auditoria-higiene-submenu', 'auditoria-higiene-form', 'auditoria-historico'],
+      activeModes: ['auditorias-submenu', 'auditoria-higiene-submenu', 'auditoria-higiene-form', 'auditoria-historico', 'auditoria-processos-submenu', 'auditoria-processos-paciente', 'auditoria-processos-form', 'auditoria-processos-historico'],
       entryFnName: 'enterAuditoriasMode'
     },
     dashboard_pa: {
@@ -1335,25 +1335,6 @@
       if (!button) return;
       button.classList.toggle('topbar-nav-active', modulo === activeModule && state.mode);
       button.querySelectorAll('.topbar-module-close').forEach(el => el.remove());
-      if (modulo === activeModule && state.mode) {
-        const close = document.createElement('span');
-        close.className = 'topbar-module-close';
-        close.setAttribute('role', 'button');
-        close.setAttribute('tabindex', '0');
-        close.setAttribute('aria-label', `Fechar ${modulo.nome}`);
-        close.innerHTML = '<i class="bi bi-x"></i>';
-        const closeHandler = event => {
-          event.preventDefault();
-          event.stopPropagation();
-          discardModuleWork(modulo.id);
-          showModeChooser();
-        };
-        close.addEventListener('click', closeHandler);
-        close.addEventListener('keydown', event => {
-          if (event.key === 'Enter' || event.key === ' ') closeHandler(event);
-        });
-        button.appendChild(close);
-      }
     });
 
     const adminBtn = document.getElementById('nav-admin');
@@ -7098,6 +7079,8 @@ const moduleHandlers = {
       const draft = getModuleDraft('auditorias');
       if (draft?.activeScreen && typeof window.hydrateAuditoriaDraft === 'function') {
         window.hydrateAuditoriaDraft(draft);
+      } else if (draft?.activeScreen && typeof window.hydrateProcessosDraft === 'function') {
+        window.hydrateProcessosDraft(draft);
       } else {
         const menu = document.getElementById('auditorias-sub-menu');
         if (menu) activateWorkspace('auditorias-submenu', menu);

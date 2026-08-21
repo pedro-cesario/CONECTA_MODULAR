@@ -137,6 +137,15 @@ async function ensureAccessSchema() {
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_auditorias_nisa')");
   }
 
+  // Migration: Permissões para Auditoria de Processos
+  const migrationProcessos = await all("SELECT id FROM config_migrations WHERE id = '2026_08_auditorias_processos'");
+  if (migrationProcessos.length === 0) {
+    for (const permissao of ['lancar_auditoria_processos', 'visualizar_historico_auditoria_processos', 'exportar_auditoria_processos']) {
+      await run(`INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES ('admin', 'auditorias', ?)`, [permissao]);
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_auditorias_processos')");
+  }
+
   await run(`CREATE TABLE IF NOT EXISTS studio_pages (
     id TEXT PRIMARY KEY,
     nome TEXT NOT NULL,
