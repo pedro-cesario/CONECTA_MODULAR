@@ -132,16 +132,23 @@ function getEspecialidadeBySetor(cdSetor) {
 }
 
 function getCdPerfilBySetor(cdSetor, cdPerfisMap) {
-  const especialidade = getEspecialidadeBySetor(cdSetor);
-  if (!especialidade) return null;
-  return cdPerfisMap ? cdPerfisMap[especialidade.id] : null;
+  if (!cdPerfisMap || typeof cdPerfisMap !== 'object') return null;
+  const especialidades = getESpecialidades();
+  const matching = especialidades.filter(e => e.setorId === Number(cdSetor));
+  for (const esp of matching) {
+    if (cdPerfisMap[esp.id]) return cdPerfisMap[esp.id];
+  }
+  return null;
 }
 
 function getCdPerfilByModulo(cdModulo, cdPerfisMap) {
+  if (!cdPerfisMap || typeof cdPerfisMap !== 'object') return null;
   const especialidades = getESpecialidades();
-  const especialidade = especialidades.find(e => e.setorId === Number(cdModulo));
-  if (!especialidade) return null;
-  return cdPerfisMap ? cdPerfisMap[especialidade.id] : null;
+  const matching = especialidades.filter(e => e.setorId === Number(cdModulo));
+  for (const esp of matching) {
+    if (cdPerfisMap[esp.id]) return cdPerfisMap[esp.id];
+  }
+  return null;
 }
 
 function buildCdPerfisMap(perfisPorEspecialidade) {

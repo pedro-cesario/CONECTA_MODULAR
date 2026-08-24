@@ -1,9 +1,37 @@
 const { getConnection } = require('../database');
 const oracledb = require('oracledb');
 const { getSetorReferenciaFixo, getCdPerfilByModulo } = require('../config/especialidades');
+const configCache = require('../config/configCache');
 
 function getCdPerfilForInsert(usuario, cdModulo) {
-  return getCdPerfilByModulo(cdModulo, usuario.cd_perfis);
+  if (!usuario) return null;
+
+  // 1. Se houver perfil ativo na sessão e ele tiver cd_perfil mapeado, valida se pertence ao módulo
+  const perfilAtivo = usuario.perfilAtivo;
+  if (perfilAtivo && usuario.cd_perfis?.[perfilAtivo]) {
+    const perfis = configCache.getCachedPerfis();
+    const esp = perfis.find(e => e.id === perfilAtivo);
+    if (esp && (!cdModulo || esp.setorId === Number(cdModulo))) {
+      return usuario.cd_perfis[perfilAtivo];
+    }
+  }
+
+  // 2. Busca entre todos os perfis do usuário vinculados ao setor/módulo
+  const cdPerfil = getCdPerfilByModulo(cdModulo, usuario.cd_perfis);
+  if (cdPerfil) return cdPerfil;
+
+  // 3. Fallback: se perfilAtivo tiver mapeamento no cd_perfis
+  if (perfilAtivo && usuario.cd_perfis?.[perfilAtivo]) {
+    return usuario.cd_perfis[perfilAtivo];
+  }
+
+  // 4. Fallback final: primeiro cd_perfil numérico disponível no mapa do usuário
+  if (usuario.cd_perfis && typeof usuario.cd_perfis === 'object') {
+    const values = Object.values(usuario.cd_perfis).filter(v => Number.isInteger(Number(v)));
+    if (values.length > 0) return Number(values[0]);
+  }
+
+  return null;
 }
 
 function sanitizeTexto(value) {

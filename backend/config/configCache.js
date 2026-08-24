@@ -457,15 +457,21 @@ function getEspecialidadeBySetor(cdSetor) {
 }
 
 function getCdPerfilBySetor(cdSetor, cdPerfisMap) {
-  const perfil = getEspecialidadeBySetor(cdSetor);
-  if (!perfil) return null;
-  return cdPerfisMap ? cdPerfisMap[perfil.id] : null;
+  if (!cdPerfisMap || typeof cdPerfisMap !== 'object') return null;
+  const matching = cache.perfis.filter(p => p.setorId === Number(cdSetor));
+  for (const perfil of matching) {
+    if (cdPerfisMap[perfil.id]) return cdPerfisMap[perfil.id];
+  }
+  return null;
 }
 
 function getCdPerfilByModulo(cdModulo, cdPerfisMap) {
-  const perfil = cache.perfis.find(p => p.setorId === Number(cdModulo));
-  if (!perfil) return null;
-  return cdPerfisMap ? cdPerfisMap[perfil.id] : null;
+  if (!cdPerfisMap || typeof cdPerfisMap !== 'object') return null;
+  const matching = cache.perfis.filter(p => p.setorId === Number(cdModulo));
+  for (const perfil of matching) {
+    if (cdPerfisMap[perfil.id]) return cdPerfisMap[perfil.id];
+  }
+  return null;
 }
 
 function buildCdPerfisMap(perfisPorEspecialidade) {
