@@ -3542,6 +3542,7 @@ body {
 }
 
 #workspace-livro.livro-stitch-page, #workspace-auditoria-higiene-form.livro-stitch-page, #workspace-auditoria-historico.livro-stitch-page,
+#workspace-registros-pessoa-busca.livro-stitch-page, #workspace-registros-demanda-form.livro-stitch-page,
 #workspace-print.print-stitch-page {
   width: 100%;
   max-width: none;
@@ -3903,7 +3904,7 @@ body {
 #workspace-auditoria-processos-historico .livro-action-bar button {
   min-height: 40px;
   border-radius: 0.65rem;
-  font-size: 0.78rem;
+  font-size: 0.95rem;
 }
 
 #workspace-livro .livro-clear-btn,
@@ -4174,18 +4175,21 @@ body {
   }
 
   #workspace-livro .livro-page-header, #workspace-auditoria-higiene-form .livro-page-header, #workspace-auditoria-historico .livro-page-header, #workspace-passagens-anteriores .livro-page-header,
+  #workspace-registros-pessoa-busca .livro-page-header, #workspace-registros-demanda-form .livro-page-header,
   #workspace-print .print-page-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  #workspace-livro .livro-page-status, #workspace-auditoria-higiene-form .livro-page-status, #workspace-auditoria-historico .livro-page-status {
+  #workspace-livro .livro-page-status, #workspace-auditoria-higiene-form .livro-page-status, #workspace-auditoria-historico .livro-page-status,
+  #workspace-registros-pessoa-busca .livro-page-status, #workspace-registros-demanda-form .livro-page-status {
     display: none;
   }
 
   #workspace-livro .livro-filter-panel, #workspace-auditoria-higiene-form .livro-filter-panel, #workspace-auditoria-historico .livro-filter-panel,
   #workspace-print .print-filter-panel,
-  #workspace-passagens-anteriores .livro-filter-panel {
+  #workspace-passagens-anteriores .livro-filter-panel,
+  #workspace-registros-pessoa-busca .livro-filter-panel, #workspace-registros-demanda-form .livro-filter-panel {
     grid-template-columns: 1fr;
   }
 
@@ -4206,7 +4210,8 @@ body {
   }
 
   #workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar,
-  #workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar {
+  #workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar,
+  #workspace-registros-pessoa-busca .livro-action-bar, #workspace-registros-demanda-form .livro-action-bar {
     position: static;
     align-items: stretch;
     flex-direction: column;
@@ -4918,6 +4923,11 @@ textarea:focus-visible,
   color: #DC2626 !important;
 }
 
+.module-icon-teal {
+  background: #CCFBF1 !important;
+  color: #0F766E !important;
+}
+
 .module-content {
   display: flex !important;
   flex: 0 1 auto !important;
@@ -5403,6 +5413,7 @@ textarea:focus-visible,
 
 #workspace-escala.escala-stitch-page,
 #workspace-livro.livro-stitch-page, #workspace-auditoria-higiene-form.livro-stitch-page, #workspace-auditoria-historico.livro-stitch-page,
+#workspace-registros-pessoa-busca.livro-stitch-page, #workspace-registros-demanda-form.livro-stitch-page,
 #workspace-print.print-stitch-page,
 #workspace-passagens-anteriores {
   flex: 1 1 auto;
@@ -6216,6 +6227,10 @@ body.modal-open {
   overscroll-behavior: contain;
 }
 
+#modal-registros-cadastrar-pessoa .modal-card-wide {
+  overflow-y: visible;
+}
+
 .modal-internacao-body,
 .modal-diff-body,
 .modal-message-list {
@@ -6449,6 +6464,14 @@ input[type="password"] {
     max-height: calc(100dvh - 1.5rem);
     padding: 1.25rem 1rem;
     border-radius: 18px;
+  }
+
+  #cad-pessoa-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #modal-registros-cadastrar-pessoa .modal-card-wide {
+    overflow-y: auto;
   }
 
   .modal-card-lg {
@@ -6706,11 +6729,15 @@ input[type="password"] {
 }
 
 #workspace-livro .livro-page-header, #workspace-auditoria-higiene-form .livro-page-header, #workspace-auditoria-historico .livro-page-header, #workspace-passagens-anteriores .livro-page-header,
+#workspace-registros-pessoa-busca .livro-page-header, #workspace-registros-demanda-form .livro-page-header,
 #workspace-livro .livro-filter-panel, #workspace-auditoria-higiene-form .livro-filter-panel, #workspace-auditoria-historico .livro-filter-panel,
+#workspace-registros-pessoa-busca .livro-filter-panel, #workspace-registros-demanda-form .livro-filter-panel,
 #workspace-livro .livro-sections-grid,
 #workspace-livro > .livro-preview,
 #workspace-livro .livro-action-bar, #workspace-auditoria-higiene-form .livro-action-bar, #workspace-auditoria-historico .livro-action-bar,
 #workspace-auditoria-processos-paciente .livro-action-bar, #workspace-auditoria-processos-form .livro-action-bar, #workspace-auditoria-processos-historico .livro-action-bar,
+#workspace-registros-pessoa-busca .livro-action-bar,
+#workspace-registros-demanda-form .livro-action-bar,
 #workspace-print .print-page-header,
 #workspace-print .print-filter-panel,
 #workspace-passagens-anteriores .livro-filter-panel,
@@ -7904,6 +7931,210 @@ input[type="password"] {
   display: grid !important;
   grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.1fr) !important;
   gap: 0.9rem !important;
+}
+
+/* ─── Registros: herda padrão Higiene (full width) ────────────────────────── */
+#workspace-registros-pessoa-busca .livro-page-header,
+#workspace-registros-demanda-form .livro-page-header {
+  width: min(1480px, 100%);
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+#workspace-registros-pessoa-busca .livro-page-heading,
+#workspace-registros-demanda-form .livro-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+#workspace-registros-pessoa-busca .livro-page-back,
+#workspace-registros-demanda-form .livro-page-back {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid var(--slate-300);
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--slate-600);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+#workspace-registros-pessoa-busca .livro-page-back:hover,
+#workspace-registros-demanda-form .livro-page-back:hover {
+  border-color: var(--primary-300);
+  color: var(--primary);
+  background: var(--primary-50);
+}
+#workspace-registros-pessoa-busca .livro-page-icon,
+#workspace-registros-demanda-form .livro-page-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--primary-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+#workspace-registros-pessoa-busca .livro-page-eyebrow,
+#workspace-registros-demanda-form .livro-page-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+#workspace-registros-pessoa-busca .livro-page-heading h2,
+#workspace-registros-demanda-form .livro-page-heading h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--slate-800);
+}
+#workspace-registros-pessoa-busca .livro-page-heading p,
+#workspace-registros-demanda-form .livro-page-heading p {
+  margin: 0.2rem 0 0;
+  color: var(--slate-500);
+  font-size: 0.88rem;
+}
+#workspace-registros-pessoa-busca .livro-page-status,
+#workspace-registros-demanda-form .livro-page-status {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* Override filter-panel para pessoa-busca: flex ao invés de grid */
+#workspace-registros-pessoa-busca .livro-filter-panel {
+  display: block !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+}
+
+#workspace-registros-pessoa-busca .livro-section + .livro-section,
+#workspace-registros-demanda-form .livro-section + .livro-section {
+  margin-top: 1rem;
+}
+
+/* ─── Registros: Split Screen na Confirmação de Pessoa ───────────────────── */
+.reg-split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.reg-col-dados,
+.reg-col-historico {
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-col-dados .livro-section,
+.reg-col-historico .livro-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0 !important;
+}
+
+.reg-col-dados .livro-section-body,
+.reg-col-historico .livro-section-body {
+  flex: 1;
+}
+
+.reg-dados-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.reg-dados-fields-grid .reg-field-full {
+  grid-column: 1 / -1;
+}
+
+#reg-lista-demandas-anteriores {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+#reg-lista-demandas-anteriores::-webkit-scrollbar {
+  width: 6px;
+}
+
+#reg-lista-demandas-anteriores::-webkit-scrollbar-thumb {
+  background-color: var(--slate-300);
+  border-radius: 4px;
+}
+
+@media (max-width: 1024px) {
+  .reg-split-layout {
+    grid-template-columns: 1fr;
+  }
+  .reg-col-historico {
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .reg-dados-fields-grid {
+    grid-template-columns: 1fr;
+  }
+}
+#workspace-registros-pessoa-busca .livro-action-bar,
+#workspace-registros-demanda-form .livro-action-bar {
+  position: sticky;
+  z-index: 12;
+  bottom: 1rem;
+  width: 100%;
+  max-width: none;
+  margin: 1rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.13);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+#workspace-registros-pessoa-busca .livro-action-group,
+#workspace-registros-demanda-form .livro-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+#workspace-registros-pessoa-busca .livro-action-group-end,
+#workspace-registros-demanda-form .livro-action-group-end {
+  justify-content: flex-end;
+}
+#workspace-registros-pessoa-busca .livro-action-bar button,
+#workspace-registros-demanda-form .livro-action-bar button {
+  min-height: 40px;
+  border-radius: 0.65rem;
+  font-size: 0.95rem;
+}
+#workspace-registros-pessoa-busca .livro-clear-btn,
+#workspace-registros-demanda-form .livro-clear-btn {
+  color: #9f1239;
+  border-color: #fecdd3;
+  background: #fff7f8;
 }
 
 /* ─── Processos: estilos visuais (herda padrão Higiene de Mãos) ──────────── */

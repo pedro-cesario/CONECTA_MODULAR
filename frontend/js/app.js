@@ -62,6 +62,15 @@
       topbarButtonId: 'nav-dashboard-pa',
       activeModes: ['dashboard-internacao'],
       entryFnName: 'enterDashboardInternacaoMode'
+    },
+    registros: {
+      id: 'registros',
+      nome: 'Registros',
+      allowedProfiles: [],
+      buttonId: 'btn-abrir-registros',
+      topbarButtonId: 'nav-registros',
+      activeModes: ['registros-submenu', 'registros-pessoa-busca', 'registros-demanda-form'],
+      entryFnName: 'showRegistrosSubMenu'
     }
   };
 
@@ -70,7 +79,8 @@
     dashboard: ['enfermagem', 'tecnico_enfermagem'],
     livro: ['enfermagem'],
     escala: ['psicologia'],
-    dashboard_pa: ['enfermagem']
+    dashboard_pa: ['enfermagem'],
+    registros: ['admin', 'servico_social']
   };
 
   async function loadModulosFromBackend() {
@@ -323,7 +333,7 @@
 
   const DRAFT_STORAGE_VERSION = 2;
   const DRAFT_STORAGE_PREFIX = 'conecta_drafts_v2';
-  const EDITABLE_DRAFT_MODULES = ['passagem', 'livro', 'escala', 'auditorias'];
+  const EDITABLE_DRAFT_MODULES = ['passagem', 'livro', 'escala', 'auditorias', 'registros'];
   const draftDirtyModules = new Set();
   const draftSaveTimers = new Map();
   const draftHydratingModules = new Set();
@@ -417,6 +427,10 @@
         if (observacoes) observacoes.value = '';
         renderEscalaSemanal();
         atualizarBotaoPublicarEscala();
+      } else if (moduleId === 'registros') {
+        if (typeof window.clearRegistrosForm === 'function') {
+          window.clearRegistrosForm();
+        }
       }
     } finally {
       draftHydratingModules.delete(moduleId);
@@ -504,6 +518,7 @@
     if (moduleId === 'livro') return captureLivroDraft();
     if (moduleId === 'escala') return captureEscalaDraft();
     if (moduleId === 'auditorias') return typeof window.captureAuditoriaDraft === 'function' ? window.captureAuditoriaDraft() : null;
+    if (moduleId === 'registros') return typeof window.captureRegistrosDraft === 'function' ? window.captureRegistrosDraft() : null;
     return null;
   }
 
@@ -7086,28 +7101,31 @@ const moduleHandlers = {
         if (menu) activateWorkspace('auditorias-submenu', menu);
       }
     },
-   passagem: () => {
-     showPassagemSubMenu(); return; if (false) {
-       enterPassagemMode();
-     } else if (state.lastModuleState.passagem === 'passagens-anteriores') {
-       document.getElementById('btn-passagem-anteriores')?.click();
-     } else {
-       showPassagemSubMenu();
-     }
-   },
-   dashboard: enterDashboardMode,
-   livro: () => {
-     if (state.lastModuleState.livro === 'livro') {
-       enterLivroMode();
-     } else if (state.lastModuleState.livro === 'print') {
-       document.getElementById('btn-livro-imprimir')?.click();
-     } else {
-       showLivroSubMenu();
-     }
-   },
-   escala: enterEscalaMode,
-   dashboard_pa: enterDashboardInternacaoMode
- };
+    registros: () => {
+      const draft = getModuleDraft('registros');
+      if (draft?.activeScreen && typeof window.hydrateRegistrosDraft === 'function') {
+        window.hydrateRegistrosDraft(draft);
+      } else {
+        const menu = document.getElementById('registros-sub-menu');
+        if (menu) activateWorkspace('registros-submenu', menu);
+      }
+    },
+    passagem: () => {
+      showPassagemSubMenu();
+    },
+    dashboard: enterDashboardMode,
+    livro: () => {
+      if (state.lastModuleState.livro === 'livro') {
+        enterLivroMode();
+      } else if (state.lastModuleState.livro === 'print') {
+        document.getElementById('btn-livro-imprimir')?.click();
+      } else {
+        showLivroSubMenu();
+      }
+    },
+    escala: enterEscalaMode,
+    dashboard_pa: enterDashboardInternacaoMode
+  };
 
   document.getElementById('btn-passagem-lancar')?.addEventListener('click', () => {
     if (!temPermissaoAtiva('passagem', 'lancar_nova_passagem')) {

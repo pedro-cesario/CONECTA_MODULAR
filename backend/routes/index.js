@@ -9,6 +9,7 @@ const usuarioController = require('../controllers/usuarioController');
 const dashboardController = require('../controllers/dashboardController');
 const escalaAtivaController = require('../controllers/escalaAtivaController');
 const auditoriaController = require('../controllers/auditoriaController');
+const registroController = require('../controllers/registroController');
 const nativeSsoController = require('../controllers/nativeSsoController');
 const adminRoutes = require('./adminRoutes');
 const configCache = require('../config/configCache');
@@ -104,5 +105,14 @@ router.put('/escala-ativa', requireAuth, escalaAtivaController.saveEscalaAtiva);
 router.get('/escala-ativa/versoes', requireAuth, escalaAtivaController.listarVersoes);
 router.get('/escala-ativa/versao', requireAuth, escalaAtivaController.loadVersaoEspecifica);
 router.get('/escala-ativa/diff', requireAuth, escalaAtivaController.loadDiff);
+
+// Registros Assistenciais (Demanda Espontânea, etc.)
+router.get('/registros/tipos', requireAuth, registroController.listarTipos);
+router.get('/registros/pessoas', requireAuth, registroController.buscarPessoas);
+router.get('/registros/pessoas/:cdPessoaFisica', requireAuth, registroController.obterPessoa);
+router.post('/registros/pessoas', requireAuth, registroController.cadastrarPessoa);
+router.put('/registros/pessoas/:cdPessoaFisica', requireAuth, registroController.atualizarPessoa);
+router.post('/registros', requireAuth, registroController.salvarRegistro);
+router.get('/registros/historico', requireAuth, registroController.listarHistorico);
 
 module.exports = router;

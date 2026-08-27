@@ -146,6 +146,17 @@ async function ensureAccessSchema() {
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_auditorias_processos')");
   }
 
+  // Migration: Módulo de Registros Assistenciais (Demanda Espontânea, etc.)
+  const migrationRegistros = await all("SELECT id FROM config_migrations WHERE id = '2026_08_registros_modulo'");
+  if (migrationRegistros.length === 0) {
+    await run(`INSERT OR IGNORE INTO modulos (id, nome, descricao, icon, setorId) VALUES ('registros', 'Registros', 'Registros assistenciais e acolhimento de demandas', 'bi-journal-bookmark', NULL)`);
+    await run(`INSERT OR IGNORE INTO perfil_modulos (perfil_id, modulo_id) VALUES ('admin', 'registros')`);
+    for (const permissao of ['lancar_demanda_espontanea', 'cadastrar_pessoa_fisica', 'visualizar_historico_registros']) {
+      await run(`INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES ('admin', 'registros', ?)`, [permissao]);
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_registros_modulo')");
+  }
+
   await run(`CREATE TABLE IF NOT EXISTS studio_pages (
     id TEXT PRIMARY KEY,
     nome TEXT NOT NULL,
