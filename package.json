@@ -6,9 +6,11 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
-    "test:sso": "node --test backend/services/nativeSsoService.test.js backend/controllers/nativeSsoController.test.js",
+    "test": "node --test backend/test/*.test.js backend/src/modules/auth/*.test.js",
+    "test:sso": "node --test backend/src/modules/auth/*.test.js",
     "db:init": "node scripts/init-config-db.js"
   },
+
   "dependencies": {
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",

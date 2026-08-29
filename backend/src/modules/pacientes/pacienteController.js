@@ -1,6 +1,7 @@
-const pacienteService = require('.//pacienteService');
+const pacienteService = require('./pacienteService');
 const { validarPerfil, validarModuloPermissao, getPerfilAtivo } = require('../../core/utils/acesso');
 const configCache = require('../../core/config/configCache');
+const auditLogger = require('../../core/utils/auditLogger');
 
 async function listarPacientes(req, res) {
   try {
@@ -23,13 +24,22 @@ async function listarPacientes(req, res) {
       return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
     }
     const pacientes = await pacienteService.listarPacientes(setores);
-    console.log(`[Pacientes] Retornando ${pacientes.length} pacientes para setores:`, setores);
+
+    auditLogger.log({
+      req,
+      action: 'CONSULTA_PACIENTES_INTERNACAO',
+      resourceType: 'SETORES',
+      resourceId: Array.isArray(setores) ? setores.join(',') : setores,
+      details: { totalPacientes: pacientes.length }
+    });
+
     return res.json({ success: true, data: pacientes });
   } catch (err) {
     console.error('[Pacientes] Erro:', err.message);
     return res.status(err.status || 500).json({ success: false, message: err.message });
   }
 }
+
 
 async function listarPacientesSetor(req, res) {
   try {

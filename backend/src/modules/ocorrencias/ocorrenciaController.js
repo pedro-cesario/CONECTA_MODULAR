@@ -1,7 +1,9 @@
-const ocorrenciaService = require('.//ocorrenciaService');
+const ocorrenciaService = require('./ocorrenciaService');
 const { validarPerfil, validarModuloPermissao, getPerfilAtivo } = require('../../core/utils/acesso');
 const configCache = require('../../core/config/configCache');
 const redisClient = require('../../core/config/redisClient');
+const auditLogger = require('../../core/utils/auditLogger');
+
 
 const LOTE_PREFIX = 'passagem_lote:';
 
@@ -108,9 +110,21 @@ async function salvar(req, res) {
     }
 
     const resultado = await ocorrenciaService.salvarPassagem({ ...finalPayload, cd_modulo: perfil?.setorId }, usuario);
+
+    auditLogger.log({
+      req,
+      action: 'SALVAR_PASSAGEM_PLANTAO',
+      resourceType: 'SETORES',
+      resourceId: Array.isArray(finalPayload.setoresSelecionados) ? finalPayload.setoresSelecionados.join(',') : '',
+      details: {
+        totalIntercorrencias: Object.keys(finalPayload.intercorrencias || {}).length,
+        isLote
+      }
+    });
+
     res.json({ success: true, data: resultado });
   } catch (err) {
-    console.error('[Ocorrência] Erro:', err.message);
+    console.error('[Ocorrência] Erro ao salvar:', err.message);
     res.status(err.status || 500).json({ success: false, message: err.message });
   }
 }
@@ -119,17 +133,26 @@ async function listarPassagensAnteriores(req, res) {
   try {
     const usuario = req.session?.usuario;
     if (!usuario) return res.status(401).json({ success: false, message: 'Sessão expirada' });
-    if (!validarModuloPermissao(usuario, 'passagem')) {
-      return res.status(403).json({ success: false, message: 'Acesso restrito à Passagem de Plantão' });
+
+    if (!validarModuloPermissao(usuario, 'passagem', 'ver_passagens_anteriores')) {
+      return res.status(403).json({ success: false, message: 'Sem permissão para visualizar passagens anteriores' });
     }
+
     const perfilAtivo = getPerfilAtivo(usuario);
-    const cdPerfil = Number(usuario.cd_perfis?.[perfilAtivo]);
-    if (!Number.isInteger(cdPerfil)) {
-      return res.status(400).json({ success: false, message: 'Perfil TASY não encontrado' });
-    }
+    const cdPerfil = configCache.getPerfilIdTasy(perfilAtivo);
     const setoresPermitidos = configCache.getSetoresPermitidos(perfilAtivo, 'passagem');
     const { setor, dtInicio, dtFim } = req.query || {};
     const resultado = await ocorrenciaService.listarPassagensAnteriores(cdPerfil, setoresPermitidos, { setor, dtInicio, dtFim });
+
+    
+    auditLogger.log({
+      req,
+      action: 'CONSULTA_PASSAGENS_ANTERIORES',
+      resourceType: 'SETOR',
+      resourceId: setor || 'TODOS',
+      details: { dtInicio, dtFim, totalRegistros: (resultado || []).length }
+    });
+
     return res.json({ success: true, data: resultado });
   } catch (err) {
     console.error('[Passagens anteriores] Erro:', err.message);
@@ -148,6 +171,18 @@ async function salvarLivroAdministrativo(req, res) {
     }
 
     const resultado = await ocorrenciaService.salvarLivroAdministrativo(req.body, usuario);
+
+    auditLogger.log({
+      req,
+      action: 'SALVAR_LIVRO_ADMINISTRATIVO',
+      resourceType: 'LIVRO',
+      resourceId: req.body?.data || null,
+      details: {
+        enfermeiro: req.body?.enfermeiro,
+        totalTecnicos: (req.body?.tecnicos || []).length
+      }
+    });
+
     res.json({ success: true, data: resultado });
   } catch (err) {
     console.error('[Livro Administrativo] Erro ao salvar:', err.message);

@@ -394,6 +394,26 @@ async function deletarStudioPage(req, res) {
   }
 }
 
+const { queryAuditLogs } = require('../../core/database/auditDatabase');
+
+async function obterAuditTrail(req, res) {
+  try {
+    const { limit, offset, usuario, action, startDate, endDate } = req.query;
+    const logs = await queryAuditLogs({
+      limit: limit ? parseInt(limit, 10) : 100,
+      offset: offset ? parseInt(offset, 10) : 0,
+      usuario,
+      action,
+      startDate,
+      endDate
+    });
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    console.error('[Admin] Erro ao consultar audit trail:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 module.exports = {
   listarPerfis,
   salvarPerfil,
@@ -418,5 +438,7 @@ module.exports = {
   listarStudioPages,
   obterStudioPage,
   salvarStudioPage,
-  deletarStudioPage
+  deletarStudioPage,
+  obterAuditTrail
 };
+

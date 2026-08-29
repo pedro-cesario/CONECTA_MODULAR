@@ -31,8 +31,10 @@ router.get('/ect/agendas', requireAuth, requireAdmin, adminController.listarAgen
 router.get('/ect/procedimentos', requireAuth, requireAdmin, adminController.listarProcedimentosEct);
 
 router.get('/sessoes', requireAuth, requireAdmin, adminController.listarSessoes);
+router.get('/audit-trail', requireAuth, requireAdmin, adminController.obterAuditTrail);
 
 router.get('/studio/pages', requireAuth, requireAdmin, adminController.listarStudioPages);
+
 router.get('/studio/pages/:id', requireAuth, requireAdmin, adminController.obterStudioPage);
 router.post('/studio/pages', requireAuth, requireAdmin, adminController.salvarStudioPage);
 router.put('/studio/pages/:id', requireAuth, requireAdmin, adminController.salvarStudioPage);
