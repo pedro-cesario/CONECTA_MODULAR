@@ -193,6 +193,11 @@ async function initApp() {
     const mod = await loadModule('livro');
     mod.showLivroSubMenu();
   });
+  document.getElementById('btn-livro-limpar')?.addEventListener('click', async () => {
+    const mod = await loadModule('livro');
+    mod.limparLivro();
+  });
+
   document.getElementById('btn-print-voltar')?.addEventListener('click', async () => {
     const mod = await loadModule('livro');
     mod.showLivroSubMenu();

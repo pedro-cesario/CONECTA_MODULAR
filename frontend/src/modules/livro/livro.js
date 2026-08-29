@@ -2463,9 +2463,69 @@ export function temAcessoTecnicoEnfermagem() {
     }
   });
 
+  export async function limparLivro() {
+    const confirm = await ui.showConfirmModal(
+      'Limpar Livro Administrativo',
+      'Deseja limpar todos os dados preenchidos e descartar o rascunho atual?'
+    );
+    if (!confirm) return;
+
+    // 1. Limpa o rascunho do módulo
+    draft.clearModuleDraft('livro');
+    draft.discardModuleWork('livro');
+
+    // 2. Reseta o estado em memória
+    state.livroSetorSelecionado = null;
+    state.livroEnfermeiroSelecionado = null;
+    state.livroTecnicosSelecionados = [buildLivroTecnicoRow(), buildLivroTecnicoRow()];
+    state.livroFaltasFolgas = [];
+    state.livroPatio = [];
+    state.livroCirculante = [];
+    state.livroAvaliacaoExterna = [];
+    state.livroEctPre = [];
+    state.livroEctSala = [];
+    state.livroEctRecuperacao = [];
+    state.livroPacientesSetor = [];
+
+    // 3. Reseta os campos do DOM
+    const dateInput = document.getElementById('livro-data-plantao');
+    if (dateInput) dateInput.value = utils.getTodayIsoDate();
+
+    const turnoManha = document.querySelector('input[name="livro-turno"][value="M"]');
+    if (turnoManha) turnoManha.checked = true;
+
+    const setorSelect = document.getElementById('livro-setor');
+    if (setorSelect) setorSelect.value = '';
+
+    const enfermeiroSelect = document.getElementById('livro-enfermeiro');
+    if (enfermeiroSelect) enfermeiroSelect.value = '';
+
+    const obsTextarea = document.getElementById('livro-observacoes');
+    if (obsTextarea) obsTextarea.value = '';
+
+    const previewEl = document.getElementById('livro-preview');
+    if (previewEl) previewEl.innerHTML = '<div class="loading-placeholder">Nenhuma escala carregada para visualização.</div>';
+
+    // 4. Re-renderiza todas as seções e listas
+    renderLivroSetorSelect();
+    renderLivroEnfermeiroSelect();
+    renderTecnicosList();
+    renderFaltasFolgasList();
+    renderPatioList();
+    renderCirculanteList();
+    renderAvaliacaoList();
+    renderLivroEctSelects();
+    ensureLivroEditable();
+    draft.updateTopbarDraftIndicators();
+
+    ui.showToast('Livro Administrativo limpo com sucesso!', 'info');
+  }
+
+  document.getElementById('btn-livro-limpar')?.addEventListener('click', limparLivro);
 
   // --- Livro Sub-Menu ---
   export function showLivroSubMenu() {
+
     router.activateWorkspace('livro-submenu', document.getElementById('livro-sub-menu'));
   }
 
