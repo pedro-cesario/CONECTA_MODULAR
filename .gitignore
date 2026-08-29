@@ -1,6 +1,10 @@
-node_modules
+node_modules/
 *.log
 .env
+.env.local
 data/
+*.sqlite-journal
 .DS_Store
 Thumbs.db
+
+

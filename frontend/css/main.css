@@ -1,0 +1,14 @@
+/**
+ * Conecta Assistencial - Master Stylesheet
+ * Carrega a base visual e os módulos de domínio de forma desacoplada
+ */
+
+@import url('style.css');
+@import url('modules/passagem.css');
+@import url('modules/dashboard.css');
+@import url('modules/escalas.css');
+@import url('modules/livro.css');
+@import url('modules/auditorias.css');
+@import url('modules/registros.css');
+@import url('modules/skeleton.css');
+

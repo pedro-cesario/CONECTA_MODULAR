@@ -10,16 +10,32 @@ const rateLimit = require('express-rate-limit');
 
 const RedisStore = require('connect-redis').default;
 const { RedisStore: RateLimitRedisStore } = require('rate-limit-redis');
-const redisClient = require('./config/redisClient');
+const redisClient = require('./src/core/config/redisClient');
 
-const { initPool, closePool, initEscalaAtivaTables } = require('./database');
-const routes = require('./routes');
-const dashboardService = require('./services/dashboardService');
-const { parseBoolean } = require('./utils/parseBoolean');
-const configCache = require('./config/configCache');
+const { initPool, closePool, initEscalaAtivaTables } = require('./src/core/database');
+const routes = require('./src/routes');
+const errorHandler = require('./src/core/middlewares/errorHandler');
+const responseHandler = require('./src/core/middlewares/responseHandler');
+const correlationIdMiddleware = require('./src/core/middlewares/correlationIdMiddleware');
+const logger = require('./src/core/utils/logger');
+const dashboardService = require('./src/modules/dashboard/dashboardService');
+const { parseBoolean } = require('./src/core/utils/parseBoolean');
+const configCache = require('./src/core/config/configCache');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(correlationIdMiddleware);
+
+// HTTP Access Logging com Correlation ID
+app.use('/api', (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const durationMs = Date.now() - start;
+    logger.http(req, res, durationMs);
+  });
+  next();
+});
 
 const dbRequiredOnStartup = parseBoolean(process.env.DB_REQUIRED_ON_STARTUP, true);
 
@@ -77,6 +93,7 @@ app.use('/api/native-sso', nativeSsoLimiter);
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(responseHandler);
 
 // Aplica no-cache apenas para rotas da API
 app.use('/api', (req, res, next) => {
@@ -136,14 +153,18 @@ app.use((req, res, next) => {
   });
 });
 
-// Servir arquivos estáticos (JS, CSS, imagens) com cache por 7 dias
+// Servir arquivos estáticos (JS, CSS, imagens) com validação de cache
 app.use(express.static(path.join(__dirname, '../frontend'), {
   setHeaders: (res, filePath) => {
-    res.set('Cache-Control', 'public, max-age=604800');
+    if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.set('Cache-Control', 'no-cache, must-revalidate');
+    } else {
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
   }
 }));
 
-const { getPoolStats, getConnection } = require('./database');
+const { getPoolStats, getConnection } = require('./src/core/database');
 
 app.get('/health', async (req, res) => {
   const health = {
@@ -213,15 +234,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-app.use((err, req, res, next) => {
-  console.error('[Error]', err.message);
-  const isProd = process.env.NODE_ENV === 'production';
-  const message = isProd ? 'Erro interno do servidor' : (err.message || 'Erro interno do servidor');
-  res.status(err.status || 500).json({
-    success: false,
-    message
-  });
-});
+// Middleware Centralizado de Tratamento de Erros
+app.use(errorHandler);
 
 async function start() {
   try {

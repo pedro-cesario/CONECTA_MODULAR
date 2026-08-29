@@ -326,6 +326,228 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
 
+    /* Modal de Permissões Extra Largo com Abas */
+    #permissoes-modal .modal-content {
+      max-width: 1400px;
+      width: 96vw;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 32px;
+    }
+
+    .perm-tabs-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .perm-tab-btn {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      color: var(--slate-700);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      text-align: left;
+      min-height: 74px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      width: 100%;
+    }
+
+    .perm-tab-btn:hover {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+    .perm-tab-btn.active {
+      color: var(--primary);
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(0, 56, 122, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .perm-tab-btn.active::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3.5px;
+      background: var(--primary);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .perm-tab-btn-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .perm-tab-btn-icon {
+      font-size: 1.3rem;
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .perm-tab-btn-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      line-height: 1.25;
+      display: block;
+      transition: color 0.2s;
+    }
+
+    .perm-tab-btn.active .perm-tab-btn-title {
+      color: var(--primary);
+    }
+
+    .perm-tab-badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      transition: all 0.2s ease;
+    }
+
+    .perm-tab-badge.enabled {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .perm-tab-badge.disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 1px solid #e2e8f0;
+    }
+
+    #permissoes-modal-content {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 420px;
+      max-height: 62vh;
+      padding-right: 8px;
+    }
+
+    .perm-tab-pane {
+      display: none;
+      animation: permFadeIn 0.15s ease-out;
+    }
+
+    .perm-tab-pane.active {
+      display: block;
+    }
+
+    @keyframes permFadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .perm-module-main-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 24px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .perm-module-main-toggle.active {
+      border-color: var(--primary);
+      background: #f0f6ff;
+    }
+
+    .perm-subcard {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .perm-subcard-header {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .perm-subcard-header i {
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    .perm-pills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .perm-pill-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: var(--slate-700);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .perm-pill-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .perm-pill-item.active,
+    .perm-pill-item:has(input:checked) {
+      background: #eef5ff;
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .perm-pill-item input {
+      margin: 0;
+      cursor: pointer;
+      width: 1.15em;
+      height: 1.15em;
+      accent-color: var(--primary);
+    }
+
     #permissoes-modal-content .form-check {
       padding: 10px 14px;
       margin-bottom: 8px;
@@ -999,14 +1221,19 @@
   <div class="modal" id="permissoes-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Gerenciar Permissões do Perfil</h3>
+        <div>
+          <h3 class="modal-title m-0">Gerenciar Permissões do Perfil</h3>
+          <small class="text-muted" id="permissoes-perfil-subtitle">Selecione os módulos e permissões</small>
+        </div>
         <button class="close-modal" id="permissoes-modal-close">&times;</button>
       </div>
-      <div id="permissoes-modal-content">
-      </div>
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <div class="perm-tabs-nav" id="permissoes-tabs-nav"></div>
+      <div id="permissoes-modal-content"></div>
+      <div style="display: flex; gap: 10px; margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
         <button type="button" class="btn btn-secondary" style="flex: 1;" id="permissoes-cancelar">Cancelar</button>
-        <button type="button" class="btn btn-primary" style="flex: 1;" id="permissoes-salvar">Salvar</button>
+        <button type="button" class="btn btn-primary" style="flex: 1;" id="permissoes-salvar">
+          <i class="bi bi-check-lg"></i> Salvar Permissões
+        </button>
       </div>
     </div>
   </div>
@@ -1532,19 +1759,46 @@
     let currentPerfilPermissoes = null;
     let checkboxHandler = null;
 
+    function switchPermTab(moduloId) {
+      document.querySelectorAll('.perm-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.perm-tab-pane').forEach(p => p.classList.remove('active'));
+      const btn = document.getElementById(`perm-tab-btn-${moduloId}`);
+      const pane = document.getElementById(`perm-tab-pane-${moduloId}`);
+      if (btn) btn.classList.add('active');
+      if (pane) pane.classList.add('active');
+    }
+
     function managePermissoes(perfilId) {
       currentPerfilPermissoes = perfilId;
       const modal = document.getElementById('permissoes-modal');
+      const tabsNav = document.getElementById('permissoes-tabs-nav');
       const content = document.getElementById('permissoes-modal-content');
+      const subtitle = document.getElementById('permissoes-perfil-subtitle');
 
-      content.innerHTML = '';
+      if (tabsNav) tabsNav.innerHTML = '';
+      if (content) {
+        content.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 320px; color: var(--slate-400);">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div> Carregando módulos e permissões...
+          </div>
+        `;
+      }
 
       Promise.all([
+        api.get(`${apiConfig.baseUrl}/admin/perfis`),
         api.get(`${apiConfig.baseUrl}/admin/modulos`),
         api.get(`${apiConfig.baseUrl}/admin/passagem/setores`)
       ])
-        .then(([result, setoresResult]) => {
+        .then(([perfisResult, result, setoresResult]) => {
           if (!result.success) throw new Error(result.message);
+
+          if (perfisResult && perfisResult.success && Array.isArray(perfisResult.data)) {
+            const perfilObj = perfisResult.data.find(p => p.id === perfilId);
+            if (perfilObj && subtitle) {
+              subtitle.innerHTML = `Perfil: <strong style="color: var(--primary); font-size: 1rem;">${escapeHtml(perfilObj.nome)}</strong> &bull; ID: <code>${escapeHtml(perfilObj.id)}</code>`;
+            }
+          }
+
           const rawSetores = (setoresResult && setoresResult.success && Array.isArray(setoresResult.data)) ? setoresResult.data : [];
           const seenSetorIds = new Set();
           const setoresInternacao = rawSetores.filter(s => {
@@ -1554,243 +1808,275 @@
             return true;
           });
 
-          result.data.forEach(modulo => {
-            const div = document.createElement('div');
-            div.className = 'form-check';
-            div.innerHTML = `
-              <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}" value="${modulo.id}" data-modulo-check>
-              <label class="form-check-label" for="perm-${perfilId}-${modulo.id}">
-                <strong>${escapeHtml(modulo.nome)}</strong>
-                <br><small class="text-muted">${escapeHtml(modulo.descricao)}</small>
-                <br><small class="text-info">ID: ${escapeHtml(modulo.id)}</small>
-              </label>
+          if (tabsNav) tabsNav.innerHTML = '';
+          if (content) content.innerHTML = '';
+
+          const MODULO_ICONS = {
+            passagem: 'bi-arrow-left-right',
+            dashboard: 'bi-people',
+            livro: 'bi-book',
+            escala: 'bi-calendar3',
+            auditorias: 'bi-clipboard2-check',
+            registros: 'bi-journal-bookmark',
+            dashboard_pa: 'bi-hospital',
+            admin: 'bi-gear-fill'
+          };
+
+          const modulosList = result.data || [];
+
+          modulosList.forEach((modulo, index) => {
+            const iconClass = modulo.icon && modulo.icon.trim() ? (modulo.icon.startsWith('bi-') ? modulo.icon : `bi-${modulo.icon}`) : (MODULO_ICONS[modulo.id] || 'bi-grid');
+
+            // 1. Criar Botão da Aba
+            if (tabsNav) {
+              const tabBtn = document.createElement('button');
+              tabBtn.type = 'button';
+              tabBtn.className = `perm-tab-btn ${index === 0 ? 'active' : ''}`;
+              tabBtn.id = `perm-tab-btn-${modulo.id}`;
+              tabBtn.setAttribute('data-target-tab', modulo.id);
+              tabBtn.innerHTML = `
+                <div class="perm-tab-btn-top">
+                  <i class="bi ${iconClass} perm-tab-btn-icon"></i>
+                  <span class="perm-tab-badge disabled" id="perm-tab-badge-${modulo.id}">Inativo</span>
+                </div>
+                <span class="perm-tab-btn-title">${escapeHtml(modulo.nome)}</span>
+              `;
+              tabBtn.addEventListener('click', () => {
+                switchPermTab(modulo.id);
+              });
+              tabsNav.appendChild(tabBtn);
+            }
+
+            // 2. Criar Painel da Aba
+            const pane = document.createElement('div');
+            pane.className = `perm-tab-pane ${index === 0 ? 'active' : ''}`;
+            pane.id = `perm-tab-pane-${modulo.id}`;
+
+            pane.innerHTML = `
+              <!-- Toggle Mestre do Módulo -->
+              <div class="perm-module-main-toggle" id="perm-toggle-box-${modulo.id}">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi ${iconClass}" style="font-size: 1.35rem; color: var(--primary);"></i>
+                    <h5 style="margin: 0; color: var(--primary); font-weight: 700; font-size: 1.1rem;">${escapeHtml(modulo.nome)}</h5>
+                  </div>
+                  <p style="margin: 4px 0 0; font-size: 0.9rem; color: var(--slate-600);">${escapeHtml(modulo.descricao || 'Sem descrição cadastrada')}</p>
+                  <small style="color: var(--slate-400);">ID do Módulo: <code>${escapeHtml(modulo.id)}</code></small>
+                </div>
+                <div class="form-check form-switch m-0" style="padding-left: 3.2em;">
+                  <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}" value="${modulo.id}" data-modulo-check style="width: 2.8em; height: 1.5em; cursor: pointer;">
+                  <label class="form-check-label fw-bold" for="perm-${perfilId}-${modulo.id}" style="cursor: pointer; margin-left: 8px; font-size: 1rem; color: var(--primary);">Habilitado</label>
+                </div>
+              </div>
+
               ${modulo.id === 'escala' ? `
-                <div class="ms-4 mt-2">
-                  <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}-edit" value="editar_publicar_escala" data-edit-escala disabled>
-                  <label class="form-check-label" for="perm-${perfilId}-${modulo.id}-edit">
-                    <small><strong>Editar/Publicar escala</strong></small>
-                  </label>
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-pencil-square"></i> Permissões de Escala
+                  </div>
+                  <div class="perm-pills-container">
+                    <label class="perm-pill-item" for="perm-${perfilId}-${modulo.id}-edit">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-${modulo.id}-edit" value="editar_publicar_escala" data-edit-escala data-parent-mod="escala">
+                      <span><strong>Editar e Publicar Escala</strong></span>
+                    </label>
+                  </div>
                 </div>
               ` : ''}
+
               ${modulo.id === 'auditorias' ? `
-                <div class="ms-4 mt-2">
-                  <small><strong>Funções habilitadas:</strong></small>
-                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-shield-check"></i> Funções de Auditoria Habilitadas
+                  </div>
+                  <div class="perm-pills-container">
                     ${[
-                      ['lancar_higiene_maos', 'Lançar auditoria de Higiene de Mãos'],
-                      ['visualizar_historico_higiene_maos', 'Visualizar histórico'],
-                      ['exportar_higiene_maos', 'Exportar XLSX e PDF'],
-                      ['lancar_auditoria_processos', 'Lançar Auditoria de Processos'],
-                      ['visualizar_historico_auditoria_processos', 'Visualizar histórico (Processos)'],
-                      ['exportar_auditoria_processos', 'Exportar XLSX e PDF (Processos)']
-                    ].map(([value, label]) => `<div class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" id="perm-${perfilId}-auditorias-${value}" value="${value}" data-auditoria-permissao disabled><label class="form-check-label text-muted" for="perm-${perfilId}-auditorias-${value}"><small>${label}</small></label></div>`).join('')}
+                      ['lancar_higiene_maos', 'Lançar Auditoria de Higiene de Mãos', 'bi-hand-index-thumb'],
+                      ['visualizar_historico_higiene_maos', 'Visualizar Histórico (Higiene)', 'bi-clock-history'],
+                      ['exportar_higiene_maos', 'Exportar XLSX e PDF (Higiene)', 'bi-file-earmark-excel'],
+                      ['lancar_auditoria_processos', 'Lançar Auditoria de Processos', 'bi-clipboard-check'],
+                      ['visualizar_historico_auditoria_processos', 'Visualizar Histórico (Processos)', 'bi-clock-history'],
+                      ['exportar_auditoria_processos', 'Exportar XLSX e PDF (Processos)', 'bi-file-earmark-excel']
+                    ].map(([value, label, icon]) => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-auditorias-${value}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-auditorias-${value}" value="${value}" data-auditoria-permissao data-parent-mod="auditorias">
+                        <span><i class="bi ${icon} text-muted me-1"></i>${label}</span>
+                      </label>
+                    `).join('')}
                   </div>
                 </div>
               ` : ''}
+
               ${modulo.id === 'registros' ? `
-                <div class="ms-4 mt-2">
-                  <small><strong>Tipos de Registros e Funções habilitadas:</strong></small>
-                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-journal-plus"></i> Tipos de Registros e Funções Habilitadas
+                  </div>
+                  <div class="perm-pills-container">
                     ${[
-                      ['lancar_demanda_espontanea', 'Demanda Espontânea (Serviço Social)'],
-                      ['cadastrar_pessoa_fisica', 'Cadastrar Pessoa Física'],
-                      ['visualizar_historico_registros', 'Visualizar Histórico']
-                    ].map(([value, label]) => `<div class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" id="perm-${perfilId}-registros-${value}" value="${value}" data-registro-permissao disabled><label class="form-check-label text-muted" for="perm-${perfilId}-registros-${value}"><small>${label}</small></label></div>`).join('')}
+                      ['lancar_demanda_espontanea', 'Demanda Espontânea (Serviço Social)', 'bi-person-raised-hand'],
+                      ['cadastrar_pessoa_fisica', 'Cadastrar Nova Pessoa Física', 'bi-person-plus'],
+                      ['visualizar_historico_registros', 'Visualizar Histórico de Registros', 'bi-clock-history']
+                    ].map(([value, label, icon]) => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-registros-${value}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-registros-${value}" value="${value}" data-registro-permissao data-parent-mod="registros">
+                        <span><i class="bi ${icon} text-muted me-1"></i>${label}</span>
+                      </label>
+                    `).join('')}
                   </div>
                 </div>
               ` : ''}
+
               ${modulo.id === 'livro' ? `
-                <div class="ms-4 mt-2">
-                  <small><strong>Escalas Habilitadas:</strong></small>
-                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-hospital"></i> Setores / Escalas Habilitadas
+                  </div>
+                  <div class="perm-pills-container">
                     ${setoresInternacao.map(setor => `
-                      <div class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-livro-setor-${setor.id}" value="${setor.id}" data-livro-setor disabled>
-                        <label class="form-check-label text-muted" for="perm-${perfilId}-livro-setor-${setor.id}">
-                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
-                        </label>
-                      </div>
+                      <label class="perm-pill-item" for="perm-${perfilId}-livro-setor-${setor.id}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-livro-setor-${setor.id}" value="${setor.id}" data-livro-setor data-parent-mod="livro">
+                        <span>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</span>
+                      </label>
                     `).join('')}
                   </div>
                 </div>
               ` : ''}
+
               ${modulo.id === 'dashboard' ? `
-                <div class="ms-4 mt-2">
-                  <small><strong>Setores Habilitados:</strong></small>
-                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-hospital"></i> Setores Habilitados no Dashboard
+                  </div>
+                  <div class="perm-pills-container">
                     ${setoresInternacao.map(setor => `
-                      <div class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-dashboard-setor-${setor.id}" value="${setor.id}" data-dashboard-setor disabled>
-                        <label class="form-check-label text-muted" for="perm-${perfilId}-dashboard-setor-${setor.id}">
-                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
-                        </label>
-                      </div>
+                      <label class="perm-pill-item" for="perm-${perfilId}-dashboard-setor-${setor.id}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-dashboard-setor-${setor.id}" value="${setor.id}" data-dashboard-setor data-parent-mod="dashboard">
+                        <span>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</span>
+                      </label>
                     `).join('')}
                   </div>
                 </div>
               ` : ''}
+
               ${modulo.id === 'passagem' ? `
-                <div class="ms-4 mt-2">
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-lancar" value="lancar_nova_passagem" data-lancar-passagem disabled>
-                    <label class="form-check-label" for="perm-${perfilId}-passagem-lancar"><small><strong>Lançar nova passagem</strong></small></label>
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-arrow-left-right"></i> Operações de Passagem
                   </div>
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-lancar-lote" value="lancar_passagem_lote" data-passagem-checkbox disabled>
-                    <label class="form-check-label text-muted" for="perm-${perfilId}-passagem-lancar-lote"><small>Passagem em Lote (Múltiplos Setores)</small></label>
+                  <div class="perm-pills-container">
+                    <label class="perm-pill-item" for="perm-${perfilId}-passagem-lancar">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-passagem-lancar" value="lancar_nova_passagem" data-lancar-passagem data-parent-mod="passagem">
+                      <span><strong>Lançar nova passagem</strong></span>
+                    </label>
+                    <label class="perm-pill-item" for="perm-${perfilId}-passagem-lancar-lote">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-passagem-lancar-lote" value="lancar_passagem_lote" data-passagem-checkbox data-parent-mod="passagem">
+                      <span>Passagem em Lote (Múltiplos Setores)</span>
+                    </label>
                   </div>
-                  <div class="mb-2">
-                    <small><strong>Itens de Intercorrência Habilitados:</strong></small>
-                    <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
-                      ${CHECKBOX_INTERCORRENCIAS.map(item => `
-                        <div class="form-check form-check-inline m-0">
-                          <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-check-${item.field}" value="campo_${item.field}" data-passagem-checkbox disabled>
-                          <label class="form-check-label text-muted" for="perm-${perfilId}-passagem-check-${item.field}">
-                            <small>${escapeHtml(item.label)}</small>
-                          </label>
-                        </div>
-                      `).join('')}
-                    </div>
+                </div>
+
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-clock"></i> Modelo de Trabalho
                   </div>
-                  <div class="mb-2 mt-3">
-                    <small><strong>Modelo de Trabalho:</strong></small>
-                    <div class="d-flex flex-wrap mt-1" style="gap: 15px;">
-                      <div class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-modelo-plantao" value="modelo_plantao" data-passagem-checkbox disabled onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-periodo').checked = false">
-                        <label class="form-check-label text-muted" for="perm-${perfilId}-modelo-plantao">
-                          <small>Plantão (Diurno / Noturno)</small>
-                        </label>
-                      </div>
-                      <div class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-modelo-periodo" value="modelo_periodo" data-passagem-checkbox disabled onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-plantao').checked = false">
-                        <label class="form-check-label text-muted" for="perm-${perfilId}-modelo-periodo">
-                          <small>Período (Manhã / Tarde / Noite)</small>
-                        </label>
-                      </div>
-                    </div>
+                  <div class="perm-pills-container">
+                    <label class="perm-pill-item" for="perm-${perfilId}-modelo-plantao">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-modelo-plantao" value="modelo_plantao" data-passagem-checkbox data-parent-mod="passagem" onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-periodo').checked = false">
+                      <span>Plantão (Diurno / Noturno)</span>
+                    </label>
+                    <label class="perm-pill-item" for="perm-${perfilId}-modelo-periodo">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-modelo-periodo" value="modelo_periodo" data-passagem-checkbox data-parent-mod="passagem" onclick="if(this.checked) document.getElementById('perm-${perfilId}-modelo-plantao').checked = false">
+                      <span>Período (Manhã / Tarde / Noite)</span>
+                    </label>
                   </div>
-                  <small><strong>Setores Habilitados:</strong></small>
-                  <div class="d-flex flex-wrap mt-1" style="gap: 10px;">
+                </div>
+
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-card-checklist"></i> Itens de Intercorrência Habilitados
+                  </div>
+                  <div class="perm-pills-container">
+                    ${CHECKBOX_INTERCORRENCIAS.map(item => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-passagem-check-${item.field}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-passagem-check-${item.field}" value="campo_${item.field}" data-passagem-checkbox data-parent-mod="passagem">
+                        <span>${escapeHtml(item.label)}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-hospital"></i> Setores Habilitados para Passagem
+                  </div>
+                  <div class="perm-pills-container">
                     ${setoresInternacao.map(setor => `
-                      <div class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox" id="perm-${perfilId}-passagem-setor-${setor.id}" value="${setor.id}" data-passagem-setor disabled>
-                        <label class="form-check-label text-muted" for="perm-${perfilId}-passagem-setor-${setor.id}">
-                          <small>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</small>
-                        </label>
-                      </div>
+                      <label class="perm-pill-item" for="perm-${perfilId}-passagem-setor-${setor.id}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-passagem-setor-${setor.id}" value="${setor.id}" data-passagem-setor data-parent-mod="passagem">
+                        <span>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</span>
+                      </label>
                     `).join('')}
                   </div>
                 </div>
               ` : ''}
             `;
-            content.appendChild(div);
+
+            content.appendChild(pane);
           });
 
+          function updateTabBadge(modId) {
+            const check = document.querySelector(`input[data-modulo-check][value="${modId}"]`);
+            const badge = document.getElementById(`perm-tab-badge-${modId}`);
+            const toggleBox = document.getElementById(`perm-toggle-box-${modId}`);
+            const isChecked = Boolean(check && check.checked);
+            if (badge) {
+              badge.textContent = isChecked ? 'Ativo' : 'Inativo';
+              badge.className = `perm-tab-badge ${isChecked ? 'enabled' : 'disabled'}`;
+            }
+            if (toggleBox) {
+              if (isChecked) toggleBox.classList.add('active');
+              else toggleBox.classList.remove('active');
+            }
+          }
+
+          function updateAllTabBadges() {
+            modulosList.forEach(m => updateTabBadge(m.id));
+          }
+
           checkboxHandler = e => {
-            const checkbox = e.target.closest('.form-check input');
-            if (checkbox) {
-              const modId = checkbox.value;
-              if (checkbox.dataset.moduloCheck !== undefined) {
-                const editCheckbox = document.querySelector(`#perm-${perfilId}-${modId}-edit`);
-                if (editCheckbox) {
-                  if (checkbox.checked) {
-                    editCheckbox.disabled = false;
-                  } else {
-                    editCheckbox.checked = false;
-                    editCheckbox.disabled = true;
-                  }
-                }
-              }
-              if (checkbox.dataset.moduloCheck !== undefined && modId === 'passagem') {
-                  document.querySelectorAll('input[data-passagem-setor]').forEach(cb => {
-                    cb.disabled = !checkbox.checked;
-                    if (!checkbox.checked) cb.checked = false;
-                  });
-                  document.querySelectorAll('input[data-passagem-checkbox]').forEach(cb => {
-                    cb.disabled = !checkbox.checked;
-                    if (!checkbox.checked) cb.checked = false;
-                  });
-                  const lancar = document.querySelector('input[data-lancar-passagem]');
-                  if (lancar) {
-                    lancar.disabled = !checkbox.checked;
-                    if (!checkbox.checked) lancar.checked = false;
-                  }
-              }
-              if (checkbox.dataset.moduloCheck !== undefined && modId === 'livro') {
-                  document.querySelectorAll('input[data-livro-setor]').forEach(cb => {
-                    cb.disabled = !checkbox.checked;
-                    if (!checkbox.checked) cb.checked = false;
-                  });
-              }
-              if (checkbox.dataset.moduloCheck !== undefined && modId === 'dashboard') {
-                  document.querySelectorAll('input[data-dashboard-setor]').forEach(cb => {
-                    cb.disabled = !checkbox.checked;
-                    if (!checkbox.checked) cb.checked = false;
-                  });
-              }
-              if (checkbox.dataset.moduloCheck !== undefined && modId === 'auditorias') {
-                document.querySelectorAll('input[data-auditoria-permissao]').forEach(cb => {
-                  cb.disabled = !checkbox.checked;
-                  if (!checkbox.checked) cb.checked = false;
+            const checkbox = e.target.closest('input[type="checkbox"]');
+            if (!checkbox) return;
+
+            const modId = checkbox.value;
+
+            // Se clicou no toggle mestre do módulo
+            if (checkbox.dataset.moduloCheck !== undefined) {
+              const pane = document.getElementById(`perm-tab-pane-${modId}`);
+              if (!checkbox.checked && pane) {
+                // Ao desabilitar o módulo mestre, desmarca todos os sub-checkboxes
+                pane.querySelectorAll('input[type="checkbox"]:not([data-modulo-check])').forEach(cb => {
+                  cb.checked = false;
                 });
               }
-              if (checkbox.dataset.auditoriaPermissao !== undefined) {
-                const moduloCheck = document.querySelector(`#perm-${perfilId}-auditorias`);
-                if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                  moduloCheck.checked = true;
-                  document.querySelectorAll('input[data-auditoria-permissao]').forEach(cb => cb.disabled = false);
-                }
-              }
-              if (checkbox.dataset.moduloCheck !== undefined && modId === 'registros') {
-                document.querySelectorAll('input[data-registro-permissao]').forEach(cb => {
-                  cb.disabled = !checkbox.checked;
-                  if (!checkbox.checked) cb.checked = false;
-                });
-              }
-              if (checkbox.dataset.registroPermissao !== undefined) {
-                const moduloCheck = document.querySelector(`#perm-${perfilId}-registros`);
-                if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                  moduloCheck.checked = true;
-                  document.querySelectorAll('input[data-registro-permissao]').forEach(cb => cb.disabled = false);
-                }
-              }
-              if (checkbox.dataset.passagemSetor !== undefined || checkbox.dataset.lancarPassagem !== undefined || checkbox.dataset.passagemCheckbox !== undefined) {
-                 const moduloCheck = document.querySelector(`#perm-${perfilId}-passagem`);
-                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                   moduloCheck.checked = true;
-                   document.querySelectorAll('input[data-passagem-setor]').forEach(cb => cb.disabled = false);
-                   document.querySelectorAll('input[data-passagem-checkbox]').forEach(cb => cb.disabled = false);
-                   const lancar = document.querySelector('input[data-lancar-passagem]');
-                   if (lancar) lancar.disabled = false;
-                 }
-              }
-              if (checkbox.dataset.livroSetor !== undefined) {
-                 const moduloCheck = document.querySelector(`#perm-${perfilId}-livro`);
-                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                   moduloCheck.checked = true;
-                   document.querySelectorAll('input[data-livro-setor]').forEach(cb => cb.disabled = false);
-                 }
-              }
-              if (checkbox.dataset.dashboardSetor !== undefined) {
-                 const moduloCheck = document.querySelector(`#perm-${perfilId}-dashboard`);
-                 if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                   moduloCheck.checked = true;
-                   document.querySelectorAll('input[data-dashboard-setor]').forEach(cb => cb.disabled = false);
-                 }
-              }
-              if (checkbox.dataset.editEscala !== undefined) {
-                const moduloCheck = document.querySelector(`#perm-${perfilId}-${modId}`);
-                if (checkbox.checked && moduloCheck && !moduloCheck.checked) {
-                  moduloCheck.checked = true;
-                  const edit = document.querySelector(`#perm-${perfilId}-${modId}-edit`);
-                  if (edit) edit.disabled = false;
-                }
+              updateTabBadge(modId);
+              return;
+            }
+
+            // Se clicou em qualquer sub-checkbox (setor, ação, permissão)
+            const parentModId = checkbox.dataset.parentMod || (checkbox.closest('.perm-tab-pane')?.id.replace('perm-tab-pane-', ''));
+            if (parentModId && checkbox.checked) {
+              const masterCheck = document.querySelector(`input[data-modulo-check][value="${parentModId}"]`);
+              if (masterCheck && !masterCheck.checked) {
+                masterCheck.checked = true;
+                updateTabBadge(parentModId);
               }
             }
           };
           content.addEventListener('change', checkboxHandler);
 
-          loadPermissoesModulo(perfilId);
+          loadPermissoesModulo(perfilId).then(() => {
+            updateAllTabBadges();
+          });
 
           modal.classList.add('show');
           document.body.classList.add('modal-open');
@@ -1808,92 +2094,79 @@
           const perfilPermissoes = result.data.perfilPermissoes || [];
           const perfilModuloSetores = result.data.perfilModuloSetores || [];
 
-          const modulos = document.querySelectorAll('.form-check input[data-modulo-check]');
+          // 1. Módulos Ativos
+          const modulos = document.querySelectorAll('input[data-modulo-check]');
           modulos.forEach(checkbox => {
             const moduloId = checkbox.value;
             checkbox.checked = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === moduloId);
           });
 
-          const editChecks = document.querySelectorAll('.form-check input[data-edit-escala]');
+          // 2. Escala
+          const editChecks = document.querySelectorAll('input[data-edit-escala]');
           editChecks.forEach(checkbox => {
-            const moduloId = checkbox.value;
-            const escalaGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'escala');
             const temEdicao = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'escala' && pp.permissao === 'editar_publicar_escala');
             checkbox.checked = temEdicao;
-            checkbox.disabled = !escalaGranted;
-            if (!escalaGranted) checkbox.checked = false;
           });
 
-          const passagemChecks = document.querySelectorAll('.form-check input[data-passagem-setor]');
+          // 3. Passagem de Plantão - Setores
+          const passagemChecks = document.querySelectorAll('input[data-passagem-setor]');
           passagemChecks.forEach(checkbox => {
-             const setorId = checkbox.value;
-             const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
-             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'passagem' && String(item.cd_setor_atendimento) === String(setorId));
-             checkbox.checked = temSetor;
-             checkbox.disabled = !passagemGranted;
-             if (!passagemGranted) checkbox.checked = false;
+            const setorId = checkbox.value;
+            const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'passagem' && String(item.cd_setor_atendimento) === String(setorId));
+            checkbox.checked = temSetor;
           });
 
-          const livroChecksElements = document.querySelectorAll('.form-check input[data-livro-setor]');
+          // 4. Livro - Setores
+          const livroChecksElements = document.querySelectorAll('input[data-livro-setor]');
           livroChecksElements.forEach(checkbox => {
-             const setorId = checkbox.value;
-             const livroGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'livro');
-             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'livro' && String(item.cd_setor_atendimento) === String(setorId));
-             checkbox.checked = temSetor;
-             checkbox.disabled = !livroGranted;
-             if (!livroGranted) checkbox.checked = false;
+            const setorId = checkbox.value;
+            const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'livro' && String(item.cd_setor_atendimento) === String(setorId));
+            checkbox.checked = temSetor;
           });
 
-          const dashboardChecksElements = document.querySelectorAll('.form-check input[data-dashboard-setor]');
+          // 5. Dashboard - Setores
+          const dashboardChecksElements = document.querySelectorAll('input[data-dashboard-setor]');
           dashboardChecksElements.forEach(checkbox => {
-             const setorId = checkbox.value;
-             const dashboardGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'dashboard');
-             const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'dashboard' && String(item.cd_setor_atendimento) === String(setorId));
-             checkbox.checked = temSetor;
-             checkbox.disabled = !dashboardGranted;
-             if (!dashboardGranted) checkbox.checked = false;
+            const setorId = checkbox.value;
+            const temSetor = perfilModuloSetores.some(item => item.perfil_id === perfilId && item.modulo_id === 'dashboard' && String(item.cd_setor_atendimento) === String(setorId));
+            checkbox.checked = temSetor;
           });
 
+          // 6. Passagem - Lançar
           const lancarPassagem = document.querySelector('input[data-lancar-passagem]');
           if (lancarPassagem) {
-            const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
             lancarPassagem.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'passagem' && pp.permissao === 'lancar_nova_passagem');
-            lancarPassagem.disabled = !passagemGranted;
           }
 
-          const passagemCheckboxes = document.querySelectorAll('.form-check input[data-passagem-checkbox]');
+          // 7. Passagem - Checkboxes (intercorrências, modelo, lote)
+          const passagemCheckboxes = document.querySelectorAll('input[data-passagem-checkbox]');
           passagemCheckboxes.forEach(checkbox => {
-             const permName = checkbox.value;
-             const passagemGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'passagem');
-             const temPerm = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'passagem' && pp.permissao === permName);
-             checkbox.checked = temPerm;
-             checkbox.disabled = !passagemGranted;
-             if (!passagemGranted) checkbox.checked = false;
+            const permName = checkbox.value;
+            const temPerm = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'passagem' && pp.permissao === permName);
+            checkbox.checked = temPerm;
           });
 
-          const auditoriaChecks = document.querySelectorAll('.form-check input[data-auditoria-permissao]');
+          // 8. Auditorias
+          const auditoriaChecks = document.querySelectorAll('input[data-auditoria-permissao]');
           auditoriaChecks.forEach(checkbox => {
-            const auditoriasGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'auditorias');
             checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'auditorias' && pp.permissao === checkbox.value);
-            checkbox.disabled = !auditoriasGranted;
-            if (!auditoriasGranted) checkbox.checked = false;
           });
 
-          const registroChecks = document.querySelectorAll('.form-check input[data-registro-permissao]');
+          // 9. Registros
+          const registroChecks = document.querySelectorAll('input[data-registro-permissao]');
           registroChecks.forEach(checkbox => {
-            const registrosGranted = perfilModulos.some(pm => pm.perfil_id === perfilId && pm.modulo_id === 'registros');
             checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'registros' && pp.permissao === checkbox.value);
-            checkbox.disabled = !registrosGranted;
-            if (!registrosGranted) checkbox.checked = false;
           });
 
+          // 10. Modelo de Plantão / Período default
           const plantaoRadio = document.getElementById(`perm-${perfilId}-modelo-plantao`);
           const periodoRadio = document.getElementById(`perm-${perfilId}-modelo-periodo`);
-          if (plantaoRadio && periodoRadio && !plantaoRadio.checked && !periodoRadio.checked && !plantaoRadio.disabled) {
+          if (plantaoRadio && periodoRadio && !plantaoRadio.checked && !periodoRadio.checked) {
             plantaoRadio.checked = true;
           }
         }
-      } catch (_) {
+      } catch (err) {
+        console.error('Erro ao carregar permissões do módulo:', err);
       }
     }
 
@@ -1901,20 +2174,22 @@
     document.getElementById('permissoes-cancelar').addEventListener('click', closePermissoesModal);
     document.getElementById('permissoes-salvar').addEventListener('click', async () => {
       if (!currentPerfilPermissoes) return;
+      const saveBtn = document.getElementById('permissoes-salvar');
+      const originalBtnText = saveBtn.innerHTML;
 
-      const checkboxes = document.querySelectorAll('.form-check input:checked[data-modulo-check]');
+      const checkboxes = document.querySelectorAll('input:checked[data-modulo-check]');
       const modulos = Array.from(checkboxes).map(c => c.value);
 
       const permissoes = {};
-      const editChecks = document.querySelectorAll('.form-check input[data-edit-escala]:checked');
+      const editChecks = document.querySelectorAll('input[data-edit-escala]:checked');
       if (editChecks.length > 0) {
         permissoes['escala'] = Array.from(editChecks).map(c => c.value);
       }
-      const passagemChecks = document.querySelectorAll('.form-check input[data-passagem-setor]:checked');
-      const livroChecks = document.querySelectorAll('.form-check input[data-livro-setor]:checked');
-      const dashboardChecks = document.querySelectorAll('.form-check input[data-dashboard-setor]:checked');
-      const lancarPassagem = document.querySelector('.form-check input[data-lancar-passagem]:checked');
-      const passagemCheckboxes = document.querySelectorAll('.form-check input[data-passagem-checkbox]:checked');
+      const passagemChecks = document.querySelectorAll('input[data-passagem-setor]:checked');
+      const livroChecks = document.querySelectorAll('input[data-livro-setor]:checked');
+      const dashboardChecks = document.querySelectorAll('input[data-dashboard-setor]:checked');
+      const lancarPassagem = document.querySelector('input[data-lancar-passagem]:checked');
+      const passagemCheckboxes = document.querySelectorAll('input[data-passagem-checkbox]:checked');
 
       const passagemPermissoes = [];
       if (lancarPassagem) {
@@ -1926,11 +2201,11 @@
       if (passagemPermissoes.length > 0) {
         permissoes['passagem'] = passagemPermissoes;
       }
-      const auditoriaChecks = document.querySelectorAll('.form-check input[data-auditoria-permissao]:checked');
+      const auditoriaChecks = document.querySelectorAll('input[data-auditoria-permissao]:checked');
       if (auditoriaChecks.length > 0) {
         permissoes['auditorias'] = Array.from(auditoriaChecks).map(c => c.value);
       }
-      const regChecks = document.querySelectorAll('.form-check input[data-registro-permissao]:checked');
+      const regChecks = document.querySelectorAll('input[data-registro-permissao]:checked');
       if (regChecks.length > 0) {
         permissoes['registros'] = Array.from(regChecks).map(c => c.value);
       }
@@ -1941,7 +2216,17 @@
         dashboard: Array.from(dashboardChecks).map(c => Number(c.value)).filter(Number.isInteger)
       };
 
+      // Validação amigável se passagem foi selecionada mas nenhum setor foi marcado
+      if (modulos.includes('passagem') && (!setoresPorModulo.passagem || setoresPorModulo.passagem.length === 0)) {
+        showToast('Selecione ao menos um setor habilitado para a Passagem de Plantão.', 'warning');
+        switchPermTab('passagem');
+        return;
+      }
+
       try {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Salvando...';
+
         const result = await api.post(`${apiConfig.baseUrl}/admin/permissoes`, {
           perfilId: currentPerfilPermissoes,
           modulos,
@@ -1958,7 +2243,10 @@
           showToast('Erro ao salvar permissões: ' + result.message, 'error');
         }
       } catch (err) {
-        showToast('Erro ao salvar permissões: ' + err.message, 'error');
+        showToast('Erro ao salvar permissões: ' + (err.message || 'Erro inesperado'), 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnText;
       }
     });
 
@@ -1968,9 +2256,13 @@
       document.body.classList.remove('modal-open');
       if (checkboxHandler) {
         const content = document.getElementById('permissoes-modal-content');
-        content.removeEventListener('change', checkboxHandler);
+        if (content) content.removeEventListener('change', checkboxHandler);
         checkboxHandler = null;
       }
+      const tabsNav = document.getElementById('permissoes-tabs-nav');
+      if (tabsNav) tabsNav.innerHTML = '';
+      const content = document.getElementById('permissoes-modal-content');
+      if (content) content.innerHTML = '';
       currentPerfilPermissoes = null;
     }
 
@@ -2152,15 +2444,8 @@
       }
     });
 
-    window.addEventListener('click', (e) => {
-      const modals = document.querySelectorAll('.modal');
-      modals.forEach(modal => {
-        if (e.target === modal) {
-          modal.classList.remove('show');
-          document.body.classList.remove('modal-open');
-        }
-      });
-    });
+    // Modais agora fecham apenas pelos botões de Fechar (X) e Cancelar, conforme solicitado
+    // (Clique fora do modal desabilitado para evitar perda de dados)
 
     document.querySelectorAll('.admin-tab-btn').forEach(tab => {
       tab.addEventListener('click', (e) => {

@@ -1,0 +1,27 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "sourceType": "script",
+    "ecmaVersion": 2020
+  },
+  "rules": {
+    "no-undef": "error"
+  },
+  "globals": {
+    "bootstrap": "readonly",
+    "window": "readonly",
+    "document": "readonly",
+    "console": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+    "setInterval": "readonly",
+    "clearInterval": "readonly",
+    "sessionStorage": "readonly",
+    "fetch": "readonly",
+    "Event": "readonly",
+    "URL": "readonly"
+  }
+}
