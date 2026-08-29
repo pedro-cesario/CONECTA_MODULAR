@@ -83,8 +83,17 @@ files.forEach(f => {
 ### 🔴 REGRA 5: Versionamento de Cache no `index.html`
 Ao alterar qualquer arquivo dentro de `frontend/src/`, incremente o parâmetro de versão no `frontend/index.html`:
 ```html
-<script type="module" src="src/main.js?v=247"></script>
+<script type="module" src="src/main.js?v=260"></script>
 ```
+
+### 🔴 REGRA 6: Conformidade Obrigatória com o Design System Oficial
+Toda e qualquer interface, modal, botão, cabeçalho ou estilo deve seguir rigorosamente o manual oficial:
+👉 [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)
+- **Nunca** invente cores hexadecimais soltas ou inline styles (`style="..."`). Use as variáveis CSS do tema (`--primary`, `--slate-900`, `--green-600`, etc.).
+- **Nunca** use `alert()`, `confirm()` ou bibliotecas externas. Use sempre `ui.showModal()`, `ui.showConfirmModal()` e `ui.showToast()`.
+- **Nunca** use placeholders de texto soltos como *"Carregando..."*. Use os **Skeleton Loaders** pulsantes (`ui.renderPacientesSkeleton()`, `ui.renderDashboardSkeleton()`).
+- Mantenha a estrutura de cabeçalho padronizada (`.livro-page-header`, `.livro-page-back`, `.livro-page-eyebrow`).
+
 
 ---
 

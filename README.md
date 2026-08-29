@@ -203,8 +203,11 @@ A aplicação estará disponível em: **`http://localhost:3020`** (ou porta conf
 ---
 
 ## 📘 6. Diretrizes para IAs & Desenvolvedores
-Para regras de contribuição, padrões de importação, gerenciamento de estado e validação via AST, consulte o arquivo oficial:  
-👉 [`ARQUITETURA_E_PADROES.md`](./ARQUITETURA_E_PADROES.md)
+- **Arquitetura & Padrões de Código:** Regras de importação, gerenciamento de estado e validação AST:  
+  👉 [`ARQUITETURA_E_PADROES.md`](./ARQUITETURA_E_PADROES.md)
+- **Design System Oficial (UI/UX):** Tokens de cor, tipografia, modais, skeletons e componentes:  
+  👉 [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)
+
 
 ---
 
