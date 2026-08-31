@@ -2913,7 +2913,9 @@
           }
 
           tbody.innerHTML = res.data.map(log => {
-            const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '-';
+            const dateVal = log.timestamp || log.created_at;
+            const dateStr = dateVal ? new Date(dateVal).toLocaleString('pt-BR') : '-';
+            const userStr = log.nm_usuario || log.usuario || '-';
             const statusBadge = log.status === 'SUCCESS'
               ? '<span class="badge bg-success">Sucesso</span>'
               : '<span class="badge bg-danger">Erro</span>';
@@ -2922,7 +2924,7 @@
               <tr>
                 <td><small class="text-muted">#${log.id}</small></td>
                 <td><small>${dateStr}</small></td>
-                <td><strong>${log.usuario || '-'}</strong></td>
+                <td><strong>${userStr}</strong></td>
                 <td><span class="badge bg-primary-subtle text-primary">${log.action}</span></td>
                 <td><code>${log.ip || '-'}</code></td>
                 <td>${statusBadge}</td>
@@ -2952,9 +2954,11 @@
 
     const auditModal = document.getElementById('audit-modal');
     function openAuditModal(log) {
+      const dateVal = log.timestamp || log.created_at;
+      const userStr = log.nm_usuario || log.usuario || '-';
       document.getElementById('audit-detail-action').textContent = log.action;
-      document.getElementById('audit-detail-user').textContent = `Usuário: ${log.usuario}`;
-      document.getElementById('audit-detail-date').textContent = log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '';
+      document.getElementById('audit-detail-user').textContent = `Usuário: ${userStr}`;
+      document.getElementById('audit-detail-date').textContent = dateVal ? new Date(dateVal).toLocaleString('pt-BR') : '';
       document.getElementById('audit-detail-ip').textContent = `IP: ${log.ip || '-'}`;
 
       let parsedDetails = log.details;
@@ -2980,7 +2984,7 @@
     document.getElementById('btn-export-audit')?.addEventListener('click', () => {
       if (!currentAuditLogs || currentAuditLogs.length === 0) return showToast('Nenhum dado para exportar', 'warning');
       const headers = ['ID', 'Data/Hora', 'Usuario', 'Acao', 'IP', 'Status'];
-      const rows = currentAuditLogs.map(l => [l.id, l.created_at, l.usuario, l.action, l.ip, l.status]);
+      const rows = currentAuditLogs.map(l => [l.id, l.timestamp || l.created_at, l.nm_usuario || l.usuario, l.action, l.ip, l.status]);
       let csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');

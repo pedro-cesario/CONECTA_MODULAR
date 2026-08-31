@@ -357,9 +357,9 @@ async function encerrarSessao(req, res) {
 
 async function listarAuditTrail(req, res) {
   try {
-    const auditLogger = require('../../core/logging/auditLogger');
+    const { queryAuditLogs } = require('../../core/database/auditDatabase');
     const { usuario, action, startDate, endDate, limit, offset } = req.query;
-    const logs = await auditLogger.getAuditLogs({
+    const logs = await queryAuditLogs({
       usuario,
       action,
       startDate,
@@ -370,7 +370,7 @@ async function listarAuditTrail(req, res) {
     res.json({ success: true, data: logs });
   } catch (err) {
     console.error('[Admin] Erro ao consultar audit trail:', err);
-    res.status(500).json({ success: false, message: 'Erro ao consultar trilha de auditoria.' });
+    res.status(500).json({ success: false, message: 'Erro ao consultar trilha de auditoria: ' + err.message });
   }
 }
 
