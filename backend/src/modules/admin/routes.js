@@ -13,6 +13,10 @@ router.delete('/modulos/:id', requireAuth, requireAdmin, adminController.deletar
 
 router.post('/permissoes', requireAuth, requireAdmin, adminController.salvarPermissoesModulo);
 router.get('/passagem/setores', requireAuth, requireAdmin, adminController.listarSetoresPassagem);
+router.get('/passagem/checkboxes', requireAuth, requireAdmin, adminController.listarPassagemCheckboxes);
+router.post('/passagem/checkboxes', requireAuth, requireAdmin, adminController.salvarPassagemCheckbox);
+router.put('/passagem/checkboxes/:id/toggle', requireAuth, requireAdmin, adminController.togglePassagemCheckbox);
+router.delete('/passagem/checkboxes/:id', requireAuth, requireAdmin, adminController.deletarPassagemCheckbox);
 
 router.get('/cache', requireAuth, requireAdmin, adminController.obterCacheStatus);
 router.post('/cache/reload', requireAuth, requireAdmin, adminController.recarregarCache);

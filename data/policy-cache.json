@@ -37,7 +37,7 @@
     "policyLabel": null,
     "source": "default",
     "version": 40,
-    "evaluatedAt": "2026-08-31T18:03:56.017Z"
+    "evaluatedAt": "2026-08-31T18:07:59.670Z"
   },
   "conecta|pedroteles.adm||": {
     "feature": "conecta",
@@ -48,5 +48,15 @@
     "source": "default",
     "version": 40,
     "evaluatedAt": "2026-08-31T18:02:23.860Z"
+  },
+  "conecta|italo.silva||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-31T18:10:02.218Z"
   }
 }

@@ -321,6 +321,43 @@ async function ensureAccessSchema() {
 
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_studio_pages')");
   }
+
+  // Migration: Tabela passagem_checkboxes
+  await run(`CREATE TABLE IF NOT EXISTS passagem_checkboxes (
+    id TEXT PRIMARY KEY,
+    chave TEXT UNIQUE NOT NULL,
+    label TEXT NOT NULL,
+    categoria TEXT DEFAULT 'Geral',
+    icone TEXT DEFAULT 'bi-check-circle',
+    ordem INTEGER DEFAULT 0,
+    ativo INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  const migrationCheckboxesTable = await all("SELECT id FROM config_migrations WHERE id = '2026_08_passagem_checkboxes_table'");
+  if (migrationCheckboxesTable.length === 0) {
+    const defaultCheckboxes = [
+      { id: 'dieta_zero', chave: 'dieta_zero', label: 'Dieta Zero / Jejum', categoria: 'Nutrição', icone: 'bi-slash-circle', ordem: 1 },
+      { id: 'sne_sng', chave: 'sne_sng', label: 'Sonda Nasoentérica / Nasogástrica', categoria: 'Dispositivos', icone: 'bi-activity', ordem: 2 },
+      { id: 'svd', chave: 'svd', label: 'Sonda Vesical de Demora (SVD)', categoria: 'Dispositivos', icone: 'bi-droplet-half', ordem: 3 },
+      { id: 'picc_cvc', chave: 'picc_cvc', label: 'Acesso Central (PICC / CVC / FAV)', categoria: 'Acessos', icone: 'bi-heart-pulse', ordem: 4 },
+      { id: 'oxigenioterapia', chave: 'oxigenioterapia', label: 'Oxigenioterapia / O2', categoria: 'Respiratório', icone: 'bi-lungs', ordem: 5 },
+      { id: 'curativo_complexo', chave: 'curativo_complexo', label: 'Curativo Especial / Complexo', categoria: 'Pele & Curativos', icone: 'bi-bandaid', ordem: 6 },
+      { id: 'lesao_pressao', chave: 'lesao_pressao', label: 'Lesão por Pressão (LPP)', categoria: 'Pele & Curativos', icone: 'bi-shield-exclamation', ordem: 7 },
+      { id: 'risco_queda', chave: 'risco_queda', label: 'Risco de Queda', categoria: 'Segurança', icone: 'bi-exclamation-triangle', ordem: 8 },
+      { id: 'isolamento', chave: 'isolamento', label: 'Precaução / Isolamento', categoria: 'Segurança', icone: 'bi-radioactive', ordem: 9 },
+      { id: 'alergia', chave: 'alergia', label: 'Alergia Relatada', categoria: 'Alerta', icone: 'bi-exclamation-octagon', ordem: 10 },
+      { id: 'dreno', chave: 'dreno', label: 'Drenos / Aspiração', categoria: 'Dispositivos', icone: 'bi-funnel', ordem: 11 },
+      { id: 'glicemia_capilar', chave: 'glicemia_capilar', label: 'Controle Glicêmico (HGT)', categoria: 'Cuidados', icone: 'bi-clipboard-pulse', ordem: 12 }
+    ];
+
+    for (const item of defaultCheckboxes) {
+      await run(`INSERT OR IGNORE INTO passagem_checkboxes (id, chave, label, categoria, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+        [item.id, item.chave, item.label, item.categoria, item.icone, item.ordem]);
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes_table')");
+  }
 }
 
 async function load() {
@@ -757,6 +794,49 @@ async function deleteStudioPage(id) {
   return { success: true, id };
 }
 
+async function getPassagemCheckboxes() {
+  return await all('SELECT * FROM passagem_checkboxes ORDER BY ordem ASC, label ASC');
+}
+
+async function getActivePassagemCheckboxes() {
+  return await all('SELECT * FROM passagem_checkboxes WHERE ativo = 1 ORDER BY ordem ASC, label ASC');
+}
+
+async function savePassagemCheckbox({ id, chave, label, categoria, icone, ordem, ativo = 1 }) {
+  if (!chave || !label) {
+    throw new Error('Chave e rótulo são obrigatórios');
+  }
+  const cleanChave = String(chave).trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const targetId = id || cleanChave;
+  const existing = await all('SELECT id FROM passagem_checkboxes WHERE id = ? OR chave = ?', [targetId, cleanChave]);
+
+  if (existing.length > 0) {
+    await run(`UPDATE passagem_checkboxes 
+      SET chave = ?, label = ?, categoria = ?, icone = ?, ordem = ?, ativo = ?, updated_at = datetime('now')
+      WHERE id = ?`,
+      [cleanChave, label.trim(), (categoria || 'Geral').trim(), (icone || 'bi-check-circle').trim(), parseInt(ordem || 0, 10), ativo ? 1 : 0, existing[0].id]);
+    return { id: existing[0].id, chave: cleanChave, label, categoria, icone, ordem, ativo };
+  } else {
+    await run(`INSERT INTO passagem_checkboxes (id, chave, label, categoria, icone, ordem, ativo, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      [targetId, cleanChave, label.trim(), (categoria || 'Geral').trim(), (icone || 'bi-check-circle').trim(), parseInt(ordem || 0, 10), ativo ? 1 : 0]);
+    return { id: targetId, chave: cleanChave, label, categoria, icone, ordem, ativo };
+  }
+}
+
+async function deletePassagemCheckbox(id) {
+  if (!id) throw new Error('ID é obrigatório');
+  await run('DELETE FROM passagem_checkboxes WHERE id = ?', [id]);
+  return { success: true, id };
+}
+
+async function togglePassagemCheckbox(id, ativo) {
+  if (!id) throw new Error('ID é obrigatório');
+  const val = ativo ? 1 : 0;
+  await run("UPDATE passagem_checkboxes SET ativo = ?, updated_at = datetime('now') WHERE id = ?", [val, id]);
+  return { success: true, id, ativo: val };
+}
+
 module.exports = {
   load,
   loadConfig: load,
@@ -799,5 +879,10 @@ module.exports = {
   getStudioPages,
   getStudioPageById,
   saveStudioPage,
-  deleteStudioPage
+  deleteStudioPage,
+  getPassagemCheckboxes,
+  getActivePassagemCheckboxes,
+  savePassagemCheckbox,
+  deletePassagemCheckbox,
+  togglePassagemCheckbox
 };

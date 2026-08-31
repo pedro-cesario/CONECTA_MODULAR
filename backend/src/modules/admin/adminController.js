@@ -409,6 +409,63 @@ async function deletarStudioPage(req, res) {
   }
 }
 
+async function listarPassagemCheckboxes(req, res) {
+  try {
+    const items = await configCache.getPassagemCheckboxes();
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar checkboxes:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function listarCheckboxesAtivos(req, res) {
+  try {
+    const items = await configCache.getActivePassagemCheckboxes();
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar checkboxes ativos:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarPassagemCheckbox(req, res) {
+  try {
+    const { id, chave, label, categoria, icone, ordem, ativo } = req.body;
+    if (!chave || !label) {
+      return res.status(400).json({ success: false, message: 'Chave e rótulo são obrigatórios' });
+    }
+    const item = await configCache.savePassagemCheckbox({ id, chave, label, categoria, icone, ordem, ativo });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar checkbox:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function deletarPassagemCheckbox(req, res) {
+  try {
+    const { id } = req.params;
+    const result = await configCache.deletePassagemCheckbox(id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Admin] Erro ao deletar checkbox:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function togglePassagemCheckbox(req, res) {
+  try {
+    const { id } = req.params;
+    const { ativo } = req.body;
+    const result = await configCache.togglePassagemCheckbox(id, ativo);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Admin] Erro ao alterar status do checkbox:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 module.exports = {
   listarPerfis,
   salvarPerfil,
@@ -435,6 +492,11 @@ module.exports = {
   listarStudioPages,
   obterStudioPage,
   salvarStudioPage,
-  deletarStudioPage
+  deletarStudioPage,
+  listarPassagemCheckboxes,
+  listarCheckboxesAtivos,
+  salvarPassagemCheckbox,
+  deletarPassagemCheckbox,
+  togglePassagemCheckbox
 };
 

@@ -742,6 +742,30 @@ export const CHECKBOX_INTERCORRENCIAS_MAP = new Map(
   CHECKBOX_INTERCORRENCIAS.map(item => [item.field, item.label])
 );
 
+export async function carregarCheckboxesDinamicos() {
+  try {
+    const res = await api.get('/passagem/checkboxes');
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      CHECKBOX_INTERCORRENCIAS.length = 0;
+      CHECKBOX_INTERCORRENCIAS_MAP.clear();
+      res.data.forEach(item => {
+        CHECKBOX_INTERCORRENCIAS.push({
+          field: item.chave,
+          label: item.label,
+          categoria: item.categoria,
+          icone: item.icone
+        });
+        CHECKBOX_INTERCORRENCIAS_MAP.set(item.chave, item.label);
+      });
+    }
+  } catch (err) {
+    console.warn('[Passagem] Falha ao carregar checkboxes dinâmicos da API, usando padrão:', err.message);
+  }
+}
+
+// Inicializa o carregamento dos checkboxes do backend
+carregarCheckboxesDinamicos();
+
 
 export function getTextareaKey(ta) {
   if (ta.dataset.atendimento) return `atendimento_${ta.dataset.atendimento}`;

@@ -44,6 +44,10 @@ router.get('/modulos', requireAuth, (req, res) => {
   res.json({ success: true, data: modulos });
 });
 
+// Checkboxes dinâmicos da Passagem de Plantão
+const adminController = require('./modules/admin/adminController');
+router.get('/passagem/checkboxes', requireAuth, adminController.listarCheckboxesAtivos);
+
 // Aliases de Compatibilidade Legada
 router.get('/setores-internacao', requireAuth, setorController.listarSetoresInternacao);
 router.post('/setores-internacao', requireAuth, setorController.listarSetoresInternacao);

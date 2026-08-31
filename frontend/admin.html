@@ -1421,6 +1421,67 @@
     </div>
   </div>
 
+  <!-- MODAL: CHECKBOX DA PASSAGEM DE PLANTÃO -->
+  <div class="modal" id="checkbox-modal">
+    <div class="modal-content" style="max-width: 540px; background: #ffffff; border-radius: 1rem; padding: 1.5rem;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="modal-title m-0" id="checkbox-modal-title" style="font-weight: 800; color: var(--primary);">
+          <i class="bi bi-check2-square"></i> Novo Checkbox Clínico
+        </h4>
+        <button type="button" class="close-modal" id="checkbox-modal-close" style="border: 0; background: transparent; font-size: 1.5rem;">&times;</button>
+      </div>
+      <form id="checkbox-form">
+        <input type="hidden" id="checkbox-id">
+        <div class="form-group mb-3">
+          <label for="checkbox-label" class="form-label small fw-bold">Rótulo Visível (Nome)</label>
+          <input type="text" id="checkbox-label" class="form-control" placeholder="Ex: Dieta Zero / Jejum" required>
+        </div>
+        <div class="form-group mb-3">
+          <label for="checkbox-chave" class="form-label small fw-bold">Identificador / Chave Técnica</label>
+          <input type="text" id="checkbox-chave" class="form-control" placeholder="Ex: dieta_zero" required>
+          <small class="text-muted">Apenas letras minúsculas, números e sublinhado (sem acentos).</small>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label for="checkbox-categoria" class="form-label small fw-bold">Categoria</label>
+            <input type="text" id="checkbox-categoria" class="form-control" list="checkbox-cat-list" placeholder="Ex: Nutrição" required>
+            <datalist id="checkbox-cat-list">
+              <option value="Nutrição">
+              <option value="Dispositivos">
+              <option value="Acessos">
+              <option value="Respiratório">
+              <option value="Pele & Curativos">
+              <option value="Segurança">
+              <option value="Alerta">
+              <option value="Cuidados">
+              <option value="Geral">
+            </datalist>
+          </div>
+          <div class="col-md-6">
+            <label for="checkbox-icone" class="form-label small fw-bold">Ícone Bootstrap</label>
+            <input type="text" id="checkbox-icone" class="form-control" placeholder="bi-check-circle" value="bi-check-circle">
+          </div>
+        </div>
+        <div class="row g-2 mb-3 align-items-center">
+          <div class="col-md-6">
+            <label for="checkbox-ordem" class="form-label small fw-bold">Ordem de Exibição</label>
+            <input type="number" id="checkbox-ordem" class="form-control" value="0" min="0" max="999">
+          </div>
+          <div class="col-md-6 pt-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="checkbox-ativo" checked>
+              <label class="form-check-label fw-bold" for="checkbox-ativo">Checkbox Ativo</label>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end mt-4 pt-3 border-top">
+          <button type="button" class="btn btn-secondary" id="checkbox-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold" id="checkbox-salvar">Salvar Checkbox</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal" id="perfil-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -2768,6 +2829,7 @@
           target.classList.add('show', 'active');
         }
         if (targetId === 'pillar-clinico') {
+          loadCheckboxes();
           loadStudioPages();
         }
         if (targetId === 'pillar-seguranca') {
@@ -2801,6 +2863,9 @@
         if (targetSubpane) {
           targetSubpane.classList.add('active');
         }
+        if (targetSubpaneId === 'subpane-checkboxes') {
+          loadCheckboxes();
+        }
         if (targetSubpaneId === 'subpane-audit') {
           loadAuditTrail();
         }
@@ -2808,6 +2873,177 @@
           loadSessoes();
         }
       });
+    });
+
+    // =========================================================================
+    // Gerenciador de Checkboxes da Passagem de Plantão
+    // =========================================================================
+    let currentCheckboxesList = [];
+    async function loadCheckboxes() {
+      const tbody = document.getElementById('checkboxes-tbody');
+      if (!tbody) return;
+      try {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-arrow-repeat spin"></i> Carregando checkboxes clínicos...</td></tr>';
+        const res = await api.get(`${apiConfig.baseUrl}/admin/passagem/checkboxes`);
+        if (res && res.success && res.data) {
+          currentCheckboxesList = res.data;
+          if (res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhum checkbox cadastrado ainda.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = res.data.map(item => {
+            const isChecked = item.ativo === 1 ? 'checked' : '';
+            const statusBadge = item.ativo === 1 
+              ? '<span class="badge bg-success">Ativo</span>' 
+              : '<span class="badge bg-secondary">Inativo</span>';
+            const iconHtml = item.icone ? `<i class="bi ${item.icone} fs-5 text-primary"></i>` : '<i class="bi bi-check2 text-muted"></i>';
+
+            return `
+              <tr>
+                <td><strong>${item.ordem ?? 0}</strong></td>
+                <td class="text-center">${iconHtml}</td>
+                <td><strong>${item.label}</strong></td>
+                <td><code>${item.chave}</code></td>
+                <td><span class="badge bg-light text-dark border">${item.categoria || 'Geral'}</span></td>
+                <td>
+                  <div class="form-check form-switch d-inline-block me-1">
+                    <input class="form-check-input switch-toggle-checkbox" type="checkbox" data-id="${item.id}" ${isChecked}>
+                  </div>
+                  ${statusBadge}
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary btn-edit-checkbox" data-id="${item.id}" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-delete-checkbox" data-id="${item.id}" data-label="${item.label}" title="Excluir">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          // Bind switch toggle
+          tbody.querySelectorAll('.switch-toggle-checkbox').forEach(sw => {
+            sw.addEventListener('change', async () => {
+              const id = sw.dataset.id;
+              const ativo = sw.checked ? 1 : 0;
+              try {
+                const togRes = await api.put(`${apiConfig.baseUrl}/admin/passagem/checkboxes/${id}/toggle`, { ativo });
+                if (togRes && togRes.success) {
+                  showToast('Status do checkbox atualizado!', 'success');
+                  loadCheckboxes();
+                } else {
+                  showToast('Erro ao atualizar status', 'error');
+                  sw.checked = !sw.checked;
+                }
+              } catch (err) {
+                showToast('Erro de comunicação', 'error');
+                sw.checked = !sw.checked;
+              }
+            });
+          });
+
+          // Bind edit
+          tbody.querySelectorAll('.btn-edit-checkbox').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.id;
+              const item = currentCheckboxesList.find(c => String(c.id) === String(id));
+              if (item) openCheckboxModal(item);
+            });
+          });
+
+          // Bind delete
+          tbody.querySelectorAll('.btn-delete-checkbox').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const label = btn.dataset.label;
+              if (confirm(`Deseja realmente excluir o checkbox "${label}"?`)) {
+                try {
+                  const delRes = await api.delete(`${apiConfig.baseUrl}/admin/passagem/checkboxes/${id}`);
+                  if (delRes && delRes.success) {
+                    showToast(`Checkbox "${label}" excluído com sucesso!`, 'success');
+                    loadCheckboxes();
+                  } else {
+                    showToast(delRes.message || 'Erro ao excluir checkbox', 'error');
+                  }
+                } catch (err) {
+                  showToast('Erro ao excluir checkbox', 'error');
+                }
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao listar checkboxes:', err);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar checkboxes: ${err.message || err}</td></tr>`;
+      }
+    }
+
+    const checkboxModal = document.getElementById('checkbox-modal');
+    function openCheckboxModal(item = null) {
+      const title = document.getElementById('checkbox-modal-title');
+      const form = document.getElementById('checkbox-form');
+      if (item) {
+        title.innerHTML = '<i class="bi bi-pencil-square"></i> Editar Checkbox Clínico';
+        document.getElementById('checkbox-id').value = item.id;
+        document.getElementById('checkbox-label').value = item.label;
+        document.getElementById('checkbox-chave').value = item.chave;
+        document.getElementById('checkbox-categoria').value = item.categoria || 'Geral';
+        document.getElementById('checkbox-icone').value = item.icone || 'bi-check-circle';
+        document.getElementById('checkbox-ordem').value = item.ordem ?? 0;
+        document.getElementById('checkbox-ativo').checked = item.ativo === 1;
+      } else {
+        title.innerHTML = '<i class="bi bi-check2-square"></i> Novo Checkbox Clínico';
+        form.reset();
+        document.getElementById('checkbox-id').value = '';
+        document.getElementById('checkbox-ordem').value = currentCheckboxesList.length + 1;
+        document.getElementById('checkbox-ativo').checked = true;
+      }
+      checkboxModal?.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeCheckboxModal() {
+      checkboxModal?.classList.remove('show');
+      document.body.classList.remove('modal-open');
+      document.getElementById('checkbox-form')?.reset();
+    }
+
+    document.getElementById('btn-novo-checkbox')?.addEventListener('click', () => openCheckboxModal());
+    document.getElementById('checkbox-modal-close')?.addEventListener('click', closeCheckboxModal);
+    document.getElementById('checkbox-cancelar')?.addEventListener('click', closeCheckboxModal);
+
+    document.getElementById('checkbox-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('checkbox-id').value.trim();
+      const label = document.getElementById('checkbox-label').value.trim();
+      const chave = document.getElementById('checkbox-chave').value.trim();
+      const categoria = document.getElementById('checkbox-categoria').value.trim();
+      const icone = document.getElementById('checkbox-icone').value.trim();
+      const ordem = parseInt(document.getElementById('checkbox-ordem').value, 10) || 0;
+      const ativo = document.getElementById('checkbox-ativo').checked ? 1 : 0;
+
+      if (!label || !chave) {
+        return showToast('Preencha os campos obrigatórios', 'warning');
+      }
+
+      try {
+        const payload = { id: id || undefined, label, chave, categoria, icone, ordem, ativo };
+        const res = await api.post(`${apiConfig.baseUrl}/admin/passagem/checkboxes`, payload);
+        if (res && res.success) {
+          showToast('Checkbox clínico salvo com sucesso!', 'success');
+          closeCheckboxModal();
+          loadCheckboxes();
+        } else {
+          showToast(res?.message || 'Erro ao salvar checkbox', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar checkbox: ' + (err.message || err), 'error');
+      }
     });
 
 
@@ -3273,6 +3509,7 @@
         await loadConfigSistema();
         await loadSessoes();
         await loadAuditTrail();
+        await loadCheckboxes();
         await loadStudioPages();
       } catch (err) {
         console.error('[Admin] Erro ao verificar sessão:', err);
