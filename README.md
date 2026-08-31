@@ -195,14 +195,172 @@ A aplicação estará disponível em: **`http://localhost:3020`** (ou porta conf
 
 ---
 
-## 🔍 5. Endpoints de Monitoramento & Health Check
+## 🗄️ 5. Criação do Usuário de Banco de Dados Oracle (`CONECTA_APP`)
+
+Para não utilizar o usuário administrador/root (`TASY`) e seguir o **Princípio do Menor Privilégio (*Least Privilege*)**, crie um usuário de serviço exclusivo executando o script SQL abaixo no Oracle (conectado como `SYS AS SYSDBA` ou `TASY`):
+
+```sql
+-- ============================================================================
+-- 1. CRIAÇÃO DO USUÁRIO DA APLICAÇÃO
+-- ============================================================================
+CREATE USER CONECTA_APP IDENTIFIED BY "********"
+  DEFAULT TABLESPACE USERS
+  TEMPORARY TABLESPACE TEMP
+  QUOTA 100M ON USERS
+  ACCOUNT UNLOCK;
+
+GRANT CREATE SESSION TO CONECTA_APP;
+GRANT ALTER SESSION TO CONECTA_APP;
+
+-- ============================================================================
+-- 2. CONCESSÃO INTELIGENTE DE PERMISSÕES (Valida a existência dos objetos)
+-- ============================================================================
+DECLARE
+  TYPE t_obj_list IS TABLE OF VARCHAR2(100);
+  
+  v_select_objects t_obj_list := t_obj_list(
+    'ATENDIMENTO_PACIENTE',
+    'ATENDIMENTO_PACIENTE_V',
+    'PACIENTE_INTERNADO_ATUAL_V',
+    'PESSOA_FISICA',
+    'PESSOA_FISICA_HISTORICO',
+    'TIPO_HIST_PESSOA_FISICA',
+    'USUARIO',
+    'PERFIL',
+    'VALOR_DOMINIO',
+    'SETOR_ATENDIMENTO',
+    'ADEP_PEND_V',
+    'CPOE_MATERIAL',
+    'CPOE_PROCEDIMENTO',
+    'MATERIAL',
+    'PROC_INTERNO',
+    'AGENDA',
+    'AGENDA_PACIENTE',
+    'FILA_ESPERA_SENHA',
+    'PACIENTE_SENHA_FILA',
+    'PACIENTE_SENHA_FILA_HIST',
+    'GESTAO_VAGA',
+    'GESTAO_VAGA_HIST',
+    'OCORRENCIA',
+    'ESCALA_NEWS',
+    'EHR_REGISTRO',
+    'EHR_REG_ELEMENTO',
+    'EHR_REG_TEMPLATE',
+    'CONECTA_AUD_NISA',
+    'CONECTA_AUD_NISA_PROF',
+    'CONECTA_AUD_NISA_OPORT',
+    'CONECTA_AUD_PROCESSOS',
+    'CONECTA_AUD_PROCESSOS_RESPOSTA',
+    'CONECTA_ESCALA_ATIVA',
+    'CONECTA_ESCALA_LOG'
+  );
+
+  v_dml_objects t_obj_list := t_obj_list(
+    'OCORRENCIA',
+    'GESTAO_VAGA',
+    'GESTAO_VAGA_HIST',
+    'PESSOA_FISICA',
+    'PESSOA_FISICA_HISTORICO',
+    'PACIENTE_SENHA_FILA',
+    'CONECTA_AUD_NISA',
+    'CONECTA_AUD_NISA_PROF',
+    'CONECTA_AUD_NISA_OPORT',
+    'CONECTA_AUD_PROCESSOS',
+    'CONECTA_AUD_PROCESSOS_RESPOSTA',
+    'CONECTA_ESCALA_ATIVA',
+    'CONECTA_ESCALA_LOG'
+  );
+
+  v_sequences t_obj_list := t_obj_list(
+    'OCORRENCIA_SEQ',
+    'GESTAO_VAGA_SEQ',
+    'GESTAO_VAGA_HIST_SEQ',
+    'PESSOA_FISICA_SEQ',
+    'PESSOA_FISICA_HISTORICO_SEQ',
+    'CONECTA_AUD_NISA_SEQ',
+    'CONECTA_ESCALA_ATIVA_SEQ'
+  );
+
+  v_functions t_obj_list := t_obj_list(
+    'OBTER_NOME_USUARIO',
+    'OBTER_NOME_PACIENTE',
+    'OBTER_NOME_PF',
+    'OBTER_DESC_SETOR_ATEND',
+    'OBTER_DESC_CONVENIO',
+    'OBTER_CONVENIO_ATENDIMENTO',
+    'OBTER_DESC_MATERIAL',
+    'OBTER_RESULTADO_NEWS'
+  );
+
+  v_count NUMBER;
+BEGIN
+  -- A. Concede SELECT nas Tabelas/Views existentes
+  FOR i IN 1..v_select_objects.COUNT LOOP
+    SELECT COUNT(*) INTO v_count 
+    FROM all_objects 
+    WHERE owner = 'TASY' AND object_name = v_select_objects(i) AND object_type IN ('TABLE', 'VIEW');
+    
+    IF v_count > 0 THEN
+      EXECUTE IMMEDIATE 'GRANT SELECT ON TASY.' || v_select_objects(i) || ' TO CONECTA_APP';
+    END IF;
+  END LOOP;
+
+  -- B. Concede INSERT, UPDATE, DELETE nas tabelas transacionais existentes
+  FOR i IN 1..v_dml_objects.COUNT LOOP
+    SELECT COUNT(*) INTO v_count 
+    FROM all_objects 
+    WHERE owner = 'TASY' AND object_name = v_dml_objects(i) AND object_type = 'TABLE';
+    
+    IF v_count > 0 THEN
+      EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE, DELETE ON TASY.' || v_dml_objects(i) || ' TO CONECTA_APP';
+    END IF;
+  END LOOP;
+
+  -- C. Concede SELECT em Sequences existentes
+  FOR i IN 1..v_sequences.COUNT LOOP
+    SELECT COUNT(*) INTO v_count 
+    FROM all_sequences 
+    WHERE sequence_owner = 'TASY' AND sequence_name = v_sequences(i);
+    
+    IF v_count > 0 THEN
+      EXECUTE IMMEDIATE 'GRANT SELECT ON TASY.' || v_sequences(i) || ' TO CONECTA_APP';
+    END IF;
+  END LOOP;
+
+  -- D. Concede EXECUTE em Funções existentes
+  FOR i IN 1..v_functions.COUNT LOOP
+    SELECT COUNT(*) INTO v_count 
+    FROM all_objects 
+    WHERE owner = 'TASY' AND object_name = v_functions(i) AND object_type IN ('FUNCTION', 'PROCEDURE', 'PACKAGE');
+    
+    IF v_count > 0 THEN
+      EXECUTE IMMEDIATE 'GRANT EXECUTE ON TASY.' || v_functions(i) || ' TO CONECTA_APP';
+    END IF;
+  END LOOP;
+END;
+/
+
+-- ============================================================================
+-- 3. TRIGGER DE SCHEMA AUTOMÁTICO (Resolve CURRENT_SCHEMA = TASY no logon)
+-- ============================================================================
+CREATE OR REPLACE TRIGGER CONECTA_APP.AFTER_LOGON_TRG
+AFTER LOGON ON CONECTA_APP.SCHEMA
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = TASY';
+END;
+/
+```
+
+---
+
+## 🔍 6. Endpoints de Monitoramento & Health Check
 
 - **`GET /health`**: Retorna o status operacional da aplicação, pool de conexões Oracle e conectividade com o Redis.
 - **`GET /metrics`**: Métricas de consumo de memória, tempo de atividade e estatísticas de conexões ativas no pool Oracle.
 
 ---
 
-## 📘 6. Diretrizes para IAs & Desenvolvedores
+## 📘 7. Diretrizes para IAs & Desenvolvedores
 - **Arquitetura & Padrões de Código:** Regras de importação, gerenciamento de estado e validação AST:  
   👉 [`ARQUITETURA_E_PADROES.md`](./ARQUITETURA_E_PADROES.md)
 - **Design System Oficial (UI/UX):** Tokens de cor, tipografia, modais, skeletons e componentes:  
