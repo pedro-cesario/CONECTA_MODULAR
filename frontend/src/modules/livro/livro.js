@@ -2551,6 +2551,11 @@ export function temAcessoTecnicoEnfermagem() {
     showLivroSubMenu();
   });
 
+  document.getElementById('btn-livro-voltar-home')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
+
+
   document.getElementById('btn-print-voltar')?.addEventListener('click', () => {
     showLivroSubMenu();
   });

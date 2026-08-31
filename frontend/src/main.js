@@ -242,7 +242,22 @@ async function initApp() {
     mod.aplicarFiltroSetorImpressao();
   });
 
-  // 7. Dashboard PA & Internacao Navigation
+  // 7. Navigation Back & Home Handlers
+  document.getElementById('btn-livro-voltar-home')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
+  document.getElementById('btn-passagem-voltar-home')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
+  document.getElementById('btn-escala-voltar')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
+  document.getElementById('btn-registros-voltar-home')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
+  document.getElementById('btn-auditorias-voltar-home')?.addEventListener('click', () => {
+    router.showModeChooser();
+  });
   document.getElementById('btn-pa-voltar')?.addEventListener('click', () => {
     router.showModeChooser();
   });
@@ -252,6 +267,7 @@ async function initApp() {
   document.getElementById('btn-dashboard-voltar')?.addEventListener('click', () => {
     router.showModeChooser();
   });
+
 
   // 8. Grid Buttons Direct Handlers (Lazy Loaded)
   document.getElementById('btn-abrir-passagem')?.addEventListener('click', async () => {
