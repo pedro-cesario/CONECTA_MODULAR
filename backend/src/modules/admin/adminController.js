@@ -470,7 +470,8 @@ async function testarConexaoOracle(req, res) {
   const start = Date.now();
   let conn;
   try {
-    const { getConnection, getPoolStats, thickMode } = require('../../core/database');
+    const { getConnection, getPoolStats, getOracleConfig, thickMode } = require('../../core/database');
+    const oracleConfig = getOracleConfig() || {};
     conn = await getConnection();
     const result = await conn.execute(
       `SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') AS SERVER_TIME,
@@ -490,16 +491,18 @@ async function testarConexaoOracle(req, res) {
         status: 'UP',
         latencyMs,
         serverTime: row.SERVER_TIME || new Date().toISOString(),
-        dbUser: row.DB_USER || process.env.DB_USER,
-        sessionUser: row.SESSION_USER || process.env.DB_USER,
-        dbName: row.DB_NAME || process.env.DB_SERVICE,
-        hostName: row.HOST_NAME || process.env.DB_HOST,
-        connectString: `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SERVICE}`,
+        dbUser: oracleConfig.user || row.DB_USER || process.env.DB_USER,
+        sessionUser: row.SESSION_USER || oracleConfig.user || process.env.DB_USER,
+        dbName: oracleConfig.service || row.DB_NAME || process.env.DB_SERVICE,
+        hostName: oracleConfig.host || row.HOST_NAME || process.env.DB_HOST,
+        connectString: oracleConfig.connectString || `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SERVICE}`,
         mode: thickMode ? 'Thick (Instant Client 19c)' : 'Thin Mode',
         pool: poolStats
       }
     });
   } catch (err) {
+    const { getOracleConfig } = require('../../core/database');
+    const oracleConfig = getOracleConfig() || {};
     const latencyMs = Date.now() - start;
     console.error('[Admin] Erro ao testar conexão Oracle:', err);
     res.status(500).json({
@@ -508,7 +511,8 @@ async function testarConexaoOracle(req, res) {
       data: {
         status: 'DOWN',
         latencyMs,
-        error: err.message
+        error: err.message,
+        connectString: oracleConfig.connectString || `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SERVICE}`
       }
     });
   } finally {

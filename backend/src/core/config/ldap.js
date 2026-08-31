@@ -41,12 +41,24 @@ function updateLdapConfig(newParams) {
 }
 
 function getLdapPublicConfig() {
+  let sysConfig = {};
+  try {
+    const configCache = require('./configCache');
+    sysConfig = configCache.getSystemConfig() || {};
+  } catch (e) {}
+
+  const enabled = sysConfig.ldap_enabled !== undefined ? (sysConfig.ldap_enabled === 'true' || sysConfig.ldap_enabled === '1') : config.enabled;
+  const url = sysConfig.ldap_url || config.url;
+  const baseDn = sysConfig.ldap_base_dn || config.baseDn;
+  const userDomain = sysConfig.ldap_user_domain || config.userDomain;
+  const adminUser = sysConfig.ldap_admin_user || config.adminUser;
+
   return {
-    enabled: config.enabled,
-    url: config.url,
-    baseDn: config.baseDn,
-    userDomain: config.userDomain,
-    adminUser: config.adminUser,
+    enabled,
+    url,
+    baseDn,
+    userDomain,
+    adminUser,
     hasAdminPassword: Boolean(config.adminPassword)
   };
 }

@@ -141,15 +141,29 @@ function getPoolStats() {
 }
 
 function getOracleConfig() {
+  let sysConfig = {};
+  try {
+    const configCache = require('../config/configCache');
+    sysConfig = configCache.getSystemConfig() || {};
+  } catch (e) {}
+
+  const host = sysConfig.db_host || currentDbHost;
+  const port = sysConfig.db_port || currentDbPort;
+  const service = sysConfig.db_service || currentDbService;
+  const user = (sysConfig.db_user || currentDbUser || '').toUpperCase();
+  const poolMin = parseInt(sysConfig.db_pool_min || currentPoolMin, 10) || 3;
+  const poolMax = parseInt(sysConfig.db_pool_max || currentPoolMax, 10) || 15;
+  const connectString = `${host}:${port}/${service}`;
+
   return {
-    host: currentDbHost,
-    port: currentDbPort,
-    service: currentDbService,
-    user: currentDbUser,
+    host,
+    port,
+    service,
+    user,
     hasPassword: Boolean(currentDbPassword),
-    poolMin: currentPoolMin,
-    poolMax: currentPoolMax,
-    connectString: getConnectString()
+    poolMin,
+    poolMax,
+    connectString
   };
 }
 
