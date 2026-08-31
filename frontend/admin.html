@@ -129,6 +129,60 @@
       margin-right: 6px;
     }
 
+    /* Sub-navegação interna em Pills por Pilar */
+    .admin-sub-nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+      padding: 0.35rem;
+      background: var(--slate-100, #f1f5f9);
+      border-radius: 0.75rem;
+      width: fit-content;
+      border: 1px solid var(--slate-200, #e2e8f0);
+    }
+
+    .admin-sub-pill {
+      background: transparent;
+      border: none;
+      color: var(--slate-600, #475569);
+      font-weight: 600;
+      font-size: 0.88rem;
+      padding: 0.5rem 1.15rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .admin-sub-pill:hover {
+      color: var(--primary, #00387a);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .admin-sub-pill.active {
+      color: var(--primary, #00387a);
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 56, 122, 0.08);
+      font-weight: 700;
+    }
+
+    .admin-sub-pane {
+      display: none;
+    }
+
+    .admin-sub-pane.active {
+      display: block;
+      animation: fadeInSub 0.2s ease-in-out;
+    }
+
+    @keyframes fadeInSub {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .admin-header-card {
       background: white;
       border-radius: 12px;
@@ -770,23 +824,17 @@
         </a>
       </div>
       <div class="admin-tabs" id="adminNav" role="tablist">
-        <button class="admin-tab-btn active" id="perfis-tab" data-tab="perfis" role="tab" aria-controls="perfis" aria-selected="true">
-          <i class="bi bi-people-fill"></i> Perfis
+        <button class="admin-tab-btn active" id="pillar-acesso-tab" data-tab="pillar-acesso" role="tab" aria-controls="pillar-acesso" aria-selected="true">
+          <i class="bi bi-people-fill"></i> 1. Acesso & Perfis
         </button>
-        <button class="admin-tab-btn" id="modulos-tab" data-tab="modulos" role="tab" aria-controls="modulos" aria-selected="false">
-          <i class="bi bi-grid-1x2-fill"></i> Módulos
+        <button class="admin-tab-btn" id="pillar-clinico-tab" data-tab="pillar-clinico" role="tab" aria-controls="pillar-clinico" aria-selected="false">
+          <i class="bi bi-clipboard2-pulse-fill"></i> 2. Campos Clínicos
         </button>
-        <button class="admin-tab-btn" id="apontamentos-tab" data-tab="apontamentos" role="tab" aria-controls="apontamentos" aria-selected="false">
-          <i class="bi bi-sliders"></i> Apontamentos do Conecta
+        <button class="admin-tab-btn" id="pillar-seguranca-tab" data-tab="pillar-seguranca" role="tab" aria-controls="pillar-seguranca" aria-selected="false">
+          <i class="bi bi-shield-check"></i> 3. Segurança & LGPD
         </button>
-        <button class="admin-tab-btn" id="monitoramento-tab" data-tab="monitoramento" role="tab" aria-controls="monitoramento" aria-selected="false">
-          <i class="bi bi-activity"></i> Monitoramento
-        </button>
-        <button class="admin-tab-btn" id="cache-tab" data-tab="cache" role="tab" aria-controls="cache" aria-selected="false">
-          <i class="bi bi-database-fill-check"></i> Cache
-        </button>
-        <button class="admin-tab-btn" id="studio-tab" data-tab="studio" role="tab" aria-controls="studio" aria-selected="false">
-          <i class="bi bi-palette-fill"></i> Studio de Telas
+        <button class="admin-tab-btn" id="pillar-infra-tab" data-tab="pillar-infra" role="tab" aria-controls="pillar-infra" aria-selected="false">
+          <i class="bi bi-hdd-network-fill"></i> 4. Infraestrutura
         </button>
       </div>
       <div class="topbar-right">
@@ -805,284 +853,444 @@
 
     <main class="admin-main">
 
-      <div class="admin-header-card">
-        <div class="mode-eyebrow">Administração do sistema</div>
-        <h3>Painel Administrativo</h3>
-        <p>Gerenciar perfis, módulos e permissões do Conecta Heal</p>
-      </div>
-
       <div class="tab-content" id="adminTabContent">
 
-        <div class="tab-pane show active" id="perfis" role="tabpanel" aria-labelledby="perfis-tab">
-
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <div class="admin-card-title">
-                <i class="bi bi-people-fill"></i> Gerenciar Perfis
-              </div>
-              <button class="btn btn-primary" id="btn-novo-perfil">
-                <i class="bi bi-plus-lg"></i> Novo Perfil
-              </button>
-            </div>
-            <div class="admin-card-body">
-              <div class="table-responsive">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nome</th>
-                      <th>Setor ID</th>
-                      <th>Grupo LDAP</th>
-                      <th>Flag de Sessão</th>
-                      <th>Ref. Fixa</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="perfis-tbody">
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="tab-pane" id="modulos" role="tabpanel" aria-labelledby="modulos-tab">
-
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <div class="admin-card-title">
-                <i class="bi bi-grid-1x2-fill"></i> Gerenciar Módulos
-              </div>
-              <button class="btn btn-primary" id="btn-novo-modulo">
-                <i class="bi bi-plus-lg"></i> Novo Módulo
-              </button>
-            </div>
-            <div class="admin-card-body">
-              <div class="table-responsive">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nome</th>
-                      <th>Descrição</th>
-                      <th>Ícone</th>
-                      <th>Setor ID</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="modulos-tbody">
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        
-        <div class="tab-pane" id="monitoramento" role="tabpanel" aria-labelledby="monitoramento-tab">
+        <!-- PILAR 1: ACESSO & PERFIS -->
+        <div class="tab-pane show active" id="pillar-acesso" role="tabpanel" aria-labelledby="pillar-acesso-tab">
           <div class="admin-header-card">
-            <span class="mode-eyebrow">Monitoramento</span>
-            <h3>Usuários Logados</h3>
-            <p>Lista de todas as sessões ativas no momento pelo Redis.</p>
+            <div class="mode-eyebrow">Pilar 1 — Governança de Identidade & Acesso</div>
+            <h3>Controle de Acesso, Perfis e Permissões</h3>
+            <p>Gerencie perfis corporativos, grupos do Active Directory, módulos e a matriz de setores autorizados.</p>
           </div>
 
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title"><i class="bi bi-people-fill"></i> Sessões Ativas (<span id="total-sessoes">0</span>)</span>
-              <button class="btn btn-outline-primary btn-sm" id="btn-refresh-sessoes">
-                <i class="bi bi-arrow-clockwise"></i> Atualizar
-              </button>
-            </div>
-            <div class="admin-card-body p-0">
-              <div class="table-responsive">
-                <table class="table mb-0">
-                  <thead>
-                    <tr>
-                      <th>Usuário</th>
-                      <th>Nome</th>
-                      <th>Perfis Disponíveis</th>
-                      <th>Perfil Ativo</th>
-                      <th>Login (Data/Hora)</th>
-                      <th>Origem Auth</th>
-                    </tr>
-                  </thead>
-                  <tbody id="table-sessoes">
-                    <!-- Javascript will populate this -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-<div class="tab-pane" id="cache" role="tabpanel" aria-labelledby="cache-tab">
-
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <div class="admin-card-title">
-                <i class="bi bi-database-fill-check"></i> Informações do Cache
-              </div>
-            </div>
-            <div class="admin-card-body">
-              <div class="row g-4">
-                <div class="col-md-6">
-                  <div class="cache-card">
-                    <h5>Metadados do Cache</h5>
-                    <ul class="list-group">
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Perfis carregados</span>
-                        <span class="badge badge-primary" id="cache-perfis-count">0</span>
-                      </li>
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Módulos carregados</span>
-                        <span class="badge badge-primary" id="cache-modulos-count">0</span>
-                      </li>
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Permissões carregadas</span>
-                        <span class="badge badge-primary" id="cache-permissoes-count">0</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="cache-card">
-                    <h5>Ações</h5>
-                    <button class="btn btn-secondary w-100 mb-2" id="btn-cache-reload">
-                      <i class="bi bi-arrow-clockwise"></i> Recarregar Cache
-                    </button>
-                    <div class="loader" id="cache-loader">
-                      <div class="spinner"></div>
-                      <p>Recarregando cache...</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+          <div class="admin-sub-nav">
+            <button class="admin-sub-pill active" data-subpane="subpane-perfis">
+              <i class="bi bi-people-fill"></i> Perfis de Usuário
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-modulos">
+              <i class="bi bi-grid-1x2-fill"></i> Módulos do Sistema
+            </button>
           </div>
 
-        </div>
-
-        <div class="tab-pane" id="apontamentos" role="tabpanel" aria-labelledby="apontamentos-tab">
-          
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <div class="admin-card-title">
-                <i class="bi bi-sliders"></i> Apontamentos e Configurações do Sistema
-              </div>
-            </div>
-            <div class="admin-card-body">
-              <div class="row g-4">
-                
-                <div class="col-md-6">
-                  <div class="cache-card">
-                    <h5>Dashboard P.A.</h5>
-                    <p class="text-muted small">Fila de espera de destino para pacientes aceitos pela enfermagem no P.A.</p>
-                    <div class="form-group mb-3">
-                      <label for="config-fila-destino">Fila TASY (Destino)</label>
-                      <select id="config-fila-destino" class="form-select">
-                        <option value="">Selecione a fila...</option>
-                      </select>
-                    </div>
-                    <button class="btn btn-primary w-100" id="btn-save-config-pa">
-                      <i class="bi bi-save"></i> Salvar Apontamento
-                    </button>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="cache-card">
-                    <h5>Configurações do Sistema</h5>
-                    <p class="text-muted small">Versão do sistema e ambiente de testes.</p>
-                    <div class="form-group mb-3">
-                      <label for="config-app-version">Versão do Sistema</label>
-                      <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 1.6">
-                    </div>
-                    <div class="form-group mb-3">
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="config-show-test-bar">
-                        <label class="form-check-label" for="config-show-test-bar">Exibir barra de homologação (Base de Testes)</label>
-                      </div>
-                    </div>
-                    <button class="btn btn-primary w-100" id="btn-save-config-sistema">
-                      <i class="bi bi-save"></i> Salvar Configuração
-                    </button>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="cache-card">
-                    <h5>Configurações ECT</h5>
-                    <p class="text-muted small">Agenda e Procedimento do TASY para a listagem do ECT.</p>
-                    <div class="form-group mb-3">
-                      <label for="config-ect-agenda">Agenda TASY</label>
-                      <select id="config-ect-agenda" class="form-select">
-                        <option value="">Carregando agendas...</option>
-                      </select>
-                    </div>
-                    <div class="form-group mb-3">
-                      <label for="config-ect-procedimento">Procedimento TASY</label>
-                      <select id="config-ect-procedimento" class="form-select">
-                        <option value="">Carregando procedimentos...</option>
-                      </select>
-                    </div>
-                    <button class="btn btn-primary w-100" id="btn-save-config-ect">
-                      <i class="bi bi-save"></i> Salvar Apontamento
-                    </button>
-                  </div>
-                </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-
-        <div class="tab-pane" id="studio" role="tabpanel" aria-labelledby="studio-tab">
-          <div class="admin-card">
-            <div class="admin-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div>
+          <div class="admin-sub-pane active" id="subpane-perfis">
+            <div class="admin-card">
+              <div class="admin-card-header">
                 <div class="admin-card-title">
-                  <i class="bi bi-palette-fill"></i> Conecta Studio — Editor Visual de Telas
+                  <i class="bi bi-people-fill"></i> Gerenciar Perfis
                 </div>
-                <small class="text-muted">Personalize, crie e duplique telas do Conecta no estilo Wix (Drag and Drop)</small>
-              </div>
-              <div class="d-flex gap-2">
-                <button class="btn btn-primary" id="btn-studio-new-screen" style="font-weight: 700;">
-                  <i class="bi bi-plus-lg"></i> Criar Nova Tela
+                <button class="btn btn-primary" id="btn-novo-perfil">
+                  <i class="bi bi-plus-lg"></i> Novo Perfil
                 </button>
               </div>
+              <div class="admin-card-body">
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Setor ID</th>
+                        <th>Grupo LDAP</th>
+                        <th>Flag de Sessão</th>
+                        <th>Ref. Fixa</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="perfis-tbody">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-            <div class="admin-card-body">
-              
-              <!-- Seção 1: Telas Nativas do Sistema -->
-              <div class="mb-4">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                  <h5 class="m-0 d-flex align-items-center gap-2" style="font-weight: 800; color: var(--primary);">
-                    <i class="bi bi-box-seam-fill"></i> Telas Nativas do Conecta
-                  </h5>
-                  <span class="badge bg-primary-subtle text-primary" style="font-weight: 700;">Modelos Oficiais</span>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-modulos">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-grid-1x2-fill"></i> Gerenciar Módulos
                 </div>
-                <div class="row g-3" id="studio-native-cards">
-                  <!-- JS will render native screen cards -->
+                <button class="btn btn-primary" id="btn-novo-modulo">
+                  <i class="bi bi-plus-lg"></i> Novo Módulo
+                </button>
+              </div>
+              <div class="admin-card-body">
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th>Ícone</th>
+                        <th>Setor ID</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="modulos-tbody">
+                    </tbody>
+                  </table>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <hr style="border-color: #e2e8f0; margin: 1.75rem 0;">
+        <!-- PILAR 2: CAMPOS CLÍNICOS & TELAS -->
+        <div class="tab-pane" id="pillar-clinico" role="tabpanel" aria-labelledby="pillar-clinico-tab">
+          <div class="admin-header-card">
+            <div class="mode-eyebrow">Pilar 2 — Configurações Clínicas & Telas</div>
+            <h3>Formulários Clínicos & Studio Visual</h3>
+            <p>Personalize os checklists da Passagem de Plantão e customize telas em estilo visual.</p>
+          </div>
 
-              <!-- Seção 2: Telas Personalizadas -->
-              <div>
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                  <h5 class="m-0 d-flex align-items-center gap-2" style="font-weight: 800; color: #1e293b;">
-                    <i class="bi bi-stars text-warning"></i> Telas Personalizadas Criadas
-                  </h5>
-                  <span class="badge bg-secondary-subtle text-secondary" id="studio-custom-count">0 telas</span>
+          <div class="admin-sub-nav">
+            <button class="admin-sub-pill active" data-subpane="subpane-checkboxes">
+              <i class="bi bi-check2-square"></i> Checkboxes da Passagem
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-studio">
+              <i class="bi bi-palette-fill"></i> Studio de Telas (Wix)
+            </button>
+          </div>
+
+          <div class="admin-sub-pane active" id="subpane-checkboxes">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <div class="admin-card-title">
+                    <i class="bi bi-check2-square"></i> Checkboxes da Passagem de Plantão
+                  </div>
+                  <small class="text-muted">Itens clínicos e intercorrências disponíveis na passagem de plantão da enfermagem</small>
                 </div>
-                <div class="row g-3" id="studio-custom-cards">
-                  <!-- JS will render custom screen cards -->
+                <button class="btn btn-primary" id="btn-novo-checkbox" type="button">
+                  <i class="bi bi-plus-lg"></i> Novo Checkbox
+                </button>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 70px;">Ordem</th>
+                        <th style="width: 60px;">Ícone</th>
+                        <th>Rótulo Visível</th>
+                        <th>Identificador (Chave)</th>
+                        <th>Categoria</th>
+                        <th style="width: 140px;">Status</th>
+                        <th style="width: 110px;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="checkboxes-tbody">
+                      <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Carregando checkboxes...</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
+            </div>
+          </div>
 
+          <div class="admin-sub-pane" id="subpane-studio">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <div class="admin-card-title">
+                    <i class="bi bi-palette-fill"></i> Conecta Studio — Editor Visual de Telas
+                  </div>
+                  <small class="text-muted">Personalize, crie e duplique telas do Conecta no estilo Wix (Drag and Drop)</small>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary" id="btn-studio-new-screen" style="font-weight: 700;">
+                    <i class="bi bi-plus-lg"></i> Criar Nova Tela
+                  </button>
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <!-- Seção 1: Telas Nativas do Sistema -->
+                <div class="mb-4">
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="m-0 d-flex align-items-center gap-2" style="font-weight: 800; color: var(--primary);">
+                      <i class="bi bi-box-seam-fill"></i> Telas Nativas do Conecta
+                    </h5>
+                    <span class="badge bg-primary-subtle text-primary" style="font-weight: 700;">Modelos Oficiais</span>
+                  </div>
+                  <div class="row g-3" id="studio-native-cards">
+                    <!-- JS will render native screen cards -->
+                  </div>
+                </div>
+
+                <hr style="border-color: #e2e8f0; margin: 1.75rem 0;">
+
+                <!-- Seção 2: Telas Personalizadas -->
+                <div>
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="m-0 d-flex align-items-center gap-2" style="font-weight: 800; color: #1e293b;">
+                      <i class="bi bi-stars text-warning"></i> Telas Personalizadas Criadas
+                    </h5>
+                    <span class="badge bg-secondary-subtle text-secondary" id="studio-custom-count">0 telas</span>
+                  </div>
+                  <div class="row g-3" id="studio-custom-cards">
+                    <!-- JS will render custom screen cards -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PILAR 3: SEGURANÇA & LGPD -->
+        <div class="tab-pane" id="pillar-seguranca" role="tabpanel" aria-labelledby="pillar-seguranca-tab">
+          <div class="admin-header-card">
+            <div class="mode-eyebrow">Pilar 3 — Observabilidade & Conformidade LGPD</div>
+            <h3>Monitoramento de Sessões & Auditoria</h3>
+            <p>Monitore conexões em tempo real, gerencie sessões conectadas e consulte eventos de auditoria.</p>
+          </div>
+
+          <div class="admin-sub-nav">
+            <button class="admin-sub-pill active" data-subpane="subpane-sessoes">
+              <i class="bi bi-activity"></i> Sessões Ativas (<span id="total-sessoes-badge">0</span>)
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-audit">
+              <i class="bi bi-shield-check"></i> Trilha de Auditoria LGPD
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-telemetria">
+              <i class="bi bi-speedometer2"></i> Telemetria do Servidor
+            </button>
+          </div>
+
+          <div class="admin-sub-pane active" id="subpane-sessoes">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <span class="admin-card-title"><i class="bi bi-people-fill"></i> Usuários Conectados (<span id="total-sessoes">0</span>)</span>
+                <button class="btn btn-outline-primary btn-sm" id="btn-refresh-sessoes">
+                  <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </button>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Usuário</th>
+                        <th>Nome</th>
+                        <th>Perfis Disponíveis</th>
+                        <th>Perfil Ativo</th>
+                        <th>Login (Data/Hora)</th>
+                        <th>Origem Auth</th>
+                      </tr>
+                    </thead>
+                    <tbody id="table-sessoes">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-audit">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-shield-check"></i> Trilha de Auditoria LGPD (conecta_audit_trail)
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="p-4 text-center text-muted">
+                  <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--primary);"></i>
+                  <h6 class="mt-2 fw-bold text-dark">Explorador de Auditoria LGPD</h6>
+                  <p class="small text-muted mb-0">Pronto para ser ativado no Passo 2 com filtros avançados e visualizador JSON.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-telemetria">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-speedometer2"></i> Telemetria & Recursos do Backend
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="p-4 text-center text-muted">
+                  <i class="bi bi-cpu" style="font-size: 2.5rem; color: var(--primary);"></i>
+                  <h6 class="mt-2 fw-bold text-dark">Métricas do Servidor</h6>
+                  <p class="small text-muted mb-0">Pronto para ser ativado com indicadores de memória Heap, pool Oracle e Redis.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PILAR 4: INFRAESTRUTURA & CONECTORES -->
+        <div class="tab-pane" id="pillar-infra" role="tabpanel" aria-labelledby="pillar-infra-tab">
+          <div class="admin-header-card">
+            <div class="mode-eyebrow">Pilar 4 — Infraestrutura & Conectores Corporativos</div>
+            <h3>Conexões, Apontamentos & Cache</h3>
+            <p>Gerencie integrações com o Banco Oracle TASY, Active Directory, apontamentos e cache.</p>
+          </div>
+
+          <div class="admin-sub-nav">
+            <button class="admin-sub-pill active" data-subpane="subpane-apontamentos">
+              <i class="bi bi-sliders"></i> Apontamentos do Conecta
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-cache">
+              <i class="bi bi-database-fill-check"></i> Cache do Sistema
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-oracle">
+              <i class="bi bi-database-fill-gear"></i> Banco Oracle TASY
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-ldap">
+              <i class="bi bi-shield-lock-fill"></i> Active Directory LDAP
+            </button>
+          </div>
+
+          <div class="admin-sub-pane active" id="subpane-apontamentos">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-sliders"></i> Apontamentos e Configurações do Sistema
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <div class="cache-card">
+                      <h5>Dashboard P.A.</h5>
+                      <p class="text-muted small">Fila de espera de destino para pacientes aceitos pela enfermagem no P.A.</p>
+                      <div class="form-group mb-3">
+                        <label for="config-fila-destino">Fila TASY (Destino)</label>
+                        <select id="config-fila-destino" class="form-select">
+                          <option value="">Selecione a fila...</option>
+                        </select>
+                      </div>
+                      <button class="btn btn-primary w-100" id="btn-save-config-pa">
+                        <i class="bi bi-save"></i> Salvar Apontamento
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="cache-card">
+                      <h5>Configurações do Sistema</h5>
+                      <p class="text-muted small">Versão do sistema e ambiente de testes.</p>
+                      <div class="form-group mb-3">
+                        <label for="config-app-version">Versão do Sistema</label>
+                        <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 1.6">
+                      </div>
+                      <div class="form-group mb-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" id="config-show-test-bar">
+                          <label class="form-check-label" for="config-show-test-bar">Exibir barra de homologação (Base de Testes)</label>
+                        </div>
+                      </div>
+                      <button class="btn btn-primary w-100" id="btn-save-config-sistema">
+                        <i class="bi bi-save"></i> Salvar Configuração
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="cache-card">
+                      <h5>Configurações ECT</h5>
+                      <p class="text-muted small">Agenda e Procedimento do TASY para a listagem do ECT.</p>
+                      <div class="form-group mb-3">
+                        <label for="config-ect-agenda">Agenda TASY</label>
+                        <select id="config-ect-agenda" class="form-select">
+                          <option value="">Carregando agendas...</option>
+                        </select>
+                      </div>
+                      <div class="form-group mb-3">
+                        <label for="config-ect-procedimento">Procedimento TASY</label>
+                        <select id="config-ect-procedimento" class="form-select">
+                          <option value="">Carregando procedimentos...</option>
+                        </select>
+                      </div>
+                      <button class="btn btn-primary w-100" id="btn-save-config-ect">
+                        <i class="bi bi-save"></i> Salvar Apontamento
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-cache">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-database-fill-check"></i> Informações do Cache
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <div class="cache-card">
+                      <h5>Metadados do Cache</h5>
+                      <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <span>Perfis carregados</span>
+                          <span class="badge badge-primary" id="cache-perfis-count">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <span>Módulos carregados</span>
+                          <span class="badge badge-primary" id="cache-modulos-count">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <span>Permissões carregadas</span>
+                          <span class="badge badge-primary" id="cache-permissoes-count">0</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="cache-card">
+                      <h5>Ações</h5>
+                      <button class="btn btn-secondary w-100 mb-2" id="btn-cache-reload">
+                        <i class="bi bi-arrow-clockwise"></i> Recarregar Cache
+                      </button>
+                      <div class="loader" id="cache-loader">
+                        <div class="spinner"></div>
+                        <p>Recarregando cache...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-oracle">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-database-fill-gear"></i> Banco de Dados Oracle TASY
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="p-4 text-center text-muted">
+                  <i class="bi bi-database" style="font-size: 2.5rem; color: var(--primary);"></i>
+                  <h6 class="mt-2 fw-bold text-dark">Configuração & Testador de Conexão Oracle</h6>
+                  <p class="small text-muted mb-0">Pronto para ser ativado no Passo 4 com medição de latência em milissegundos.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-sub-pane" id="subpane-ldap">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-shield-lock-fill"></i> Active Directory / LDAP
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <div class="p-4 text-center text-muted">
+                  <i class="bi bi-diagram-3" style="font-size: 2.5rem; color: var(--primary);"></i>
+                  <h6 class="mt-2 fw-bold text-dark">Configuração & Simulador de Login AD</h6>
+                  <p class="small text-muted mb-0">Pronto para ser ativado no Passo 5 com simulação de login e grupos em tempo real.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2447,6 +2655,7 @@
     // Modais agora fecham apenas pelos botões de Fechar (X) e Cancelar, conforme solicitado
     // (Clique fora do modal desabilitado para evitar perda de dados)
 
+    // Navegação Principal dos 4 Pilares
     document.querySelectorAll('.admin-tab-btn').forEach(tab => {
       tab.addEventListener('click', (e) => {
         e.preventDefault();
@@ -2462,11 +2671,39 @@
         if (target) {
           target.classList.add('show', 'active');
         }
-        if (targetId === 'studio') {
+        if (targetId === 'pillar-clinico') {
           loadStudioPages();
         }
-        if (targetId === 'monitoramento') {
+        if (targetId === 'pillar-seguranca') {
           loadSessoes();
+        }
+        if (targetId === 'pillar-infra') {
+          loadConfigSistema();
+          loadCacheInfo();
+        }
+        if (targetId === 'pillar-acesso') {
+          loadPerfis();
+          loadModulos();
+        }
+      });
+    });
+
+    // Navegação Interna em Sub-Pills de cada Pilar
+    document.querySelectorAll('.admin-sub-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        e.preventDefault();
+        const parentNav = pill.closest('.admin-sub-nav');
+        const parentPane = pill.closest('.tab-pane');
+        if (!parentNav || !parentPane) return;
+
+        parentNav.querySelectorAll('.admin-sub-pill').forEach(p => p.classList.remove('active'));
+        parentPane.querySelectorAll('.admin-sub-pane').forEach(sp => sp.classList.remove('active'));
+
+        pill.classList.add('active');
+        const targetSubpaneId = pill.getAttribute('data-subpane');
+        const targetSubpane = document.getElementById(targetSubpaneId);
+        if (targetSubpane) {
+          targetSubpane.classList.add('active');
         }
       });
     });
@@ -2480,7 +2717,9 @@
         const result = await api.get(`${apiConfig.baseUrl}/admin/sessoes`);
         
         if (result.success && result.data) {
-          countEl.textContent = result.data.length;
+          if (countEl) countEl.textContent = result.data.length;
+          const badgeEl = document.getElementById('total-sessoes-badge');
+          if (badgeEl) badgeEl.textContent = result.data.length;
           if (result.data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhuma sessão ativa encontrada.</td></tr>';
             return;
