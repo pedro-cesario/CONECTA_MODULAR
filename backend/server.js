@@ -226,6 +226,11 @@ app.get('/metrics', (req, res) => {
 
 app.use('/api', routes);
 
+// Qualquer rota /api que não foi tratada retorna 404 JSON, evitando retornar HTML do index.html
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: `Rota da API não encontrada: ${req.method} ${req.originalUrl}` });
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/admin.html'));
 });

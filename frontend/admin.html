@@ -1548,6 +1548,9 @@
         if (!res.ok) {
           throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
         }
+        if (json === null) {
+          throw { message: 'Servidor retornou resposta inválida (não-JSON). Reinicie o backend.', status: res.status };
+        }
         return json;
       },
 
@@ -1556,6 +1559,9 @@
         const json = await res.json().catch(() => null);
         if (!res.ok) {
           throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        if (json === null) {
+          throw { message: 'Servidor retornou resposta inválida (não-JSON). Reinicie o backend.', status: res.status };
         }
         return json;
       },
@@ -1571,18 +1577,23 @@
         if (!res.ok) {
           throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
         }
+        if (json === null) {
+          throw { message: 'Servidor retornou resposta inválida (não-JSON). Reinicie o backend.', status: res.status };
+        }
         return json;
       },
 
-      async del(url) {
+      async delete(url) {
         const res = await fetch(url, {
           method: 'DELETE',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          credentials: 'include'
         });
         const json = await res.json().catch(() => null);
         if (!res.ok) {
           throw { message: json?.message || `HTTP ${res.status}`, status: res.status, data: json };
+        }
+        if (json === null) {
+          throw { message: 'Servidor retornou resposta inválida (não-JSON). Reinicie o backend.', status: res.status };
         }
         return json;
       }
@@ -2905,7 +2916,7 @@
         params.set('limit', '100');
 
         const res = await api.get(`${apiConfig.baseUrl}/admin/audit-trail?${params.toString()}`);
-        if (res.success && res.data) {
+        if (res && res.success && res.data) {
           currentAuditLogs = res.data;
           if (res.data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhum evento registrado no período selecionado.</td></tr>';
