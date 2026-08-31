@@ -2533,7 +2533,7 @@ export function temAcessoTecnicoEnfermagem() {
     enterLivroMode();
   });
 
-  document.getElementById('btn-livro-imprimir')?.addEventListener('click', () => {
+  export function enterPrintMode() {
     router.activateWorkspace('print', document.getElementById('workspace-print'));
     const dataInput = document.getElementById('print-data-plantao');
     if (dataInput) dataInput.value = utils.getTodayIsoDate();
@@ -2545,7 +2545,11 @@ export function temAcessoTecnicoEnfermagem() {
     state.printEscalasAll = [];
     state.printEscalasFiltradas = [];
     setTimeout(() => buscarEscalasLiberadas(), 100);
-  });
+  }
+
+  document.getElementById('btn-livro-imprimir')?.addEventListener('click', enterPrintMode);
+  document.getElementById('btn-livro-buscar')?.addEventListener('click', enterPrintMode);
+
 
   document.getElementById('btn-livro-voltar')?.addEventListener('click', () => {
     showLivroSubMenu();

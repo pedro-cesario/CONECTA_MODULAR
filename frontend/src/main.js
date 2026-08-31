@@ -204,17 +204,11 @@ async function initApp() {
   });
   document.getElementById('btn-livro-imprimir')?.addEventListener('click', async () => {
     const mod = await loadModule('livro');
-    router.activateWorkspace('print', document.getElementById('workspace-print'));
-    const dataInput = document.getElementById('print-data-plantao');
-    if (dataInput) dataInput.value = utils.getTodayIsoDate();
-    const turnoSelect = document.getElementById('print-turno');
-    const setorSelect = document.getElementById('print-setor');
-    if (turnoSelect) turnoSelect.value = '';
-    if (setorSelect) setorSelect.innerHTML = '<option value="">Todos os setores</option>';
-    state.printHtmlBody = null;
-    state.printEscalasAll = [];
-    state.printEscalasFiltradas = [];
-    setTimeout(() => mod.buscarEscalasLiberadas(), 100);
+    mod.enterPrintMode();
+  });
+  document.getElementById('btn-livro-buscar')?.addEventListener('click', async () => {
+    const mod = await loadModule('livro');
+    mod.enterPrintMode();
   });
   document.getElementById('btn-livro-voltar')?.addEventListener('click', async () => {
     const mod = await loadModule('livro');
