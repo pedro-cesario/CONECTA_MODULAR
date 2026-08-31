@@ -95,15 +95,41 @@ async function initApp() {
   const inpSenha = document.getElementById('inp-senha');
   const btnLogin = document.getElementById('btn-login');
   const loginError = document.getElementById('login-error');
+  const btnTogglePassword = document.getElementById('btn-toggle-password');
+
+  function showLoginError(msg) {
+    if (!loginError) return;
+    loginError.innerHTML = `<i class="bi bi-exclamation-circle-fill me-2"></i> <span>${utils.escapeHtml(msg)}</span>`;
+    loginError.classList.remove('d-none');
+  }
+
+  function hideLoginError() {
+    if (!loginError) return;
+    loginError.textContent = '';
+    loginError.classList.add('d-none');
+  }
+
+  inpUsuario?.addEventListener('input', hideLoginError);
+  inpSenha?.addEventListener('input', hideLoginError);
+
+  btnTogglePassword?.addEventListener('click', () => {
+    if (!inpSenha) return;
+    const isPassword = inpSenha.getAttribute('type') === 'password';
+    inpSenha.setAttribute('type', isPassword ? 'text' : 'password');
+    const icon = btnTogglePassword.querySelector('i');
+    if (icon) {
+      icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+    }
+  });
 
   formLogin?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (loginError) loginError.textContent = '';
+    hideLoginError();
     const usuario = inpUsuario ? inpUsuario.value.trim() : '';
     const senha = inpSenha ? inpSenha.value : '';
 
     if (!usuario || !senha) {
-      if (loginError) loginError.textContent = 'Informe usuário e senha';
+      showLoginError('Informe usuário e senha.');
       return;
     }
 
@@ -128,14 +154,15 @@ async function initApp() {
           mod.enterPassagemMode();
         }
       } else {
-        if (loginError) loginError.textContent = result.message || 'Credenciais inválidas';
+        showLoginError(result.message || 'Login ou senha incorretos.');
       }
     } catch (err) {
-      if (loginError) loginError.textContent = err?.message || 'Erro ao comunicar com o servidor';
+      showLoginError(err?.message || 'Login ou senha incorretos.');
     } finally {
       if (btnLogin) ui.setLoading(btnLogin, false);
     }
   });
+
 
   document.getElementById('btn-logout')?.addEventListener('click', async () => {
     const ok = await ui.showConfirmModal('Encerrar Sessão', 'Deseja realmente sair do sistema?');
