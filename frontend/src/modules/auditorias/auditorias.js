@@ -65,7 +65,7 @@ export let historicoModo = 'individual';
     }
     window.scrollTo(0, 0);
   }
-  export function message(text, type = 'error') {
+  export function message(text, type = 'error', focusElement = null) {
     const overlay = byId('modal-overlay');
     if (!overlay) {
       alert(text);
@@ -84,19 +84,35 @@ export let historicoModo = 'individual';
       } else if (type === 'warning') {
         iconEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
       } else {
-        iconEl.innerHTML = '<i class="bi bi-x-lg"></i>';
+        iconEl.innerHTML = '<i class="bi bi-exclamation-circle"></i>';
       }
     }
     if (titleEl) {
-      titleEl.textContent = type === 'success' ? 'Sucesso!' : type === 'warning' ? 'Atenção' : 'Atenção';
+      titleEl.textContent = type === 'success' ? 'Sucesso!' : type === 'warning' ? 'Atenção' : 'Campos Obrigatórios';
     }
-    if (msgEl) msgEl.textContent = text;
+    if (msgEl) {
+      if (typeof text === 'string' && text.includes('<')) {
+        msgEl.innerHTML = text;
+      } else {
+        msgEl.textContent = text;
+      }
+    }
 
     overlay.classList.remove('d-none');
     document.body.classList.add('modal-open');
     const close = () => {
       overlay.classList.add('d-none');
       document.body.classList.remove('modal-open');
+      if (focusElement) {
+        setTimeout(() => {
+          if (typeof focusElement.scrollIntoView === 'function') {
+            focusElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          if (typeof focusElement.focus === 'function') {
+            focusElement.focus({ preventScroll: true });
+          }
+        }, 150);
+      }
     };
     const closeBtn = byId('modal-close');
     if (closeBtn) closeBtn.onclick = close;
@@ -165,22 +181,76 @@ export let historicoModo = 'individual';
   }
 
   export function collectPayload() {
-    const oportunidadesPayload = oportunidades.map(([code]) => ({
-      ie_tipo_oportunidade: code,
-      ie_resultado: document.querySelector(`input[name="auditoria-${code}"]:checked`)?.value || ''
-    }));
+    const dtEl = byId('auditoria-data');
+    const setorEl = byId('auditoria-setor');
+    const avaliadorEl = byId('auditoria-avaliador');
+    const profEl = byId('auditoria-profissional');
+
+    const missingFields = [];
+    [dtEl, setorEl, avaliadorEl, profEl].forEach(el => {
+      el?.classList.remove('field-error-highlight', 'is-invalid');
+      el?.closest('.livro-field')?.classList.remove('field-has-error');
+    });
+
+    if (!dtEl?.value) missingFields.push({ name: 'Data da Auditoria', el: dtEl });
+    if (!setorEl?.value) missingFields.push({ name: 'Setor', el: setorEl });
+    if (!avaliadorEl?.value) missingFields.push({ name: 'Avaliador', el: avaliadorEl });
+    if (!profEl?.value) missingFields.push({ name: 'Categoria Profissional', el: profEl });
+
+    const oportunidadesPayload = oportunidades.map(([code]) => {
+      const checked = document.querySelector(`input[name="auditoria-${code}"]:checked`);
+      const container = document.querySelector(`input[name="auditoria-${code}"]`)?.closest('.auditoria-oportunidade-row');
+      if (!checked?.value) {
+        container?.classList.add('field-error-highlight');
+      } else {
+        container?.classList.remove('field-error-highlight');
+      }
+      return {
+        ie_tipo_oportunidade: code,
+        ie_resultado: checked?.value || ''
+      };
+    });
+
+    const missingOp = oportunidadesPayload.some(item => !item.ie_resultado);
+    if (missingOp) {
+      const firstMissingOp = document.querySelector('.auditoria-oportunidades .field-error-highlight');
+      missingFields.push({ name: '5 Oportunidades de Higiene de Mãos', el: firstMissingOp });
+    }
+
+    if (missingFields.length > 0) {
+      missingFields.forEach(item => {
+        if (item.el) {
+          item.el.classList.add('field-error-highlight', 'is-invalid');
+          item.el.closest('.livro-field')?.classList.add('field-has-error');
+
+          const clearHandler = () => {
+            item.el.classList.remove('field-error-highlight', 'is-invalid');
+            item.el.closest('.livro-field')?.classList.remove('field-has-error');
+            item.el.removeEventListener('input', clearHandler);
+            item.el.removeEventListener('change', clearHandler);
+          };
+          item.el.addEventListener('input', clearHandler);
+          item.el.addEventListener('change', clearHandler);
+        }
+      });
+
+      const listHtml = `<div class="mt-2 text-start"><strong>Por favor, preencha os campos obrigatórios em destaque:</strong><ul class="mb-0 mt-2 ps-3">${missingFields.map(f => `<li><span class="text-danger">●</span> <strong>${f.name}</strong></li>`).join('')}</ul></div>`;
+      
+      const error = new Error(`Preencha todos os campos obrigatórios (${missingFields.map(f => f.name).join(', ')}).`);
+      error.htmlMessage = listHtml;
+      error.firstElement = missingFields[0]?.el;
+      throw error;
+    }
+
     const payload = {
-      dt_auditoria: byId('auditoria-data').value,
-      cd_setor_atendimento: Number(byId('auditoria-setor').value),
-      cd_avaliador: Number(byId('auditoria-avaliador').value),
+      dt_auditoria: dtEl.value,
+      cd_setor_atendimento: Number(setorEl.value),
+      cd_avaliador: Number(avaliadorEl.value),
       ie_turno: new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'D' : 'N',
-      cd_profissional: byId('auditoria-profissional').value,
+      cd_profissional: profEl.value,
       ds_observacao: byId('auditoria-observacoes').value,
       oportunidades: oportunidadesPayload
     };
-    if (!payload.dt_auditoria || !payload.cd_setor_atendimento || !payload.cd_avaliador || !payload.ie_turno || !payload.cd_profissional || oportunidadesPayload.some(item => !item.ie_resultado)) {
-      throw new Error('Preencha todos os campos obrigatórios e as cinco oportunidades.');
-    }
     return payload;
   }
 
@@ -196,12 +266,13 @@ export let historicoModo = 'individual';
       clearForm();
       message(result.message || 'Auditoria salva com sucesso.', 'success');
     } catch (err) {
-      message(err.message || 'Erro ao salvar auditoria.', 'error');
+      message(err.htmlMessage || err.message || 'Erro ao salvar auditoria.', 'error', err.firstElement);
     } finally {
       button.disabled = false;
       button.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar';
     }
   }
+
 
   export function formatPercentual(conformes, total) {
     return total ? Math.round((conformes / total) * 100) : 0;
@@ -737,23 +808,64 @@ export let historicoModo = 'individual';
     const acompanhanteChecked = document.querySelector('input[name="proc-perg-acompanhante"]:checked');
     const ie_acompanhante = acompanhanteChecked ? acompanhanteChecked.value : 'NA';
 
+    const dtEl = byId('proc-dt-auditoria');
+    const setorEl = byId('proc-setor');
+    const avaliadorEl = byId('proc-avaliador');
+    const pacienteEl = byId('proc-nm-paciente');
+
+    const missingFields = [];
+    [dtEl, setorEl, avaliadorEl, pacienteEl].forEach(el => {
+      el?.classList.remove('field-error-highlight', 'is-invalid');
+      el?.closest('.livro-field')?.classList.remove('field-has-error');
+    });
+
+    if (!dtEl?.value) missingFields.push({ name: 'Data da Auditoria', el: dtEl });
+    if (!setorEl?.value) missingFields.push({ name: 'Setor', el: setorEl });
+    if (!avaliadorEl?.value) missingFields.push({ name: 'Responsável', el: avaliadorEl });
+    if (!pacienteEl?.value) {
+      const cardPaciente = pacienteEl?.closest('.auditoria-glazed-section') || pacienteEl;
+      missingFields.push({ name: 'Paciente Selecionado', el: pacienteEl || cardPaciente });
+    }
+
+    if (missingFields.length > 0) {
+      missingFields.forEach(item => {
+        if (item.el) {
+          item.el.classList.add('field-error-highlight', 'is-invalid');
+          item.el.closest('.livro-field')?.classList.add('field-has-error');
+
+          const clearHandler = () => {
+            item.el.classList.remove('field-error-highlight', 'is-invalid');
+            item.el.closest('.livro-field')?.classList.remove('field-has-error');
+            item.el.removeEventListener('input', clearHandler);
+            item.el.removeEventListener('change', clearHandler);
+          };
+          item.el.addEventListener('input', clearHandler);
+          item.el.addEventListener('change', clearHandler);
+        }
+      });
+
+      const listHtml = `<div class="mt-2 text-start"><strong>Por favor, preencha os campos obrigatórios em destaque:</strong><ul class="mb-0 mt-2 ps-3">${missingFields.map(f => `<li><span class="text-danger">●</span> <strong>${f.name}</strong></li>`).join('')}</ul></div>`;
+      
+      const error = new Error(`Preencha todos os campos obrigatórios (${missingFields.map(f => f.name).join(', ')}).`);
+      error.htmlMessage = listHtml;
+      error.firstElement = missingFields[0]?.el;
+      throw error;
+    }
+
     const payload = {
-      dt_auditoria: byId('proc-dt-auditoria').value,
-      cd_setor_atendimento: Number(byId('proc-setor').value),
-      cd_avaliador: Number(byId('proc-avaliador').value),
+      dt_auditoria: dtEl.value,
+      cd_setor_atendimento: Number(setorEl.value),
+      cd_avaliador: Number(avaliadorEl.value),
       ie_turno: new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'D' : 'N',
       ds_observacao: byId('proc-observacoes').value,
       ie_acompanhante,
-      nm_paciente: byId('proc-nm-paciente').value,
+      nm_paciente: pacienteEl.value,
       dt_nascimento: byId('proc-dt-nascimento').value,
       dt_admissao: byId('proc-dt-admissao').value,
       ds_unidade_leito: byId('proc-unidade-leito').value,
       nr_atendimento: byId('proc-nr-atendimento').value,
       respostas
     };
-    if (!payload.dt_auditoria || !payload.cd_setor_atendimento || !payload.cd_avaliador || !payload.nm_paciente) {
-      throw new Error('Preencha todos os campos obrigatórios (Data, Setor, Responsável, Nome do Paciente).');
-    }
     return payload;
   }
 
@@ -769,7 +881,7 @@ export let historicoModo = 'individual';
       clearFormProcessos();
       message(result.message || 'Auditoria de Processos salva com sucesso.', 'success');
     } catch (err) {
-      message(err.message || 'Erro ao salvar auditoria.', 'error');
+      message(err.htmlMessage || err.message || 'Erro ao salvar auditoria.', 'error', err.firstElement);
     } finally {
       button.disabled = false;
       button.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar';
