@@ -1458,8 +1458,22 @@
             </datalist>
           </div>
           <div class="col-md-6">
-            <label for="checkbox-icone" class="form-label small fw-bold">Ícone Bootstrap</label>
-            <input type="text" id="checkbox-icone" class="form-control" placeholder="bi-check-circle" value="bi-check-circle">
+            <label for="checkbox-icone" class="form-label small fw-bold">Ícone Visual</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border text-primary" id="icon-preview-box" style="width: 44px; display: flex; align-items: center; justify-content: center;">
+                <i id="checkbox-icone-preview" class="bi bi-check-circle fs-5"></i>
+              </span>
+              <input type="text" id="checkbox-icone" class="form-control" placeholder="bi-check-circle" value="bi-check-circle">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Galeria Rápida de Ícones Clínicos -->
+        <div class="mb-3 p-2 bg-light rounded border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="small fw-bold text-muted" style="font-size: 0.75rem;">Clique para selecionar um ícone rápido:</label>
+          </div>
+          <div class="d-flex flex-wrap gap-1" id="icon-picker-grid" style="max-height: 110px; overflow-y: auto; padding: 2px;">
           </div>
         </div>
         <div class="row g-2 mb-3 align-items-center">
@@ -2995,12 +3009,78 @@
       }
     }
 
+    const CLINICAL_ICONS = [
+      { icon: 'bi-person-check', title: 'Acompanhante' },
+      { icon: 'bi-exclamation-circle', title: 'Broncoaspiração / Alerta' },
+      { icon: 'bi-lock', title: 'Contenção' },
+      { icon: 'bi-shield-slash', title: 'Comportamento / Agressão' },
+      { icon: 'bi-slash-circle', title: 'Dieta Zero / Jejum' },
+      { icon: 'bi-bandaid', title: 'Curativo / Lesão' },
+      { icon: 'bi-exclamation-triangle', title: 'Risco de Queda' },
+      { icon: 'bi-clipboard-pulse', title: 'Cuidados / TAE' },
+      { icon: 'bi-door-open', title: 'Risco de Fuga' },
+      { icon: 'bi-heart-pulse', title: 'Cardíaco / Acessos' },
+      { icon: 'bi-lungs', title: 'Oxigênio / Respiratório' },
+      { icon: 'bi-droplet-half', title: 'Sonda / Diurese' },
+      { icon: 'bi-activity', title: 'Monitorização / Sinais' },
+      { icon: 'bi-radioactive', title: 'Isolamento / Precaução' },
+      { icon: 'bi-exclamation-octagon', title: 'Alergia / Perigo' },
+      { icon: 'bi-thermometer-half', title: 'Temperatura / Febre' },
+      { icon: 'bi-capsule', title: 'Medicamento' },
+      { icon: 'bi-funnel', title: 'Drenos / Aspiração' },
+      { icon: 'bi-hospital', title: 'Leito / Internação' },
+      { icon: 'bi-bell', title: 'Campainha / Chamado' },
+      { icon: 'bi-eye', title: 'Observação Contínua' },
+      { icon: 'bi-speedometer2', title: 'Sinais Vitais' },
+      { icon: 'bi-check-circle', title: 'Padrão (Sucesso)' },
+      { icon: 'bi-star', title: 'Destaque' }
+    ];
+
+    function updateIconPreview(iconName) {
+      const preview = document.getElementById('checkbox-icone-preview');
+      if (!preview) return;
+      const clean = (iconName || 'bi-check-circle').trim();
+      const cls = clean.startsWith('bi-') ? clean : ('bi-' + clean);
+      preview.className = `bi ${cls} fs-5`;
+
+      document.querySelectorAll('.btn-icon-pick').forEach(btn => {
+        if (btn.dataset.icon === clean) {
+          btn.classList.add('btn-primary', 'text-white');
+          btn.classList.remove('btn-outline-secondary');
+        } else {
+          btn.classList.remove('btn-primary', 'text-white');
+          btn.classList.add('btn-outline-secondary');
+        }
+      });
+    }
+
+    function initIconPickerGrid() {
+      const grid = document.getElementById('icon-picker-grid');
+      if (!grid || grid.children.length > 0) return;
+      
+      grid.innerHTML = CLINICAL_ICONS.map(item => `
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-icon-pick" data-icon="${item.icon}" title="${item.title}" style="width: 38px; height: 34px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; padding: 0;">
+          <i class="bi ${item.icon}"></i>
+        </button>
+      `).join('');
+
+      grid.querySelectorAll('.btn-icon-pick').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const icon = btn.dataset.icon;
+          const input = document.getElementById('checkbox-icone');
+          if (input) input.value = icon;
+          updateIconPreview(icon);
+        });
+      });
+    }
+
     const checkboxModal = document.getElementById('checkbox-modal');
     function openCheckboxModal(item = null) {
+      initIconPickerGrid();
       const title = document.getElementById('checkbox-modal-title');
       const form = document.getElementById('checkbox-form');
       if (item) {
-        title.innerHTML = '<i class="bi bi-pencil-square"></i> Editar Checkbox Clínico';
+        title.innerHTML = '<i class="bi bi-pencil-square"></i> Editar Item de Intercorrência';
         document.getElementById('checkbox-id').value = item.id;
         document.getElementById('checkbox-label').value = item.label;
         document.getElementById('checkbox-chave').value = item.chave;
@@ -3008,12 +3088,15 @@
         document.getElementById('checkbox-icone').value = item.icone || 'bi-check-circle';
         document.getElementById('checkbox-ordem').value = item.ordem ?? 0;
         document.getElementById('checkbox-ativo').checked = item.ativo === 1;
+        updateIconPreview(item.icone || 'bi-check-circle');
       } else {
-        title.innerHTML = '<i class="bi bi-check2-square"></i> Novo Checkbox Clínico';
+        title.innerHTML = '<i class="bi bi-check2-square"></i> Novo Item de Intercorrência';
         form.reset();
         document.getElementById('checkbox-id').value = '';
         document.getElementById('checkbox-ordem').value = currentCheckboxesList.length + 1;
         document.getElementById('checkbox-ativo').checked = true;
+        document.getElementById('checkbox-icone').value = 'bi-check-circle';
+        updateIconPreview('bi-check-circle');
       }
       checkboxModal?.classList.add('show');
       document.body.classList.add('modal-open');
@@ -3028,6 +3111,9 @@
     document.getElementById('btn-novo-checkbox')?.addEventListener('click', () => openCheckboxModal());
     document.getElementById('checkbox-modal-close')?.addEventListener('click', closeCheckboxModal);
     document.getElementById('checkbox-cancelar')?.addEventListener('click', closeCheckboxModal);
+    document.getElementById('checkbox-icone')?.addEventListener('input', (e) => {
+      updateIconPreview(e.target.value);
+    });
 
     document.getElementById('checkbox-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
