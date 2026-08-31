@@ -466,6 +466,149 @@ async function togglePassagemCheckbox(req, res) {
   }
 }
 
+async function testarConexaoOracle(req, res) {
+  const start = Date.now();
+  let conn;
+  try {
+    const { getConnection, getPoolStats, thickMode } = require('../../core/database');
+    conn = await getConnection();
+    const result = await conn.execute(
+      `SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') AS SERVER_TIME,
+              USER AS DB_USER,
+              SYS_CONTEXT('USERENV', 'SESSION_USER') AS SESSION_USER,
+              SYS_CONTEXT('USERENV', 'DB_NAME') AS DB_NAME,
+              SYS_CONTEXT('USERENV', 'HOST') AS HOST_NAME
+       FROM DUAL`
+    );
+    const latencyMs = Date.now() - start;
+    const row = result.rows && result.rows[0] ? result.rows[0] : {};
+    const poolStats = getPoolStats() || {};
+    
+    res.json({
+      success: true,
+      data: {
+        status: 'UP',
+        latencyMs,
+        serverTime: row.SERVER_TIME || new Date().toISOString(),
+        dbUser: row.DB_USER || process.env.DB_USER,
+        sessionUser: row.SESSION_USER || process.env.DB_USER,
+        dbName: row.DB_NAME || process.env.DB_SERVICE,
+        hostName: row.HOST_NAME || process.env.DB_HOST,
+        connectString: `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SERVICE}`,
+        mode: thickMode ? 'Thick (Instant Client 19c)' : 'Thin Mode',
+        pool: poolStats
+      }
+    });
+  } catch (err) {
+    const latencyMs = Date.now() - start;
+    console.error('[Admin] Erro ao testar conexão Oracle:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      data: {
+        status: 'DOWN',
+        latencyMs,
+        error: err.message
+      }
+    });
+  } finally {
+    if (conn) {
+      try { await conn.close(); } catch (e) {}
+    }
+  }
+}
+
+async function diagnosticarUsuarioLdap(req, res) {
+  const { username } = req.body;
+  if (!username || !username.trim()) {
+    return res.status(400).json({ success: false, message: 'Informe o login do usuário' });
+  }
+
+  const cleanUser = username.trim().toLowerCase();
+  const report = {
+    username: cleanUser,
+    timestamp: new Date().toISOString(),
+    tasy: { found: false, nm_usuario: null, nome: null, ie_situacao: null, situacaoTexto: 'Não encontrado' },
+    ldap: { found: false, groups: [], error: null },
+    perfisMapeados: [],
+    status: 'UNKNOWN',
+    veredicto: '',
+    acoesRecomendadas: []
+  };
+
+  // 1. Consulta no TASY
+  let conn;
+  try {
+    const { getConnection } = require('../../core/database');
+    conn = await getConnection();
+    const result = await conn.execute(
+      `SELECT nm_usuario, ds_usuario, ie_situacao, cd_pessoa_fisica, ie_profissional,
+              obter_nome_usuario(nm_usuario) AS nome
+       FROM usuario
+       WHERE LOWER(nm_usuario) = LOWER(:u) OR LOWER(ds_login) = LOWER(:u)`,
+      { u: cleanUser }
+    );
+    if (result.rows && result.rows.length > 0) {
+      const u = result.rows[0];
+      report.tasy.found = true;
+      report.tasy.nm_usuario = u.NM_USUARIO;
+      report.tasy.nome = u.NOME || u.DS_USUARIO || u.NM_USUARIO;
+      report.tasy.ie_situacao = u.IE_SITUACAO;
+      report.tasy.situacaoTexto = u.IE_SITUACAO === 'A' ? 'Ativo (A)' : `Inativo (${u.IE_SITUACAO})`;
+      report.tasy.cd_pessoa_fisica = u.CD_PESSOA_FISICA;
+    }
+  } catch (err) {
+    report.tasy.error = err.message;
+  } finally {
+    if (conn) {
+      try { await conn.close(); } catch (e) {}
+    }
+  }
+
+  // 2. Consulta no LDAP
+  try {
+    const ldapService = require('../auth/ldapService');
+    const groups = await ldapService.getUserGroupsAsAdmin(cleanUser);
+    report.ldap.found = true;
+    report.ldap.groups = groups || [];
+  } catch (err) {
+    report.ldap.error = err.message;
+  }
+
+  // 3. Mapeamento de Perfis no Conecta
+  const cachedPerfis = configCache.getCachedPerfis();
+  const perfisAtivos = cachedPerfis.filter(p => {
+    return (report.ldap.groups || []).some(g => (g || '').toUpperCase() === (p.grupoLdap || '').toUpperCase());
+  });
+  report.perfisMapeados = perfisAtivos.map(p => ({ id: p.id, nome: p.nome, grupoLdap: p.grupoLdap }));
+
+  // 4. Veredito e Ações Recomendadas
+  if (!report.tasy.found) {
+    report.status = 'ERROR';
+    report.veredicto = 'Usuário não encontrado na tabela USUARIO do TASY.';
+    report.acoesRecomendadas.push(`Cadastrar o usuário "${cleanUser}" na Manutenção de Usuários do TASY.`);
+  } else if (report.tasy.ie_situacao !== 'A') {
+    report.status = 'ERROR';
+    report.veredicto = `Usuário está INATIVO no TASY (IE_SITUACAO = '${report.tasy.ie_situacao}').`;
+    report.acoesRecomendadas.push('Ativar o usuário na Manutenção de Usuários do TASY.');
+  } else if (report.ldap.found && report.perfisMapeados.length === 0) {
+    report.status = 'WARNING';
+    report.veredicto = 'Usuário autentica no AD, mas não pertence a nenhum grupo mapeado no Conecta.';
+    report.acoesRecomendadas.push(`Adicionar o usuário a um dos grupos do Conecta no AD (ex: API_CONECTA_ASSISTENCIAL_ENF, API_CONECTA_ADMIN).`);
+  } else if (report.tasy.found && report.tasy.ie_situacao === 'A') {
+    report.status = 'OK';
+    report.veredicto = 'Usuário regular e apto para acessar o Conecta!';
+    if (report.perfisMapeados.length > 0) {
+      report.acoesRecomendadas.push(`Perfis disponíveis: ${report.perfisMapeados.map(p => p.nome).join(', ')}.`);
+    }
+  } else {
+    report.status = 'WARNING';
+    report.veredicto = 'Cadastro verificado com observações.';
+  }
+
+  res.json({ success: true, data: report });
+}
+
 module.exports = {
   listarPerfis,
   salvarPerfil,
@@ -497,6 +640,8 @@ module.exports = {
   listarCheckboxesAtivos,
   salvarPassagemCheckbox,
   deletarPassagemCheckbox,
-  togglePassagemCheckbox
+  togglePassagemCheckbox,
+  testarConexaoOracle,
+  diagnosticarUsuarioLdap
 };
 

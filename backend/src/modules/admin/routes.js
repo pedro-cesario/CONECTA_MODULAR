@@ -45,4 +45,7 @@ router.post('/studio/pages', requireAuth, requireAdmin, adminController.salvarSt
 router.put('/studio/pages/:id', requireAuth, requireAdmin, adminController.salvarStudioPage);
 router.delete('/studio/pages/:id', requireAuth, requireAdmin, adminController.deletarStudioPage);
 
+router.get('/oracle/test', requireAuth, requireAdmin, adminController.testarConexaoOracle);
+router.post('/ldap/diagnostico', requireAuth, requireAdmin, adminController.diagnosticarUsuarioLdap);
+
 module.exports = router;
