@@ -2857,30 +2857,10 @@
       currentPerfilPermissoes = null;
     }
 
-    document.getElementById('perfil-modal-close').addEventListener('click', closePerfilModal);
-    document.getElementById('perfil-cancelar').addEventListener('click', closePerfilModal);
-
-    document.getElementById('modulo-modal-close').addEventListener('click', closeModuloModal);
-    document.getElementById('modulo-cancelar').addEventListener('click', closeModuloModal);
-
-    document.getElementById('btn-cache-reload').addEventListener('click', async () => {
-      const loader = document.getElementById('cache-loader');
-      loader.classList.add('active');
-
-      try {
-        const result = await api.post(`${apiConfig.baseUrl}/admin/cache/reload`);
-        if (result.success) {
-          showToast('Cache recarregado com sucesso!', 'success');
-          loadCacheInfo();
-        } else {
-          showToast('Erro ao recarregar cache: ' + result.message, 'error');
-        }
-      } catch (err) {
-        showToast('Erro ao recarregar cache: ' + err.message, 'error');
-      } finally {
-        loader.classList.remove('active');
-      }
-    });
+    document.getElementById('perfil-modal-close')?.addEventListener('click', closePerfilModal);
+    document.getElementById('perfil-cancelar')?.addEventListener('click', closePerfilModal);
+    document.getElementById('modulo-modal-close')?.addEventListener('click', closeModuloModal);
+    document.getElementById('modulo-cancelar')?.addEventListener('click', closeModuloModal);
     
     async function loadConfigPA() {
       try {
@@ -2970,7 +2950,7 @@
       }
     }
 
-    document.getElementById('btn-save-config-sistema').addEventListener('click', async () => {
+    document.getElementById('btn-save-config-sistema')?.addEventListener('click', async () => {
       const app_version = document.getElementById('config-app-version').value;
       const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
       const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
@@ -2993,7 +2973,7 @@
       }
     });
 
-    document.getElementById('btn-save-config-ect').addEventListener('click', async () => {
+    document.getElementById('btn-save-config-ect')?.addEventListener('click', async () => {
       const app_version = document.getElementById('config-app-version').value;
       const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
       const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
@@ -3016,7 +2996,7 @@
       }
     });
 
-    document.getElementById('btn-save-config-pa').addEventListener('click', async () => {
+    document.getElementById('btn-save-config-pa')?.addEventListener('click', async () => {
       const select = document.getElementById('config-fila-destino');
       const seq = select.value;
       const text = select.options[select.selectedIndex]?.text || '';
