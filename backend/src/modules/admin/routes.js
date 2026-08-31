@@ -31,7 +31,8 @@ router.get('/ect/agendas', requireAuth, requireAdmin, adminController.listarAgen
 router.get('/ect/procedimentos', requireAuth, requireAdmin, adminController.listarProcedimentosEct);
 
 router.get('/sessoes', requireAuth, requireAdmin, adminController.listarSessoes);
-router.get('/audit-trail', requireAuth, requireAdmin, adminController.obterAuditTrail);
+router.delete('/sessoes/:id', requireAuth, requireAdmin, adminController.encerrarSessao);
+router.get('/audit-trail', requireAuth, requireAdmin, adminController.listarAuditTrail);
 
 router.get('/studio/pages', requireAuth, requireAdmin, adminController.listarStudioPages);
 

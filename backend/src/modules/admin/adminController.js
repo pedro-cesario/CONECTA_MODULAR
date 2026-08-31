@@ -270,7 +270,9 @@ module.exports = {
   salvarConfigSistema,
   listarAgendasEct,
   listarProcedimentosEct,
-  listarSessoes
+  listarSessoes,
+  encerrarSessao,
+  listarAuditTrail
 };
 
 async function listarAgendasEct(req, res) {
@@ -322,7 +324,8 @@ async function listarSessoes(req, res) {
               perfilAtivo: parsed.usuario.perfilAtivo,
               authenticated_at: parsed.auth?.authenticated_at || null,
               auth_source: parsed.auth?.source || parsed.usuario.auth_source || 'unknown',
-              is_ldap: parsed.usuario.is_ldap
+              is_ldap: parsed.usuario.is_ldap,
+              ip: parsed.usuario.ip || parsed.auth?.client?.ip || parsed.clientIp || '-'
             });
           }
         } catch (err) { }
@@ -332,6 +335,42 @@ async function listarSessoes(req, res) {
   } catch (error) {
     console.error('[Admin] Erro ao listar sessões:', error);
     res.status(500).json({ success: false, message: 'Erro ao listar sessões', error: error.message });
+  }
+}
+
+async function encerrarSessao(req, res) {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID da sessão é obrigatório.' });
+    }
+    const redisClient = require('../../core/config/redisClient');
+    if (redisClient.isReady) {
+      await redisClient.del(`sess:${id}`);
+    }
+    res.json({ success: true, message: 'Sessão encerrada com sucesso.' });
+  } catch (error) {
+    console.error('[Admin] Erro ao encerrar sessão:', error);
+    res.status(500).json({ success: false, message: 'Erro ao encerrar sessão' });
+  }
+}
+
+async function listarAuditTrail(req, res) {
+  try {
+    const auditLogger = require('../../core/logging/auditLogger');
+    const { usuario, action, startDate, endDate, limit, offset } = req.query;
+    const logs = await auditLogger.getAuditLogs({
+      usuario,
+      action,
+      startDate,
+      endDate,
+      limit: limit ? parseInt(limit, 10) : 100,
+      offset: offset ? parseInt(offset, 10) : 0
+    });
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    console.error('[Admin] Erro ao consultar audit trail:', err);
+    res.status(500).json({ success: false, message: 'Erro ao consultar trilha de auditoria.' });
   }
 }
 

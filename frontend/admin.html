@@ -1062,25 +1062,32 @@
           <div class="admin-sub-pane active" id="subpane-sessoes">
             <div class="admin-card">
               <div class="admin-card-header">
-                <span class="admin-card-title"><i class="bi bi-people-fill"></i> Usuários Conectados (<span id="total-sessoes">0</span>)</span>
+                <div>
+                  <span class="admin-card-title"><i class="bi bi-people-fill"></i> Usuários Conectados no Redis (<span id="total-sessoes">0</span>)</span>
+                  <div class="text-muted small">Acompanhamento em tempo real de quem está acessando o sistema</div>
+                </div>
                 <button class="btn btn-outline-primary btn-sm" id="btn-refresh-sessoes">
-                  <i class="bi bi-arrow-clockwise"></i> Atualizar
+                  <i class="bi bi-arrow-clockwise"></i> Atualizar Sessões
                 </button>
               </div>
               <div class="admin-card-body p-0">
                 <div class="table-responsive">
-                  <table class="table mb-0">
-                    <thead>
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                       <tr>
                         <th>Usuário</th>
-                        <th>Nome</th>
-                        <th>Perfis Disponíveis</th>
+                        <th>Nome Completo</th>
                         <th>Perfil Ativo</th>
+                        <th>IP do Cliente</th>
                         <th>Login (Data/Hora)</th>
                         <th>Origem Auth</th>
+                        <th style="width: 120px;">Ação</th>
                       </tr>
                     </thead>
                     <tbody id="table-sessoes">
+                      <tr>
+                        <td colspan="7" class="text-center text-muted py-4"><i class="bi bi-arrow-repeat spin"></i> Carregando sessões ativas...</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1090,16 +1097,71 @@
 
           <div class="admin-sub-pane" id="subpane-audit">
             <div class="admin-card">
-              <div class="admin-card-header">
-                <div class="admin-card-title">
-                  <i class="bi bi-shield-check"></i> Trilha de Auditoria LGPD (conecta_audit_trail)
+              <div class="admin-card-header flex-wrap gap-2">
+                <div>
+                  <div class="admin-card-title">
+                    <i class="bi bi-shield-check"></i> Trilha de Auditoria LGPD (conecta_audit_trail)
+                  </div>
+                  <small class="text-muted">Rastreabilidade completa de acessos a prontuários, passagens e dados sensíveis</small>
                 </div>
               </div>
-              <div class="admin-card-body">
-                <div class="p-4 text-center text-muted">
-                  <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--primary);"></i>
-                  <h6 class="mt-2 fw-bold text-dark">Explorador de Auditoria LGPD</h6>
-                  <p class="small text-muted mb-0">Pronto para ser ativado no Passo 2 com filtros avançados e visualizador JSON.</p>
+              <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1" for="audit-filter-user">Filtrar Usuário</label>
+                    <input type="text" id="audit-filter-user" class="form-control form-control-sm" placeholder="Ex: enfermeiro.pedro">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1" for="audit-filter-action">Tipo de Ação</label>
+                    <select id="audit-filter-action" class="form-select form-select-sm">
+                      <option value="">Todas as Ações</option>
+                      <option value="PACIENTE_BUSCA">Consulta de Pacientes</option>
+                      <option value="PASSAGEM_CRIADA">Passagem Criada / Editada</option>
+                      <option value="LIVRO_CRIADO">Livro Criado / Liberado</option>
+                      <option value="AUDITORIA_CRIADA">Auditoria Registrada</option>
+                      <option value="ESCALA_PUBLICADA">Escala Publicada</option>
+                      <option value="AUTH_LOGIN">Autenticação (Login)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1" for="audit-filter-period">Período</label>
+                    <select id="audit-filter-period" class="form-select form-select-sm">
+                      <option value="today">Hoje</option>
+                      <option value="7days" selected>Últimos 7 dias</option>
+                      <option value="30days">Últimos 30 dias</option>
+                      <option value="all">Todo o Histórico</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-primary btn-sm flex-fill" id="btn-search-audit">
+                      <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="btn-export-audit" title="Exportar CSV">
+                      <i class="bi bi-download"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th style="width: 160px;">Data / Hora</th>
+                        <th>Usuário</th>
+                        <th>Ação Registrada</th>
+                        <th>IP Cliente</th>
+                        <th style="width: 100px;">Status</th>
+                        <th style="width: 90px;">Detalhes</th>
+                      </tr>
+                    </thead>
+                    <tbody id="audit-tbody">
+                      <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Nenhum evento carregado ainda. Clique em Filtrar.</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -1333,6 +1395,29 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALHES DO EVENTO DE AUDITORIA LGPD -->
+  <div class="modal" id="audit-modal">
+    <div class="modal-content" style="max-width: 680px; background: #ffffff; border-radius: 1rem; padding: 1.5rem;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="modal-title m-0" style="font-weight: 800; color: var(--primary);"><i class="bi bi-shield-check"></i> Detalhes do Evento LGPD</h4>
+        <button type="button" class="close-modal" id="audit-modal-close" style="border: 0; background: transparent; font-size: 1.5rem;">&times;</button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="mb-3 d-flex gap-2 flex-wrap">
+          <span class="badge bg-primary" id="audit-detail-action">AÇÃO</span>
+          <span class="badge bg-secondary" id="audit-detail-user">USUÁRIO</span>
+          <span class="badge bg-info text-dark" id="audit-detail-date">DATA</span>
+          <span class="badge bg-dark" id="audit-detail-ip">IP</span>
+        </div>
+        <label class="fw-bold text-muted small mb-1">Payload / Metadados do Evento:</label>
+        <pre class="bg-dark text-light p-3 rounded" id="audit-detail-json" style="max-height: 380px; overflow-y: auto; font-size: 0.85rem;"></pre>
+      </div>
+      <div class="modal-footer mt-3 pt-3 border-top d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary" id="audit-modal-btn-close">Fechar</button>
+      </div>
     </div>
   </div>
 
@@ -2705,6 +2790,12 @@
         if (targetSubpane) {
           targetSubpane.classList.add('active');
         }
+        if (targetSubpaneId === 'subpane-audit') {
+          loadAuditTrail();
+        }
+        if (targetSubpaneId === 'subpane-sessoes') {
+          loadSessoes();
+        }
       });
     });
 
@@ -2712,47 +2803,193 @@
     async function loadSessoes() {
       const tbody = document.getElementById('table-sessoes');
       const countEl = document.getElementById('total-sessoes');
+      if (!tbody) return;
       try {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="bi bi-arrow-repeat spin"></i> Carregando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-arrow-repeat spin"></i> Carregando sessões ativas...</td></tr>';
         const result = await api.get(`${apiConfig.baseUrl}/admin/sessoes`);
         
         if (result.success && result.data) {
           if (countEl) countEl.textContent = result.data.length;
           const badgeEl = document.getElementById('total-sessoes-badge');
           if (badgeEl) badgeEl.textContent = result.data.length;
+
           if (result.data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhuma sessão ativa encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma sessão ativa encontrada no momento.</td></tr>';
             return;
           }
           
-          let tableHtml = '';
-          result.data.forEach(sess => {
+          tbody.innerHTML = result.data.map(sess => {
             const dateStr = sess.authenticated_at ? new Date(sess.authenticated_at).toLocaleString('pt-BR') : '-';
-            const authBadge = sess.auth_source === 'ldap' ? '<span class="badge badge-primary">AD/LDAP</span>' : '<span class="badge bg-secondary">Local</span>';
-            const ativoBadge = sess.perfilAtivo ? `<span class="badge badge-success">${sess.perfilAtivo}</span>` : '-';
-            
-            tableHtml += `
+            const authBadge = sess.auth_source === 'ldap' ? '<span class="badge bg-primary">AD/LDAP</span>' : '<span class="badge bg-secondary">Local</span>';
+            const ativoBadge = sess.perfilAtivo ? `<span class="badge bg-success">${sess.perfilAtivo}</span>` : '<span class="text-muted">-</span>';
+            const ipStr = sess.ip || '-';
+
+            return `
               <tr>
                 <td><strong>${sess.nm_usuario || '-'}</strong></td>
                 <td>${sess.nome || '-'}</td>
-                <td><small>${sess.perfis || '-'}</small></td>
                 <td>${ativoBadge}</td>
-                <td>${dateStr}</td>
+                <td><code>${ipStr}</code></td>
+                <td><small>${dateStr}</small></td>
                 <td>${authBadge}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger btn-kick-sess" data-id="${sess.id}" data-user="${sess.nm_usuario}" title="Encerrar Sessão">
+                    <i class="bi bi-box-arrow-right"></i> Derrubar
+                  </button>
+                </td>
               </tr>
             `;
+          }).join('');
+
+          tbody.querySelectorAll('.btn-kick-sess').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const user = btn.dataset.user;
+              if (confirm(`Deseja realmente desconectar a sessão do usuário "${user}"?`)) {
+                try {
+                  const kickRes = await api.delete(`${apiConfig.baseUrl}/admin/sessoes/${id}`);
+                  if (kickRes.success) {
+                    showToast(`Sessão de ${user} encerrada com sucesso!`, 'success');
+                    loadSessoes();
+                  } else {
+                    showToast(kickRes.message || 'Erro ao derrubar sessão', 'error');
+                  }
+                } catch (e) {
+                  showToast('Erro ao encerrar sessão', 'error');
+                }
+              }
+            });
           });
-          tbody.innerHTML = tableHtml;
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar sessões.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar sessões.</td></tr>';
         }
       } catch (err) {
         console.error('Erro ao listar sessões:', err);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro de conexão ao carregar sessões.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erro de conexão ao carregar sessões.</td></tr>';
       }
     }
 
-    document.getElementById('btn-refresh-sessoes').addEventListener('click', loadSessoes);
+    document.getElementById('btn-refresh-sessoes')?.addEventListener('click', loadSessoes);
+
+    // =========================================================================
+    // Trilha de Auditoria LGPD
+    // =========================================================================
+    let currentAuditLogs = [];
+    async function loadAuditTrail() {
+      const tbody = document.getElementById('audit-tbody');
+      if (!tbody) return;
+      const user = document.getElementById('audit-filter-user')?.value.trim();
+      const action = document.getElementById('audit-filter-action')?.value;
+      const period = document.getElementById('audit-filter-period')?.value || '7days';
+
+      let startDate = null;
+      const now = new Date();
+      if (period === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      } else if (period === '7days') {
+        const d7 = new Date();
+        d7.setDate(now.getDate() - 7);
+        startDate = d7.toISOString();
+      } else if (period === '30days') {
+        const d30 = new Date();
+        d30.setDate(now.getDate() - 30);
+        startDate = d30.toISOString();
+      }
+
+      try {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-arrow-repeat spin"></i> Consultando registros de auditoria LGPD...</td></tr>';
+        const params = new URLSearchParams();
+        if (user) params.set('usuario', user);
+        if (action) params.set('action', action);
+        if (startDate) params.set('startDate', startDate);
+        params.set('limit', '100');
+
+        const res = await api.get(`${apiConfig.baseUrl}/admin/audit-trail?${params.toString()}`);
+        if (res.success && res.data) {
+          currentAuditLogs = res.data;
+          if (res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhum evento registrado no período selecionado.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = res.data.map(log => {
+            const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '-';
+            const statusBadge = log.status === 'SUCCESS'
+              ? '<span class="badge bg-success">Sucesso</span>'
+              : '<span class="badge bg-danger">Erro</span>';
+
+            return `
+              <tr>
+                <td><small class="text-muted">#${log.id}</small></td>
+                <td><small>${dateStr}</small></td>
+                <td><strong>${log.usuario || '-'}</strong></td>
+                <td><span class="badge bg-primary-subtle text-primary">${log.action}</span></td>
+                <td><code>${log.ip || '-'}</code></td>
+                <td>${statusBadge}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary btn-view-audit" data-id="${log.id}">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          tbody.querySelectorAll('.btn-view-audit').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const logId = btn.dataset.id;
+              const log = currentAuditLogs.find(l => String(l.id) === String(logId));
+              if (log) openAuditModal(log);
+            });
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar registros de auditoria.</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erro ao consultar auditoria LGPD.</td></tr>';
+      }
+    }
+
+    const auditModal = document.getElementById('audit-modal');
+    function openAuditModal(log) {
+      document.getElementById('audit-detail-action').textContent = log.action;
+      document.getElementById('audit-detail-user').textContent = `Usuário: ${log.usuario}`;
+      document.getElementById('audit-detail-date').textContent = log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '';
+      document.getElementById('audit-detail-ip').textContent = `IP: ${log.ip || '-'}`;
+
+      let parsedDetails = log.details;
+      try {
+        if (typeof parsedDetails === 'string') parsedDetails = JSON.parse(parsedDetails);
+      } catch (_) {}
+
+      document.getElementById('audit-detail-json').textContent = JSON.stringify(parsedDetails, null, 2);
+      auditModal?.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    document.getElementById('audit-modal-close')?.addEventListener('click', () => {
+      auditModal?.classList.remove('show');
+      document.body.classList.remove('modal-open');
+    });
+    document.getElementById('audit-modal-btn-close')?.addEventListener('click', () => {
+      auditModal?.classList.remove('show');
+      document.body.classList.remove('modal-open');
+    });
+    document.getElementById('btn-search-audit')?.addEventListener('click', loadAuditTrail);
+
+    document.getElementById('btn-export-audit')?.addEventListener('click', () => {
+      if (!currentAuditLogs || currentAuditLogs.length === 0) return showToast('Nenhum dado para exportar', 'warning');
+      const headers = ['ID', 'Data/Hora', 'Usuario', 'Acao', 'IP', 'Status'];
+      const rows = currentAuditLogs.map(l => [l.id, l.created_at, l.usuario, l.action, l.ip, l.status]);
+      let csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `auditoria_lgpd_conecta_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
 
     async function loadStudioPages() {
       const nativeContainer = document.getElementById('studio-native-cards');
