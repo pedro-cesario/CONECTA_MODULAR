@@ -192,5 +192,40 @@ textarea.field-error-highlight {
   }
 }
 
+/* ==========================================================================
+   Escala Action Bar Buttons Size Alignment with Livro Administrativo
+   ========================================================================== */
+#workspace-escala .escala-action-bar button,
+#workspace-escala .escala-action-bar .btn-secondary,
+#workspace-escala .escala-action-bar .btn-save,
+#btn-escala-imprimir,
+#btn-escala-limpar,
+#btn-escala-publicar {
+  min-height: 42px !important;
+  padding: 0.65rem 1.15rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  border-radius: 0.65rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  line-height: 1.2 !important;
+}
+
+#workspace-escala .escala-action-bar .livro-clear-btn,
+#btn-escala-limpar {
+  color: #9f1239 !important;
+  border-color: #fecdd3 !important;
+  background-color: #fff7f8 !important;
+}
+
+#workspace-escala .escala-action-bar .livro-clear-btn:hover,
+#btn-escala-limpar:hover {
+  background-color: #ffe4e6 !important;
+  border-color: #fda4af !important;
+}
+
+
 
 
