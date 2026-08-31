@@ -117,7 +117,7 @@ export const MODULOS_CONFIG = {};
       buttonId: 'btn-abrir-passagem',
       topbarButtonId: 'nav-passagem',
       activeModes: ['passagem', 'passagem-submenu', 'passagens-anteriores'],
-      entryFnName: 'enterPassagemMode'
+      entryFnName: 'showPassagemSubMenu'
     },
     dashboard: {
       id: 'dashboard',

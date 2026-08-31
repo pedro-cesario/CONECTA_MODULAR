@@ -55,9 +55,9 @@ export function showModeChooser() {
 
 
 export const moduleHandlers = {
-  passagem: async () => { const m = await loadModule('passagem'); m?.enterPassagemMode?.(); },
+  passagem: async () => { const m = await loadModule('passagem'); m?.showPassagemSubMenu?.(); },
   dashboard: async () => { const m = await loadModule('dashboard'); m?.enterDashboardMode?.(); },
-  livro: async () => { const m = await loadModule('livro'); m?.enterLivroMode?.(); },
+  livro: async () => { const m = await loadModule('livro'); m?.showLivroSubMenu?.(); },
   escala: async () => { const m = await loadModule('escala'); m?.enterEscalaMode?.(); },
   dashboard_pa: async () => { const m = await loadModule('dashboard'); m?.enterDashboardPAMode?.(); },
   dashboard_internacao: async () => { const m = await loadModule('dashboard'); m?.enterDashboardInternacaoMode?.(); },

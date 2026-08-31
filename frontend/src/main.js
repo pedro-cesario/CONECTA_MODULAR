@@ -151,7 +151,7 @@ async function initApp() {
           router.showModeChooser();
         } else {
           const mod = await loadModule('passagem');
-          mod.enterPassagemMode();
+          mod.showPassagemSubMenu();
         }
       } else {
         showLoginError(result.message || 'Login ou senha incorretos.');
@@ -272,7 +272,7 @@ async function initApp() {
   // 8. Grid Buttons Direct Handlers (Lazy Loaded)
   document.getElementById('btn-abrir-passagem')?.addEventListener('click', async () => {
     const mod = await loadModule('passagem');
-    mod.enterPassagemMode();
+    mod.showPassagemSubMenu();
   });
   document.getElementById('btn-abrir-dashboard')?.addEventListener('click', async () => {
     const mod = await loadModule('dashboard');
