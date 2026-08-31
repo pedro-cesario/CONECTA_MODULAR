@@ -33,46 +33,76 @@ try {
   }
 }
 
-const dbUser = ((process.env.DB_USER || '').trim()).toUpperCase();
-const dbPassword = (process.env.DB_PASSWORD || '').trim();
-const dbHost = (process.env.DB_HOST || '').trim();
-const dbPort = (process.env.DB_PORT || '1521').trim();
-const dbService = (process.env.DB_SERVICE || '').trim();
+let currentDbUser = ((process.env.DB_USER || '').trim()).toUpperCase();
+let currentDbPassword = (process.env.DB_PASSWORD || '').trim();
+let currentDbHost = (process.env.DB_HOST || '').trim();
+let currentDbPort = (process.env.DB_PORT || '1521').trim();
+let currentDbService = (process.env.DB_SERVICE || '').trim();
+let currentPoolMin = parseInt(process.env.DB_POOL_MIN || '3', 10);
+let currentPoolMax = parseInt(process.env.DB_POOL_MAX || '15', 10);
 
-const connectString = `${dbHost}:${dbPort}/${dbService}`;
+function getConnectString() {
+  return `${currentDbHost}:${currentDbPort}/${currentDbService}`;
+}
 
 console.log('[Oracle] Modo:', thickMode ? 'Thick' : 'Thin');
-console.log('[Oracle] Connect:', connectString);
+console.log('[Oracle] Connect:', getConnectString());
 
 let pool;
 
-async function initPool() {
+async function initPool(customParams = null) {
+  if (customParams) {
+    if (customParams.host) currentDbHost = String(customParams.host).trim();
+    if (customParams.port) currentDbPort = String(customParams.port).trim();
+    if (customParams.service) currentDbService = String(customParams.service).trim();
+    if (customParams.user) currentDbUser = String(customParams.user).trim().toUpperCase();
+    if (customParams.password) currentDbPassword = String(customParams.password).trim();
+    if (customParams.poolMin) currentPoolMin = parseInt(customParams.poolMin, 10) || 3;
+    if (customParams.poolMax) currentPoolMax = parseInt(customParams.poolMax, 10) || 15;
+  }
+
   if (!pool) {
     console.log('[Oracle] Criando pool...');
     try {
-      const poolMin = parseInt(process.env.DB_POOL_MIN || '3');
-      const poolMax = parseInt(process.env.DB_POOL_MAX || '15');
-      const poolIncrement = parseInt(process.env.DB_POOL_INCREMENT || '2');
-      const queueTimeout = parseInt(process.env.DB_QUEUE_TIMEOUT || '10') * 1000;
-      const poolTimeout = parseInt(process.env.DB_IDLE_TIMEOUT || '60');
+      const poolIncrement = parseInt(process.env.DB_POOL_INCREMENT || '2', 10);
+      const queueTimeout = parseInt(process.env.DB_QUEUE_TIMEOUT || '10', 10) * 1000;
+      const poolTimeout = parseInt(process.env.DB_IDLE_TIMEOUT || '60', 10);
 
       pool = await oracledb.createPool({
-        user: dbUser,
-        password: dbPassword,
-        connectString: connectString,
-        poolMin: poolMin,
-        poolMax: poolMax,
+        user: currentDbUser,
+        password: currentDbPassword,
+        connectString: getConnectString(),
+        poolMin: currentPoolMin,
+        poolMax: currentPoolMax,
         poolIncrement: poolIncrement,
         poolTimeout: poolTimeout,
         queueTimeout: queueTimeout
       });
-      console.log(`[Oracle] Pool criado (min:${poolMin}, max:${poolMax}, inc:${poolIncrement})`);
+      console.log(`[Oracle] Pool criado com sucesso: ${getConnectString()} (min:${currentPoolMin}, max:${currentPoolMax})`);
     } catch (err) {
       console.error('[Oracle] Erro ao criar pool:', err.message);
       throw err;
     }
   }
   return pool;
+}
+
+async function reconnectPool(newParams) {
+  await closePool();
+  await initPool(newParams);
+  const conn = await getConnection();
+  try {
+    await conn.execute('SELECT 1 FROM DUAL');
+  } finally {
+    await conn.close();
+  }
+  return {
+    success: true,
+    connectString: getConnectString(),
+    user: currentDbUser,
+    poolMin: currentPoolMin,
+    poolMax: currentPoolMax
+  };
 }
 
 async function getConnection() {
@@ -82,7 +112,11 @@ async function getConnection() {
 
 async function closePool() {
   if (pool) {
-    await pool.close(0);
+    try {
+      await pool.close(0);
+    } catch (e) {
+      console.warn('[Oracle] Aviso ao fechar pool anterior:', e.message);
+    }
     pool = null;
   }
 }
@@ -106,4 +140,26 @@ function getPoolStats() {
   };
 }
 
-module.exports = { initPool, getConnection, closePool, thickMode, initEscalaAtivaTables, getPoolStats };
+function getOracleConfig() {
+  return {
+    host: currentDbHost,
+    port: currentDbPort,
+    service: currentDbService,
+    user: currentDbUser,
+    hasPassword: Boolean(currentDbPassword),
+    poolMin: currentPoolMin,
+    poolMax: currentPoolMax,
+    connectString: getConnectString()
+  };
+}
+
+module.exports = {
+  initPool,
+  getConnection,
+  closePool,
+  reconnectPool,
+  getOracleConfig,
+  thickMode,
+  initEscalaAtivaTables,
+  getPoolStats
+};

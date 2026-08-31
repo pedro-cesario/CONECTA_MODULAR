@@ -28,4 +28,29 @@ if (ldapEnabled) {
   config.baseDn = process.env.LDAP_BASE_DN || '';
 }
 
+function updateLdapConfig(newParams) {
+  if (newParams.enabled !== undefined) config.enabled = Boolean(newParams.enabled);
+  if (newParams.url !== undefined) config.url = String(newParams.url).trim();
+  if (newParams.baseDn !== undefined) config.baseDn = String(newParams.baseDn).trim();
+  if (newParams.userDomain !== undefined) config.userDomain = String(newParams.userDomain).trim();
+  if (newParams.adminUser !== undefined) config.adminUser = String(newParams.adminUser).trim();
+  if (newParams.adminPassword !== undefined && String(newParams.adminPassword).trim()) {
+    config.adminPassword = String(newParams.adminPassword).trim();
+  }
+  return getLdapPublicConfig();
+}
+
+function getLdapPublicConfig() {
+  return {
+    enabled: config.enabled,
+    url: config.url,
+    baseDn: config.baseDn,
+    userDomain: config.userDomain,
+    adminUser: config.adminUser,
+    hasAdminPassword: Boolean(config.adminPassword)
+  };
+}
+
 module.exports = config;
+module.exports.updateLdapConfig = updateLdapConfig;
+module.exports.getLdapPublicConfig = getLdapPublicConfig;

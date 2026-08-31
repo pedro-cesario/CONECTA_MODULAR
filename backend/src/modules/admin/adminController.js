@@ -609,6 +609,97 @@ async function diagnosticarUsuarioLdap(req, res) {
   res.json({ success: true, data: report });
 }
 
+async function obterConfigOracle(req, res) {
+  try {
+    const { getOracleConfig } = require('../../core/database');
+    res.json({ success: true, data: getOracleConfig() });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarConfigOracle(req, res) {
+  try {
+    const { host, port, service, user, password, poolMin, poolMax } = req.body;
+    if (!host || !service || !user) {
+      return res.status(400).json({ success: false, message: 'Host, Serviço e Usuário são obrigatórios' });
+    }
+
+    const { reconnectPool } = require('../../core/database');
+    const updateParams = {
+      host: host.trim(),
+      port: (port || '1521').trim(),
+      service: service.trim(),
+      user: user.trim(),
+      poolMin: parseInt(poolMin || '3', 10),
+      poolMax: parseInt(poolMax || '15', 10)
+    };
+    if (password && String(password).trim()) {
+      updateParams.password = String(password).trim();
+    }
+
+    const result = await reconnectPool(updateParams);
+
+    // Persiste no SQLite
+    await configCache.saveSystemConfig({
+      db_host: updateParams.host,
+      db_port: updateParams.port,
+      db_service: updateParams.service,
+      db_user: updateParams.user,
+      db_pool_min: updateParams.poolMin,
+      db_pool_max: updateParams.poolMax
+    });
+
+    res.json({ success: true, message: 'Configurações do Oracle salvas e pool reconectado com sucesso!', data: result });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar configurações do Oracle:', err);
+    res.status(500).json({ success: false, message: 'Erro ao reconectar no Oracle: ' + err.message });
+  }
+}
+
+async function obterConfigLdap(req, res) {
+  try {
+    const { getLdapPublicConfig } = require('../../core/config/ldap');
+    res.json({ success: true, data: getLdapPublicConfig() });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarConfigLdap(req, res) {
+  try {
+    const { enabled, url, baseDn, userDomain, adminUser, adminPassword } = req.body;
+    const { updateLdapConfig } = require('../../core/config/ldap');
+
+    const updateParams = {
+      enabled: Boolean(enabled),
+      url: (url || '').trim(),
+      baseDn: (baseDn || '').trim(),
+      userDomain: (userDomain || '').trim(),
+      adminUser: (adminUser || '').trim()
+    };
+    if (adminPassword && String(adminPassword).trim()) {
+      updateParams.adminPassword = String(adminPassword).trim();
+    }
+
+    const updated = updateLdapConfig(updateParams);
+
+    // Persiste no SQLite
+    await configCache.saveSystemConfig({
+      ldap_enabled: updateParams.enabled ? 'true' : 'false',
+      ldap_url: updateParams.url,
+      ldap_base_dn: updateParams.baseDn,
+      ldap_user_domain: updateParams.userDomain,
+      ldap_admin_user: updateParams.adminUser
+    });
+
+    res.json({ success: true, message: 'Configurações do LDAP salvas com sucesso!', data: updated });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar configurações do LDAP:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 module.exports = {
   listarPerfis,
   salvarPerfil,
@@ -642,6 +733,10 @@ module.exports = {
   deletarPassagemCheckbox,
   togglePassagemCheckbox,
   testarConexaoOracle,
-  diagnosticarUsuarioLdap
+  diagnosticarUsuarioLdap,
+  obterConfigOracle,
+  salvarConfigOracle,
+  obterConfigLdap,
+  salvarConfigLdap
 };
 

@@ -48,4 +48,9 @@ router.delete('/studio/pages/:id', requireAuth, requireAdmin, adminController.de
 router.get('/oracle/test', requireAuth, requireAdmin, adminController.testarConexaoOracle);
 router.post('/ldap/diagnostico', requireAuth, requireAdmin, adminController.diagnosticarUsuarioLdap);
 
+router.get('/infra/oracle', requireAuth, requireAdmin, adminController.obterConfigOracle);
+router.post('/infra/oracle', requireAuth, requireAdmin, adminController.salvarConfigOracle);
+router.get('/infra/ldap', requireAuth, requireAdmin, adminController.obterConfigLdap);
+router.post('/infra/ldap', requireAuth, requireAdmin, adminController.salvarConfigLdap);
+
 module.exports = router;

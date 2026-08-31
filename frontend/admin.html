@@ -1323,6 +1323,58 @@
           </div>
 
           <div class="admin-sub-pane" id="subpane-oracle">
+            <!-- Card de Configuração de Banco -->
+            <div class="admin-card mb-4">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-sliders text-primary"></i> Configuração do Servidor de Banco Oracle
+                </div>
+                <span class="badge bg-primary-subtle text-primary fw-bold">Zero-Code Config</span>
+              </div>
+              <div class="admin-card-body">
+                <form id="oracle-config-form">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold">Host / IP do Servidor Oracle</label>
+                      <input type="text" id="oracle-cfg-host" class="form-control" placeholder="192.168.1.21" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label small fw-bold">Porta</label>
+                      <input type="text" id="oracle-cfg-port" class="form-control" placeholder="1521" value="1521" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold">Nome do Serviço / SID</label>
+                      <input type="text" id="oracle-cfg-service" class="form-control" placeholder="tasyhml" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold">Usuário / Schema</label>
+                      <input type="text" id="oracle-cfg-user" class="form-control" placeholder="tasy" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold">Senha do Banco</label>
+                      <div class="input-group">
+                        <input type="password" id="oracle-cfg-password" class="form-control" placeholder="•••••••• (vazio p/ manter)">
+                        <button type="button" class="btn btn-outline-secondary btn-toggle-pass" data-target="oracle-cfg-password"><i class="bi bi-eye"></i></button>
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label small fw-bold">Pool Mínimo</label>
+                      <input type="number" id="oracle-cfg-pool-min" class="form-control" value="3" min="1" max="50">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label small fw-bold">Pool Máximo</label>
+                      <input type="number" id="oracle-cfg-pool-max" class="form-control" value="15" min="1" max="100">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                      <button type="submit" class="btn btn-success w-100 fw-bold" id="btn-save-oracle-config">
+                        <i class="bi bi-check2-circle"></i> Salvar & Reconectar Oracle
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <div class="admin-card">
               <div class="admin-card-header d-flex justify-content-between align-items-center">
                 <div class="admin-card-title">
@@ -1405,6 +1457,56 @@
           </div>
 
           <div class="admin-sub-pane" id="subpane-ldap">
+            <!-- Card de Configuração do Active Directory -->
+            <div class="admin-card mb-4">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-shield-lock-fill text-primary"></i> Configuração do Active Directory (LDAP)
+                </div>
+                <span class="badge bg-primary-subtle text-primary fw-bold">Zero-Code Config</span>
+              </div>
+              <div class="admin-card-body">
+                <form id="ldap-config-form">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="ldap-cfg-enabled" checked>
+                        <label class="form-check-label fw-bold" for="ldap-cfg-enabled">Habilitar Autenticação Integrada via Active Directory / LDAP</label>
+                      </div>
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label small fw-bold">URL do Servidor LDAP (com Porta)</label>
+                      <input type="text" id="ldap-cfg-url" class="form-control" placeholder="ldap://192.168.1.4:389" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold">Base DN (Árvore de Domínio)</label>
+                      <input type="text" id="ldap-cfg-basedn" class="form-control" placeholder="DC=heal,DC=local" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold">Domínio do Usuário</label>
+                      <input type="text" id="ldap-cfg-domain" class="form-control" placeholder="heal" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold">Usuário de Serviço (Bind Admin)</label>
+                      <input type="text" id="ldap-cfg-user" class="form-control" placeholder="servico.ldap" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold">Senha do Usuário de Serviço</label>
+                      <div class="input-group">
+                        <input type="password" id="ldap-cfg-password" class="form-control" placeholder="•••••••• (vazio p/ manter)">
+                        <button type="button" class="btn btn-outline-secondary btn-toggle-pass" data-target="ldap-cfg-password"><i class="bi bi-eye"></i></button>
+                      </div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                      <button type="submit" class="btn btn-success w-100 fw-bold" id="btn-save-ldap-config">
+                        <i class="bi bi-check2-circle"></i> Salvar Configurações LDAP
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <div class="admin-card">
               <div class="admin-card-header">
                 <div class="admin-card-title">
@@ -3938,6 +4040,142 @@
       }
     });
 
+    // Toggle Password Visibility
+    document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.target;
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        btn.innerHTML = `<i class="bi ${isPass ? 'bi-eye-slash' : 'bi-eye'}"></i>`;
+      });
+    });
+
+    // Oracle Configuration Handlers
+    async function loadOracleConfig() {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/admin/infra/oracle`);
+        if (res && res.success && res.data) {
+          const d = res.data;
+          const hostEl = document.getElementById('oracle-cfg-host');
+          const portEl = document.getElementById('oracle-cfg-port');
+          const serviceEl = document.getElementById('oracle-cfg-service');
+          const userEl = document.getElementById('oracle-cfg-user');
+          const minEl = document.getElementById('oracle-cfg-pool-min');
+          const maxEl = document.getElementById('oracle-cfg-pool-max');
+
+          if (hostEl) hostEl.value = d.host || '';
+          if (portEl) portEl.value = d.port || '1521';
+          if (serviceEl) serviceEl.value = d.service || '';
+          if (userEl) userEl.value = d.user || '';
+          if (minEl) minEl.value = d.poolMin || 3;
+          if (maxEl) maxEl.value = d.poolMax || 15;
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar configurações do Oracle:', err);
+      }
+    }
+
+    document.getElementById('oracle-config-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-oracle-config');
+      const host = document.getElementById('oracle-cfg-host').value.trim();
+      const port = document.getElementById('oracle-cfg-port').value.trim();
+      const service = document.getElementById('oracle-cfg-service').value.trim();
+      const user = document.getElementById('oracle-cfg-user').value.trim();
+      const password = document.getElementById('oracle-cfg-password').value.trim();
+      const poolMin = document.getElementById('oracle-cfg-pool-min').value;
+      const poolMax = document.getElementById('oracle-cfg-pool-max').value;
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Reconectando Oracle...';
+      }
+
+      try {
+        const payload = { host, port, service, user, poolMin, poolMax };
+        if (password) payload.password = password;
+
+        const res = await api.post(`${apiConfig.baseUrl}/admin/infra/oracle`, payload);
+        if (res && res.success) {
+          showToast('Configurações salvas e Pool Oracle reconectado com sucesso!', 'success');
+          document.getElementById('oracle-cfg-password').value = '';
+          await loadOracleConfig();
+          await testarOracle();
+        } else {
+          showToast(res?.message || 'Erro ao reconectar no Oracle', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar Oracle: ' + (err.message || err), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar & Reconectar Oracle';
+        }
+      }
+    });
+
+    // LDAP Configuration Handlers
+    async function loadLdapConfig() {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/admin/infra/ldap`);
+        if (res && res.success && res.data) {
+          const d = res.data;
+          const enEl = document.getElementById('ldap-cfg-enabled');
+          const urlEl = document.getElementById('ldap-cfg-url');
+          const baseEl = document.getElementById('ldap-cfg-basedn');
+          const domEl = document.getElementById('ldap-cfg-domain');
+          const userEl = document.getElementById('ldap-cfg-user');
+
+          if (enEl) enEl.checked = Boolean(d.enabled);
+          if (urlEl) urlEl.value = d.url || '';
+          if (baseEl) baseEl.value = d.baseDn || '';
+          if (domEl) domEl.value = d.userDomain || '';
+          if (userEl) userEl.value = d.adminUser || '';
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar configurações do LDAP:', err);
+      }
+    }
+
+    document.getElementById('ldap-config-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-ldap-config');
+      const enabled = document.getElementById('ldap-cfg-enabled').checked;
+      const url = document.getElementById('ldap-cfg-url').value.trim();
+      const baseDn = document.getElementById('ldap-cfg-basedn').value.trim();
+      const userDomain = document.getElementById('ldap-cfg-domain').value.trim();
+      const adminUser = document.getElementById('ldap-cfg-user').value.trim();
+      const adminPassword = document.getElementById('ldap-cfg-password').value.trim();
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+      }
+
+      try {
+        const payload = { enabled, url, baseDn, userDomain, adminUser };
+        if (adminPassword) payload.adminPassword = adminPassword;
+
+        const res = await api.post(`${apiConfig.baseUrl}/admin/infra/ldap`, payload);
+        if (res && res.success) {
+          showToast('Configurações do Active Directory (LDAP) salvas com sucesso!', 'success');
+          document.getElementById('ldap-cfg-password').value = '';
+          await loadLdapConfig();
+        } else {
+          showToast(res?.message || 'Erro ao salvar configurações do LDAP', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar LDAP: ' + (err.message || err), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar Configurações LDAP';
+        }
+      }
+    });
+
     async function loadAdminData() {
 
       try {
@@ -3965,6 +4203,8 @@
         await loadAuditTrail();
         await loadCheckboxes();
         await loadStudioPages();
+        await loadOracleConfig();
+        await loadLdapConfig();
       } catch (err) {
         console.error('[Admin] Erro ao verificar sessão:', err);
         window.location.href = '/';
