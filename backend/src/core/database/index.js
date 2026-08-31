@@ -3,17 +3,26 @@ const oracledb = require('oracledb');
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 oracledb.autoCommit = false;
 
-const instantClientPath = '/opt/oracle/instantclient';
-let thickMode = false;
+const path = require('path');
+const candidatePaths = [
+  process.env.OCI_LIB_DIR,
+  '/opt/oracle/instantclient',
+  path.resolve(__dirname, '../../../instantclient-files'),
+  path.resolve(__dirname, '../../../../instantclient-files')
+].filter(Boolean);
 
+let thickMode = false;
 try {
   const fs = require('fs');
-  if (fs.existsSync(instantClientPath)) {
-    const files = fs.readdirSync(instantClientPath);
-    if (files.includes('libclntsh.so.19.1')) {
-      oracledb.initOracleClient({ libDir: instantClientPath });
-      thickMode = true;
-      console.log('[Oracle] Modo Thick ativado - Instant Client 19c');
+  for (const instantClientPath of candidatePaths) {
+    if (fs.existsSync(instantClientPath)) {
+      const files = fs.readdirSync(instantClientPath);
+      if (files.includes('libclntsh.so.19.1') || files.includes('libclntsh.so')) {
+        oracledb.initOracleClient({ libDir: instantClientPath });
+        thickMode = true;
+        console.log(`[Oracle] Modo Thick ativado - Instant Client em ${instantClientPath}`);
+        break;
+      }
     }
   }
 } catch (err) {

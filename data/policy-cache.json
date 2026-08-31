@@ -28,5 +28,25 @@
     "source": "default",
     "version": 40,
     "evaluatedAt": "2026-08-21T11:40:52.983Z"
+  },
+  "conecta|pedro.teles||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-31T18:03:56.017Z"
+  },
+  "conecta|pedroteles.adm||": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 40,
+    "evaluatedAt": "2026-08-31T18:02:23.860Z"
   }
 }

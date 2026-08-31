@@ -134,6 +134,7 @@ async function createAuthenticatedSession(req, username, gruposAd, metadata = {}
   });
   const usuarioTasy = await carregarUsuarioTasy(normalizedUsername, gruposAd);
 
+  const perfisCache = configCache.getCachedPerfis();
   const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || '';
   const sessionFlags = {
     nm_usuario: usuarioTasy.NM_USUARIO || normalizedUsername,
