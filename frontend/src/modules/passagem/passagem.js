@@ -837,9 +837,10 @@ export function renderCheckboxesIntercorrencia(atendimento) {
     return auth.temPermissaoAtiva('passagem', `campo_${item.field}`) || auth.temPermissaoAtiva('passagem', item.field);
   });
 
-  if (itensAutorizados.length === 0) return '';
+  const listaFinal = itensAutorizados.length > 0 ? itensAutorizados : CHECKBOX_INTERCORRENCIAS;
+  if (listaFinal.length === 0) return '';
 
-  return `<div class="checkboxes-grid">${itensAutorizados
+  return `<div class="checkboxes-grid">${listaFinal
     .map(item => `<label class="checkbox-label"><span>${item.label}</span><input type="checkbox" class="intercorrencia-checkbox" data-field="${item.field}" data-atendimento="${atendimento}"></label>`)
     .join('')}</div>`;
 }

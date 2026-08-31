@@ -2109,7 +2109,7 @@
       }
     }
 
-    const CHECKBOX_INTERCORRENCIAS = [
+    let CHECKBOX_INTERCORRENCIAS = [
       { field: 'acompanhante', label: 'Acompanhante' },
       { field: 'broncoaspiracao', label: 'Broncoaspiração' },
       { field: 'contencao', label: 'Contenção' },
@@ -2152,10 +2152,18 @@
       Promise.all([
         api.get(`${apiConfig.baseUrl}/admin/perfis`),
         api.get(`${apiConfig.baseUrl}/admin/modulos`),
-        api.get(`${apiConfig.baseUrl}/admin/passagem/setores`)
+        api.get(`${apiConfig.baseUrl}/admin/passagem/setores`),
+        api.get(`${apiConfig.baseUrl}/admin/passagem/checkboxes`)
       ])
-        .then(([perfisResult, result, setoresResult]) => {
+        .then(([perfisResult, result, setoresResult, checkboxesResult]) => {
           if (!result.success) throw new Error(result.message);
+
+          if (checkboxesResult && checkboxesResult.success && Array.isArray(checkboxesResult.data) && checkboxesResult.data.length > 0) {
+            CHECKBOX_INTERCORRENCIAS = checkboxesResult.data.map(item => ({
+              field: item.chave,
+              label: item.label
+            }));
+          }
 
           if (perfisResult && perfisResult.success && Array.isArray(perfisResult.data)) {
             const perfilObj = perfisResult.data.find(p => p.id === perfilId);
@@ -2887,6 +2895,10 @@
         const res = await api.get(`${apiConfig.baseUrl}/admin/passagem/checkboxes`);
         if (res && res.success && res.data) {
           currentCheckboxesList = res.data;
+          CHECKBOX_INTERCORRENCIAS = res.data.map(item => ({
+            field: item.chave,
+            label: item.label
+          }));
           if (res.data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhum checkbox cadastrado ainda.</td></tr>';
             return;

@@ -813,18 +813,30 @@ async function savePassagemCheckbox({ id, chave, label, categoria, icone, ordem,
       SET chave = ?, label = ?, categoria = ?, icone = ?, ordem = ?, ativo = ?, updated_at = datetime('now')
       WHERE id = ?`,
       [cleanChave, label.trim(), (categoria || 'Geral').trim(), (icone || 'bi-check-circle').trim(), parseInt(ordem || 0, 10), ativo ? 1 : 0, existing[0].id]);
+    await load();
     return { id: existing[0].id, chave: cleanChave, label, categoria, icone, ordem, ativo };
   } else {
     await run(`INSERT INTO passagem_checkboxes (id, chave, label, categoria, icone, ordem, ativo, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       [targetId, cleanChave, label.trim(), (categoria || 'Geral').trim(), (icone || 'bi-check-circle').trim(), parseInt(ordem || 0, 10), ativo ? 1 : 0]);
+
+    // Concede permissão campo_<chave> automaticamente para os perfis com acesso ao módulo passagem
+    const passagemProfiles = await all("SELECT perfil_id FROM perfil_modulos WHERE modulo_id = 'passagem'");
+    for (const p of passagemProfiles) {
+      await run("INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES (?, 'passagem', ?)", [p.perfil_id, `campo_${cleanChave}`]);
+    }
+    await load();
     return { id: targetId, chave: cleanChave, label, categoria, icone, ordem, ativo };
   }
 }
 
 async function deletePassagemCheckbox(id) {
   if (!id) throw new Error('ID é obrigatório');
+  const existing = await all('SELECT chave FROM passagem_checkboxes WHERE id = ?', [id]);
+  const chave = existing.length > 0 ? existing[0].chave : id;
   await run('DELETE FROM passagem_checkboxes WHERE id = ?', [id]);
+  await run("DELETE FROM perfil_permissoes WHERE modulo_id = 'passagem' AND permissao = ?", [`campo_${chave}`]);
+  await load();
   return { success: true, id };
 }
 
@@ -832,6 +844,7 @@ async function togglePassagemCheckbox(id, ativo) {
   if (!id) throw new Error('ID é obrigatório');
   const val = ativo ? 1 : 0;
   await run("UPDATE passagem_checkboxes SET ativo = ?, updated_at = datetime('now') WHERE id = ?", [val, id]);
+  await load();
   return { success: true, id, ativo: val };
 }
 
