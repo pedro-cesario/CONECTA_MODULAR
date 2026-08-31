@@ -451,15 +451,11 @@ export async function loadPacientes(transitionId = modeTransitionSeq) {
       if (!router.isCurrentWorkspace(transitionId, 'passagem')) return;
 
       if (result.success && result.data) {
-
         state.pacientes = result.data;
-
+        await carregarCheckboxesDinamicos();
         renderPacientes();
-
         document.getElementById('main-footer').classList.remove('d-none');
-
         updateFooter();
-
       } else {
 
         ui.showToast(result.message || 'Erro ao carregar', 'error');
@@ -833,7 +829,11 @@ export function bindCheckboxEvents(container) {
 }
 
 export function renderCheckboxesIntercorrencia(atendimento) {
+  const permissoesPassagem = state.usuario?.permissoesAtivas?.passagem || [];
+  const hasCamposRestritos = permissoesPassagem.some(p => typeof p === 'string' && p.startsWith('campo_'));
+
   const itensAutorizados = CHECKBOX_INTERCORRENCIAS.filter(item => {
+    if (!hasCamposRestritos) return true;
     return auth.temPermissaoAtiva('passagem', `campo_${item.field}`) || auth.temPermissaoAtiva('passagem', item.field);
   });
 

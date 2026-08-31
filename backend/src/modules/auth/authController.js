@@ -11,11 +11,24 @@ const policyClientService = require('.//policyClientService');
 function atualizarContextoPerfilAtivo(usuario) {
   if (!usuario) return usuario;
   const perfilAtivo = usuario.perfilAtivo || null;
-  const perfil = (usuario.perfisDisponiveis || []).find(item => item.id === perfilAtivo);
-  usuario.permissoesAtivas = perfil?.permissoes || {};
-  usuario.setoresPassagemPermitidos = perfilAtivo
-    ? configCache.getSetoresPermitidos(perfilAtivo, 'passagem')
-    : [];
+
+  if (perfilAtivo) {
+    const permRows = configCache.getCachedPerfilPermissoes().filter(
+      p => String(p.perfil_id).toLowerCase() === String(perfilAtivo).toLowerCase()
+    );
+    const modPerms = {};
+    permRows.forEach(pr => {
+      if (!modPerms[pr.modulo_id]) modPerms[pr.modulo_id] = [];
+      if (!modPerms[pr.modulo_id].includes(pr.permissao)) {
+        modPerms[pr.modulo_id].push(pr.permissao);
+      }
+    });
+    usuario.permissoesAtivas = modPerms;
+    usuario.setoresPassagemPermitidos = configCache.getSetoresPermitidos(perfilAtivo, 'passagem');
+  } else {
+    usuario.permissoesAtivas = {};
+    usuario.setoresPassagemPermitidos = [];
+  }
   return usuario;
 }
 
