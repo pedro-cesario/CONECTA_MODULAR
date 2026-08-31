@@ -326,10 +326,21 @@ export function renderPacientesSkeleton(count = 4) {
   `).join('');
 }
 
-export function renderDashboardSkeleton(count = 6) {
-  return `<div class="skeleton-dashboard-grid">${Array.from({ length: count }, () => `
-    <div class="skeleton-dashboard-card skeleton-shimmer"></div>
-  `).join('')}</div>`;
+export function renderDashboardSkeleton(count = 8) {
+  return Array.from({ length: count }, () => `
+    <article class="dashboard-patient-card skeleton-dashboard-card-wrap">
+      <div class="dashboard-patient-tags" style="margin-bottom: 0.5rem; display: flex; gap: 0.35rem;">
+        <span class="skeleton-shimmer" style="width: 65px; height: 18px; border-radius: 999px; display: inline-block;"></span>
+        <span class="skeleton-shimmer" style="width: 50px; height: 18px; border-radius: 999px; display: inline-block;"></span>
+      </div>
+      <div class="skeleton-shimmer" style="height: 18px; width: 75%; margin-bottom: 0.65rem; border-radius: 4px;"></div>
+      <div class="dashboard-patient-meta" style="display: flex; flex-direction: column; gap: 0.35rem;">
+        <div class="skeleton-shimmer" style="height: 12px; width: 65%; border-radius: 3px;"></div>
+        <div class="skeleton-shimmer" style="height: 12px; width: 55%; border-radius: 3px;"></div>
+        <div class="skeleton-shimmer" style="height: 12px; width: 70%; border-radius: 3px;"></div>
+      </div>
+    </article>
+  `).join('');
 }
 
 
