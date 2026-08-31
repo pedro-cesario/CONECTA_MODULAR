@@ -740,7 +740,7 @@ export const CHECKBOX_INTERCORRENCIAS_MAP = new Map(
 
 export async function carregarCheckboxesDinamicos() {
   try {
-    const res = await api.get('/passagem/checkboxes');
+    const res = await api.get('/api/passagem/checkboxes');
     if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
       CHECKBOX_INTERCORRENCIAS.length = 0;
       CHECKBOX_INTERCORRENCIAS_MAP.clear();
