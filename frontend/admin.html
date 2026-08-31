@@ -1185,10 +1185,8 @@
           </div>
         </div>
 
-        <!-- PILAR 4: INFRAESTRUTURA & CONECTORES -->
-        <div class="tab-pane" id="pillar-infra" role="tabpanel" aria-labelledby="pillar-infra-tab">
         <!-- PILAR 4: INFRAESTRUTURA & INTEGRAÇÕES -->
-        <div class="tab-pane fade" id="pillar-infra" role="tabpanel">
+        <div class="tab-pane" id="pillar-infra" role="tabpanel" aria-labelledby="pillar-infra-tab">
           <div class="admin-header-card">
             <div class="mode-eyebrow">Pilar 4 — Infraestrutura & Conectores Corporativos</div>
             <h3>Conexões & Integrações de Infraestrutura</h3>
@@ -3046,8 +3044,8 @@
           loadLdapConfig();
           loadConfigSistema();
           loadConfigPA();
-          loadAgendasECT();
-          loadProcedimentosECT();
+          loadAgendasEct();
+          loadProcedimentosEct();
           const activeSubpane = target?.querySelector('.admin-sub-pane.active')?.id;
           if (activeSubpane === 'subpane-oracle' || !activeSubpane) {
             testarOracle();
@@ -3095,8 +3093,8 @@
         if (targetSubpaneId === 'subpane-apontamentos') {
           loadConfigSistema();
           loadConfigPA();
-          loadAgendasECT();
-          loadProcedimentosECT();
+          loadAgendasEct();
+          loadProcedimentosEct();
         }
       });
     });
