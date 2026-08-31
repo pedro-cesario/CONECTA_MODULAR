@@ -335,28 +335,26 @@ async function ensureAccessSchema() {
     updated_at TEXT DEFAULT (datetime('now'))
   )`);
 
-  const migrationCheckboxesTable = await all("SELECT id FROM config_migrations WHERE id = '2026_08_passagem_checkboxes_table'");
+  const migrationCheckboxesTable = await all("SELECT id FROM config_migrations WHERE id = '2026_08_passagem_checkboxes_real_v2'");
   if (migrationCheckboxesTable.length === 0) {
+    await run("DELETE FROM passagem_checkboxes");
     const defaultCheckboxes = [
-      { id: 'dieta_zero', chave: 'dieta_zero', label: 'Dieta Zero / Jejum', categoria: 'Nutrição', icone: 'bi-slash-circle', ordem: 1 },
-      { id: 'sne_sng', chave: 'sne_sng', label: 'Sonda Nasoentérica / Nasogástrica', categoria: 'Dispositivos', icone: 'bi-activity', ordem: 2 },
-      { id: 'svd', chave: 'svd', label: 'Sonda Vesical de Demora (SVD)', categoria: 'Dispositivos', icone: 'bi-droplet-half', ordem: 3 },
-      { id: 'picc_cvc', chave: 'picc_cvc', label: 'Acesso Central (PICC / CVC / FAV)', categoria: 'Acessos', icone: 'bi-heart-pulse', ordem: 4 },
-      { id: 'oxigenioterapia', chave: 'oxigenioterapia', label: 'Oxigenioterapia / O2', categoria: 'Respiratório', icone: 'bi-lungs', ordem: 5 },
-      { id: 'curativo_complexo', chave: 'curativo_complexo', label: 'Curativo Especial / Complexo', categoria: 'Pele & Curativos', icone: 'bi-bandaid', ordem: 6 },
-      { id: 'lesao_pressao', chave: 'lesao_pressao', label: 'Lesão por Pressão (LPP)', categoria: 'Pele & Curativos', icone: 'bi-shield-exclamation', ordem: 7 },
-      { id: 'risco_queda', chave: 'risco_queda', label: 'Risco de Queda', categoria: 'Segurança', icone: 'bi-exclamation-triangle', ordem: 8 },
-      { id: 'isolamento', chave: 'isolamento', label: 'Precaução / Isolamento', categoria: 'Segurança', icone: 'bi-radioactive', ordem: 9 },
-      { id: 'alergia', chave: 'alergia', label: 'Alergia Relatada', categoria: 'Alerta', icone: 'bi-exclamation-octagon', ordem: 10 },
-      { id: 'dreno', chave: 'dreno', label: 'Drenos / Aspiração', categoria: 'Dispositivos', icone: 'bi-funnel', ordem: 11 },
-      { id: 'glicemia_capilar', chave: 'glicemia_capilar', label: 'Controle Glicêmico (HGT)', categoria: 'Cuidados', icone: 'bi-clipboard-pulse', ordem: 12 }
+      { id: 'acompanhante', chave: 'acompanhante', label: 'Acompanhante', categoria: 'Geral', icone: 'bi-person-check', ordem: 1 },
+      { id: 'broncoaspiracao', chave: 'broncoaspiracao', label: 'Broncoaspiração', categoria: 'Risco Clínico', icone: 'bi-exclamation-circle', ordem: 2 },
+      { id: 'contencao', chave: 'contencao', label: 'Contenção', categoria: 'Risco Clínico', icone: 'bi-lock', ordem: 3 },
+      { id: 'heteroautoagressao', chave: 'heteroautoagressao', label: 'Heteroagressão/Autoagressão', categoria: 'Comportamento', icone: 'bi-shield-slash', ordem: 4 },
+      { id: 'jejum', chave: 'jejum', label: 'Jejum', categoria: 'Nutrição', icone: 'bi-slash-circle', ordem: 5 },
+      { id: 'lesao', chave: 'lesao', label: 'Lesão', categoria: 'Pele & Integridade', icone: 'bi-bandaid', ordem: 6 },
+      { id: 'queda', chave: 'queda', label: 'Queda', categoria: 'Segurança', icone: 'bi-exclamation-triangle', ordem: 7 },
+      { id: 'tae', chave: 'tae', label: 'TAE', categoria: 'Cuidados Especiais', icone: 'bi-clipboard-pulse', ordem: 8 },
+      { id: 'riscofuga', chave: 'riscofuga', label: 'Risco de Fuga', categoria: 'Segurança', icone: 'bi-door-open', ordem: 9 }
     ];
 
     for (const item of defaultCheckboxes) {
-      await run(`INSERT OR IGNORE INTO passagem_checkboxes (id, chave, label, categoria, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+      await run(`INSERT OR REPLACE INTO passagem_checkboxes (id, chave, label, categoria, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, 1)`,
         [item.id, item.chave, item.label, item.categoria, item.icone, item.ordem]);
     }
-    await run("INSERT INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes_table')");
+    await run("INSERT OR IGNORE INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes_real_v2')");
   }
 }
 
