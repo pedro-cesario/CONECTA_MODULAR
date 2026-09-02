@@ -1,4 +1,5 @@
 const recepcaoRepository = require('./recepcaoRepository');
+const tasyReportsClient = require('./tasyReportsClient');
 const logger = require('../../core/utils/logger');
 
 /**
@@ -106,13 +107,13 @@ async function listarRelatoriosAtendimento() {
   return recepcaoRepository.listarRelatoriosAtendimento();
 }
 
-async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
+async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento, customParams = {}) {
   if (!nrAtendimento) {
     const err = new Error('Número do atendimento é obrigatório para emitir o relatório');
     err.status = 400;
     throw err;
   }
-  return recepcaoRepository.gerarRelatorioAtendimento(cdRelatorio, nrAtendimento);
+  return tasyReportsClient.gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams);
 }
 
 async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {

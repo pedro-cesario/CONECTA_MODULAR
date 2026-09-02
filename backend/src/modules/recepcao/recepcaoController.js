@@ -145,9 +145,11 @@ async function gerarRelatorioAtendimento(req, res, next) {
   try {
     const { id } = req.params;
     const { nr_atendimento } = req.query;
-    const html = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento);
+    res.setHeader('Content-Type', contentType || 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName || `relatorio_${id}_${nr_atendimento}.pdf`}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
   } catch (err) {
     next(err);
   }

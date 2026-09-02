@@ -731,7 +731,7 @@ export function imprimirRelatorio(cdRelatorio, titulo) {
     return;
   }
 
-  ui.showToast(`Abrindo relatório oficial "${titulo}"...`, 'info');
+  ui.showToast(`Gerando PDF oficial do TASY para "${titulo}" (Atendimento #${nrAtendimento})...`, 'info');
   window.open(`/api/recepcao/relatorios/${cdRelatorio}/gerar?nr_atendimento=${nrAtendimento}`, '_blank');
 }
 
