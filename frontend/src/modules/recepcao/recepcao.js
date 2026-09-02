@@ -692,17 +692,26 @@ export async function carregarRelatorios() {
     const res = await api.get('/api/recepcao/relatorios');
     if (res.success && Array.isArray(res.data)) {
       recepcaoState.relatorios = res.data;
-      container.innerHTML = res.data.map(r => `
+      container.innerHTML = res.data.map(r => {
+        const cd = r.cd_relatorio || r.CD_RELATORIO;
+        const titulo = r.ds_titulo || r.DS_TITULO;
+        const icone = r.icone || 'bi-file-earmark-text';
+        const badge = r.badge || 'TASY';
+        return `
         <div class="relatorio-card-item">
           <div>
-            <div class="relatorio-card-title"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> ${r.DS_TITULO}</div>
-            <small class="text-muted">Cód TASY: ${r.CD_RELATORIO}</small>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-secondary" style="font-size: 0.72rem;">${escapeHtml(badge)}</span>
+              <small class="text-muted fw-bold">Cód: ${cd}</small>
+            </div>
+            <div class="relatorio-card-title"><i class="bi ${icone} text-primary me-1"></i> ${escapeHtml(titulo)}</div>
           </div>
-          <button class="btn btn-sm btn-outline-primary w-100" type="button" onclick="window.conectaCore.imprimirRelatorio(${r.CD_RELATORIO}, '${r.DS_TITULO}')">
-            <i class="bi bi-printer"></i> Imprimir Documento
+          <button class="btn btn-sm btn-outline-primary w-100 mt-2" type="button" onclick="window.conectaCore.imprimirRelatorio(${cd}, '${escapeHtml(titulo)}')">
+            <i class="bi bi-printer"></i> Visualizar & Imprimir
           </button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar relatórios:', err);
@@ -710,56 +719,15 @@ export async function carregarRelatorios() {
 }
 
 export function imprimirRelatorio(cdRelatorio, titulo) {
-  const nrAtendimento = recepcaoState.atendimentoCriado || '---';
-  const paciente = recepcaoState.pessoaSelecionada?.NM_PESSOA_FISICA || 'Paciente';
-
-  ui.showToast(`Preparando impressão de "${titulo}" para o atendimento #${nrAtendimento}...`, 'info');
-
-  // Abre janela de impressão simulando relatório oficial
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${titulo} - Atendimento ${nrAtendimento}</title>
-        <style>
-          body { font-family: sans-serif; padding: 2rem; color: #111; line-height: 1.6; }
-          .header { border-bottom: 2px solid #00387a; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-          .header h1 { margin: 0; font-size: 1.25rem; color: #00387a; }
-          .meta { font-size: 0.85rem; color: #666; margin-bottom: 2rem; }
-          .content { border: 1px solid #ddd; padding: 1.5rem; border-radius: 6px; }
-          .signature { margin-top: 4rem; display: flex; justify-content: space-between; }
-          .sig-line { border-top: 1px solid #333; width: 45%; text-align: center; font-size: 0.85rem; padding-top: 0.5rem; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <h1>HOSPITAL ESPÍRITA ANDRÉ LUIZ — HEAL</h1>
-            <small>Sistema Conecta Assistencial / TASY</small>
-          </div>
-          <strong>${titulo}</strong>
-        </div>
-        <div class="meta">
-          <strong>Paciente:</strong> ${paciente} | <strong>Atendimento:</strong> ${nrAtendimento} | <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}
-        </div>
-        <div class="content">
-          <p>Documento oficial emitido eletronicamente através do Conecta Recepção Hospitalar em conformidade com o prontuário eletrônico TASY.</p>
-          <p>Declaro estar ciente e de acordo com todas as disposições e orientações hospitalares aqui registradas.</p>
-        </div>
-        <div class="signature">
-          <div class="sig-line">Assinatura do Paciente / Responsável Legal</div>
-          <div class="sig-line">Recepção / Atendente Hospitalar</div>
-        </div>
-        <script>
-          window.onload = function() { window.print(); }
-        </script>
-      </body>
-      </html>
-    `);
-    win.document.close();
+  const nrAtendimento = recepcaoState.atendimentoCriado || document.getElementById('recepcao-atendimento-numero')?.textContent || null;
+  
+  if (!nrAtendimento || nrAtendimento === '---') {
+    ui.showToast('Abra ou selecione um atendimento antes de emitir o relatório.', 'warning');
+    return;
   }
+
+  ui.showToast(`Abrindo relatório oficial "${titulo}"...`, 'info');
+  window.open(`/api/recepcao/relatorios/${cdRelatorio}/gerar?nr_atendimento=${nrAtendimento}`, '_blank');
 }
 
 export async function carregarDocumentosGED() {

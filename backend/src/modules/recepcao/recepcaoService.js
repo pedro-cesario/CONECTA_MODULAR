@@ -106,6 +106,15 @@ async function listarRelatoriosAtendimento() {
   return recepcaoRepository.listarRelatoriosAtendimento();
 }
 
+async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
+  if (!nrAtendimento) {
+    const err = new Error('Número do atendimento é obrigatório para emitir o relatório');
+    err.status = 400;
+    throw err;
+  }
+  return recepcaoRepository.gerarRelatorioAtendimento(cdRelatorio, nrAtendimento);
+}
+
 async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
   return recepcaoRepository.listarDocumentosGED(nrAtendimento, cdPessoaFisica);
 }
@@ -139,6 +148,7 @@ module.exports = {
   listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
+  gerarRelatorioAtendimento,
   listarDocumentosGED,
   anexarDocumentoGED
 };

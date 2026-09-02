@@ -141,6 +141,18 @@ async function listarRelatoriosAtendimento(req, res, next) {
   }
 }
 
+async function gerarRelatorioAtendimento(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { nr_atendimento } = req.query;
+    const html = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listarDocumentosGED(req, res, next) {
   try {
     const { nr_atendimento, cd_pessoa_fisica } = req.query;
@@ -176,6 +188,7 @@ module.exports = {
   listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
+  gerarRelatorioAtendimento,
   listarDocumentosGED,
   anexarDocumentoGED
 };

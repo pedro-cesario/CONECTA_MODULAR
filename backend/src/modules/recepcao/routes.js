@@ -27,6 +27,7 @@ router.post('/atendimentos', recepcaoController.abrirAtendimento);
 
 // PILAR 5: Relatórios TASY e GED
 router.get('/relatorios', recepcaoController.listarRelatoriosAtendimento);
+router.get('/relatorios/:id/gerar', recepcaoController.gerarRelatorioAtendimento);
 router.get('/ged', recepcaoController.listarDocumentosGED);
 router.post('/ged', recepcaoController.anexarDocumentoGED);
 

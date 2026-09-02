@@ -758,29 +758,402 @@ async function abrirAtendimento(dados, nmUsuario) {
 // PILAR 5: RELATÓRIOS TASY & GED
 // ============================================================================
 
+const MAPA_RELATORIOS_OFICIAIS = [
+  { cd_relatorio: 718, nr_sequencia: 2750455, ds_titulo: '718 — CHECKLIST PRONTUÁRIO', icone: 'bi-check2-square', badge: 'Prontuário' },
+  { cd_relatorio: 651, nr_sequencia: 2750348, ds_titulo: '651 — HEAL - Autorização do responsável para contatos com o paciente', icone: 'bi-person-check', badge: 'Consentimento' },
+  { cd_relatorio: 205, nr_sequencia: 2750344, ds_titulo: '205 — HEAL - Comunicado de Alta - Involuntário - HTML5', icone: 'bi-file-earmark-medical', badge: 'Internação Involuntária' },
+  { cd_relatorio: 206, nr_sequencia: 2750347, ds_titulo: '206 — HEAL - Comunicado de Alta Médica Voluntária - HTML5', icone: 'bi-file-earmark-text', badge: 'Internação Voluntária' },
+  { cd_relatorio: 643, nr_sequencia: 2750843, ds_titulo: '643 — HEAL - Contrato de prestação de serviços hospitalar - HTML5', icone: 'bi-file-earmark-ruled', badge: 'Contrato Jurídico' },
+  { cd_relatorio: 717, nr_sequencia: 2750452, ds_titulo: '717 — TERMO DE AUTORIZAÇÃO PARA REALIZAÇÃO DE EXAMES LABORATORIAIS', icone: 'bi-eyedropper', badge: 'Exames' },
+  { cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento' }
+];
+
 async function listarRelatoriosAtendimento() {
   const conn = await getConnection();
   try {
+    const seqs = MAPA_RELATORIOS_OFICIAIS.map(r => r.nr_sequencia).join(',');
     const result = await conn.execute(
-      `SELECT
-         cd_relatorio,
-         ds_titulo,
-         ie_tipo_relatorio
+      `SELECT cd_relatorio, nr_sequencia, ds_titulo
        FROM relatorio
-       WHERE (
-         UPPER(ds_titulo) LIKE '%HEAL%'
-         OR UPPER(ds_titulo) LIKE '%PRONTUARIO%'
-         OR UPPER(ds_titulo) LIKE '%CONTRATO%'
-         OR UPPER(ds_titulo) LIKE '%AUTORIZACAO%'
-         OR UPPER(ds_titulo) LIKE '%ALTA%'
-         OR UPPER(ds_titulo) LIKE '%TISS%'
-       )
-       ORDER BY ds_titulo`
+       WHERE nr_sequencia IN (${seqs})
+       ORDER BY cd_relatorio`
     );
-    return result.rows || [];
+
+    const dbMap = new Map((result.rows || []).map(r => [r.NR_SEQUENCIA, r]));
+
+    return MAPA_RELATORIOS_OFICIAIS.map(item => {
+      const dbRow = dbMap.get(item.nr_sequencia);
+      return {
+        cd_relatorio: item.cd_relatorio,
+        nr_sequencia: item.nr_sequencia,
+        ds_titulo: item.ds_titulo,
+        icone: item.icone,
+        badge: item.badge,
+        ds_titulo_tasy: dbRow?.DS_TITULO || item.ds_titulo
+      };
+    });
   } finally {
     await conn.close();
   }
+}
+
+async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
+  const conn = await getConnection();
+  try {
+    const cd = parseInt(cdRelatorio, 10);
+    const nAtend = parseInt(nrAtendimento, 10);
+
+    const repInfo = MAPA_RELATORIOS_OFICIAIS.find(r => r.cd_relatorio === cd) || {
+      cd_relatorio: cd,
+      ds_titulo: `Relatório ${cd}`
+    };
+
+    let sql = null;
+    if (repInfo.nr_sequencia) {
+      const relDb = await conn.execute(
+        `SELECT ds_sql, ds_titulo FROM relatorio WHERE nr_sequencia = :seq`,
+        { seq: repInfo.nr_sequencia }
+      );
+      sql = relDb.rows[0]?.DS_SQL;
+    }
+
+    let dados = {};
+    if (sql && cd !== 70126) {
+      try {
+        const dRes = await conn.execute(sql, { nr_atendimento: nAtend });
+        dados = dRes.rows[0] || {};
+      } catch (err) {
+        console.warn(`[Relatórios] Fallback na query específica do relatório ${cd}:`, err.message);
+      }
+    }
+
+    if (!dados.NM_PACIENTE) {
+      const fbRes = await conn.execute(
+        `SELECT
+           ap.nr_atendimento,
+           ap.cd_pessoa_fisica,
+           ap.nr_prontuario,
+           ap.nm_paciente,
+           ap.ds_idade,
+           ap.ds_sexo,
+           TO_CHAR(ap.dt_nascimento, 'DD/MM/YYYY') AS dt_nasc_fmt,
+           TO_CHAR(ap.dt_entrada, 'DD/MM/YYYY HH24:MI') AS dt_entrada_fmt,
+           ap.ds_convenio,
+           ap.ds_categoria,
+           ap.cd_usuario_convenio,
+           ap.nr_cpf,
+           ap.nr_identidade,
+           ap.ds_setor_atendimento,
+           ap.nm_medico AS nm_medico_resp,
+           ap.nr_crm,
+           obter_compl_pf(ap.cd_pessoa_fisica, 1, 'E') AS ds_end,
+           obter_compl_pf(ap.cd_pessoa_fisica, 1, 'B') AS ds_bairro,
+           obter_compl_pf(ap.cd_pessoa_fisica, 1, 'CI') AS ds_municipio,
+           obter_compl_pf(ap.cd_pessoa_fisica, 1, 'UF') AS sg_estado,
+           obter_compl_pf(ap.cd_pessoa_fisica, 1, 'CEP') AS cd_cep,
+           ap.nr_telefone_celular AS cel,
+           obter_compl_pf(ap.cd_pessoa_fisica, 3, 'N') AS nome_respo,
+           obter_compl_pf(ap.cd_pessoa_fisica, 3, 'C') AS cpf_respo,
+           obter_compl_pf(ap.cd_pessoa_fisica, 3, 'I') AS carteira_ci,
+           obter_compl_pf(ap.cd_pessoa_fisica, 3, 'EN') AS endere_respo,
+           obter_compl_pf(ap.cd_pessoa_fisica, 4, 'N') AS nm_pai,
+           obter_compl_pf(ap.cd_pessoa_fisica, 5, 'N') AS nm_mae
+         FROM atendimento_paciente_v ap
+         WHERE ap.nr_atendimento = :atend`,
+        { atend: nAtend }
+      );
+      dados = fbRes.rows[0] || {};
+    }
+
+    return renderizarHtmlDocumento(cd, repInfo.ds_titulo, dados, nAtend);
+  } finally {
+    await conn.close();
+  }
+}
+
+function renderizarHtmlDocumento(cdRelatorio, titulo, d, nrAtendimento) {
+  const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dataHoraHoje = new Date().toLocaleString('pt-BR');
+
+  const pacienteNome = d.NM_PACIENTE || d.nm_paciente || 'Não informado';
+  const prontuario = d.NR_PRONTUARIO || d.nr_prontuario || '-';
+  const cpf = d.NR_CPF || d.nr_cpf || '-';
+  const rg = d.NR_IDENTIDADE || d.nr_identidade || '-';
+  const dtNasc = d.DT_NASC_FMT || (d.DT_NASCIMENTO ? new Date(d.DT_NASCIMENTO).toLocaleDateString('pt-BR') : '-');
+  const idade = d.DS_IDADE_COMP || d.DS_IDADE || d.ds_idade || '-';
+  const sexo = d.DS_SEXO || d.ds_sexo || '-';
+  const convenio = d.DS_CONVENIO || d.ds_convenio || 'Particular / SUS';
+  const carteirinha = d.CD_USUARIO_CONVENIO || d.cd_usuario_convenio || '-';
+  const endereco = d.DS_END || d.ds_end || '-';
+  const bairro = d.DS_BAIRRO || d.ds_bairro || '-';
+  const cidade = d.DS_MUNICIPIO || d.ds_municipio || 'Belo Horizonte';
+  const telefone = d.CEL || d.NR_TELEFONE_CELULAR || d.NR_FONE_PACIENTE || '-';
+  const responsavel = d.NOME_RESPO || d.nome_respo || pacienteNome;
+  const cpfResp = d.CPF_RESPO || d.cpf_respo || cpf;
+  const rgResp = d.CARTEIRA_CI || d.carteira_ci || rg;
+  const medicoResp = d.NM_MEDICO_RESP || d.nm_medico_resp || 'Corpo Clínico HEAL';
+  const setor = d.DS_SETOR_ATENDIMENTO || d.ds_setor_atendimento || 'Pronto Atendimento';
+  const mae = d.NM_MAE || d.nm_mae || '-';
+
+  let corpoConteudo = '';
+
+  switch (cdRelatorio) {
+    case 718: // CHECKLIST PRONTUÁRIO
+      corpoConteudo = `
+        <div class="card p-3 mb-4">
+          <h5 class="text-primary border-bottom pb-2"><i class="bi bi-check2-square"></i> Conferência de Itens Obrigatórios de Admissão</h5>
+          <table class="table table-bordered table-striped mt-3">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 50px;" class="text-center">Status</th>
+                <th>Item / Documento Obrigatório do Prontuário</th>
+                <th style="width: 200px;">Responsável / Rubrica</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="text-center fs-5">☑</td><td>Documento Oficial com Foto e CPF conferidos e arquivados</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Cartão do Convênio / Autorização de Guia TISS</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Contrato de Prestação de Serviços Hospitalares Assinado</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Termo de Autorização do Responsável para Contatos</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Termo de Consentimento para Exames Laboratoriais</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Ficha de Admissão Médica e Prescrição Inicial</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Pulseira de Identificação do Paciente Fixada</td><td>____________________</td></tr>
+              <tr><td class="text-center fs-5">☑</td><td>Inventário de Pertences e Guarda-Volumes Entregue</td><td>____________________</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+
+    case 651: // AUTORIZAÇÃO DO RESPONSÁVEL
+      corpoConteudo = `
+        <div class="card p-3 mb-4 text-justify">
+          <h5 class="text-primary border-bottom pb-2">Termo de Autorização para Comunicação e Contatos</h5>
+          <p class="mt-3">
+            Eu, <strong>${responsavel}</strong>, portador(a) do CPF nº <strong>${cpfResp}</strong> e RG nº <strong>${rgResp}</strong>, na qualidade de responsável legal pelo(a) paciente <strong>${pacienteNome}</strong> (Prontuário nº <strong>${prontuario}</strong>, Atendimento nº <strong>${nrAtendimento}</strong>):
+          </p>
+          <div class="alert alert-secondary">
+            <strong>AUTORIZO EXPRESSAMENTE</strong> o <strong>Hospital Espírita André Luiz (HEAL)</strong> e suas equipes médica, assistencial e de acolhimento a realizarem contatos telefônicos, envio de mensagens e relatórios informativos sobre o quadro de saúde, evolução clínica e questões administrativas através dos canais:
+            <ul class="mt-2 mb-0">
+              <li><strong>Telefone / Celular Principal:</strong> ${telefone}</li>
+              <li><strong>Cidade / Município de Residência:</strong> ${cidade}</li>
+            </ul>
+          </div>
+          <p>
+            Declaro estar ciente de que, em conformidade com a <strong>Lei Geral de Proteção de Dados (Lei 13.709/2018 - LGPD)</strong>, as informações de saúde são confidenciais e destinadas exclusivamente aos contatos formalmente autorizados neste instrumento.
+          </p>
+        </div>
+      `;
+      break;
+
+    case 205: // COMUNICADO DE ALTA INVOLUNTÁRIA
+      corpoConteudo = `
+        <div class="card p-3 mb-4 text-justify">
+          <h5 class="text-primary border-bottom pb-2">Comunicado de Desinternação / Alta Hospitalar — Regime Involuntário</h5>
+          <p class="mt-3">
+            Ao Ministério Público do Estado de Minas Gerais / Comissão de Revisão de Internações Involuntárias e Familiares:
+          </p>
+          <p>
+            Em cumprimento ao disposto na <strong>Lei Federal nº 10.216, de 06 de abril de 2001 (Art. 8º, § 2º)</strong>, o <strong>HOSPITAL ESPÍRITA ANDRÉ LUIZ</strong> comunica a alta / desinternação hospitalar do(a) paciente:
+          </p>
+          <div class="bg-light p-3 border rounded mb-3">
+            <strong>Paciente:</strong> ${pacienteNome}<br>
+            <strong>Prontuário:</strong> ${prontuario} | <strong>Atendimento:</strong> ${nrAtendimento}<br>
+            <strong>Data da Admissão:</strong> ${d.DT_ENTRADA_FMT || dataHoraHoje}<br>
+            <strong>Setor:</strong> ${setor} | <strong>Médico Responsável:</strong> ${medicoResp}
+          </div>
+          <p>
+            O paciente recebeu avaliação médica e multiprofissional com parecer favorável à continuidade do cuidado em regime extra-hospitalar e comunitário (Rede de Atenção Psicossocial - RAPS / Ambulatório).
+          </p>
+        </div>
+      `;
+      break;
+
+    case 206: // COMUNICADO DE ALTA VOLUNTÁRIA
+      corpoConteudo = `
+        <div class="card p-3 mb-4 text-justify">
+          <h5 class="text-primary border-bottom pb-2">Comunicado de Alta Médica — Regime Voluntário</h5>
+          <p class="mt-3">
+            Certificamos que o(a) paciente <strong>${pacienteNome}</strong>, internado(a) sob o número de atendimento <strong>${nrAtendimento}</strong> e prontuário <strong>${prontuario}</strong>, recebeu alta médica hospitalar no <strong>Hospital Espírita André Luiz</strong> na data de hoje.
+          </p>
+          <p>
+            O paciente e seus responsáveis foram devidamente orientados quanto às prescrições medicamentosas, cuidados gerais, recomendações nutricionais e encaminhamento para acompanhamento psiquiátrico e psicológico ambulatorial.
+          </p>
+        </div>
+      `;
+      break;
+
+    case 643: // CONTRATO DE PRESTAÇÃO DE SERVIÇOS HOSPITALARES
+      corpoConteudo = `
+        <div class="card p-3 mb-4 text-justify" style="font-size: 0.92rem; line-height: 1.5;">
+          <h5 class="text-center fw-bold mb-3">CONTRATO DE PRESTAÇÃO DE SERVIÇOS HOSPITALARES</h5>
+          <p>
+            Pelo presente instrumento particular, de um lado o <strong>HOSPITAL ESPÍRITA ANDRÉ LUIZ</strong>, mantido pela Fundação Espírita André Luiz, CNPJ 17.218.471/0001-05, com sede em Belo Horizonte/MG, doravante denominado <strong>CONTRATADO</strong>, e de outro lado <strong>${responsavel}</strong> (CPF: <strong>${cpfResp}</strong>, RG: <strong>${rgResp}</strong>), doravante denominado(a) <strong>RESPONSÁVEL / CONTRATANTE</strong>, e o(a) paciente <strong>${pacienteNome}</strong> (Prontuário <strong>${prontuario}</strong>, Atendimento <strong>${nrAtendimento}</strong>), têm entre si justo e acordado as seguintes cláusulas:
+          </p>
+          
+          <h6 class="fw-bold mt-3 text-primary">CLÁUSULA PRIMEIRA — DO OBJETO</h6>
+          <p>O CONTRATADO prestará assistência hospitalar e psiquiátrica especializada ao PACIENTE nas instalações do HEAL, de acordo com as normas médicas, éticas e regulamentares vigentes.</p>
+
+          <h6 class="fw-bold mt-3 text-primary">CLÁUSULA SEGUNDA — DAS NORMAS E REGRAS GERAIS</h6>
+          <p>O PACIENTE e o RESPONSÁVEL obrigam-se a acatar as normas regimentais da instituição, regras de convivência, horários de visitas e determinações da equipe terapêutica multidisciplinar.</p>
+
+          <h6 class="fw-bold mt-3 text-primary">CLÁUSULA TERCEIRA — DOS RECURSOS E CONVÊNIOS</h6>
+          <p>Em caso de atendimento por Convênio / Operadora de Saúde (<strong>${convenio}</strong>, Matrícula <strong>${carteirinha}</strong>), o RESPONSÁVEL obriga-se a fornecer as guias e autorizações tempestivas exigidas pelo plano.</p>
+
+          <h6 class="fw-bold mt-3 text-primary">CLÁUSULA QUARTA — DA LEI GERAL DE PROTEÇÃO DE DADOS (LGPD)</h6>
+          <p>As partes consentem com o tratamento de dados pessoais estritamente necessários para a tutela da saúde, cumprimento de obrigações legais e faturamento hospitalar, sob sigilo médico integral.</p>
+
+          <h6 class="fw-bold mt-3 text-primary">CLÁUSULA QUINTA — DO FORO</h6>
+          <p>As partes elegem o foro da Comarca de Belo Horizonte, Estado de Minas Gerais, para dirimir quaisquer controvérsias oriundas deste instrumento.</p>
+        </div>
+      `;
+      break;
+
+    case 717: // TERMO AUTORIZAÇÃO EXAMES
+      corpoConteudo = `
+        <div class="card p-3 mb-4 text-justify">
+          <h5 class="text-primary border-bottom pb-2">Termo de Autorização para Realização de Exames Complementares e Laboratoriais</h5>
+          <p class="mt-3">
+            Eu, <strong>${responsavel}</strong>, na qualidade de paciente / responsável legal por <strong>${pacienteNome}</strong> (Prontuário nº <strong>${prontuario}</strong>, Atendimento nº <strong>${nrAtendimento}</strong>):
+          </p>
+          <div class="alert alert-info">
+            <strong>AUTORIZO</strong> a equipe técnica, laboratorial e de enfermagem do <strong>Hospital Espírita André Luiz</strong> a realizar a coleta de amostras biológicas e execução de exames laboratoriais, toxicológicos, eletrocardiogramas e diagnósticos complementares indicados pelo corpo clínico assistente para elucidação diagnóstica e monitoramento da terapêutica instituída.
+          </div>
+          <p>
+            Declaro ter recebido todos os esclarecimentos pertinentes à necessidade dos exames e seus procedimentos de coleta.
+          </p>
+        </div>
+      `;
+      break;
+
+    case 70126: // GUIA TISS RESUMO DE INTERNAÇÃO
+    default:
+      corpoConteudo = `
+        <div class="card p-3 mb-4">
+          <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+            <h6 class="fw-bold mb-0">PADRÃO TISS V.4.0 — GUIA DE RESUMO DE INTERNAÇÃO</h6>
+            <span class="badge bg-secondary">ANS - Registro 305700</span>
+          </div>
+          <div class="row g-2 mb-3" style="font-size: 0.85rem;">
+            <div class="col-3 border p-2"><strong>1- Registro ANS:</strong> 305700</div>
+            <div class="col-4 border p-2"><strong>3- Nº Guia Prestador:</strong> ${nrAtendimento}</div>
+            <div class="col-5 border p-2"><strong>4- Data Emissão:</strong> ${dataHoraHoje}</div>
+            <div class="col-6 border p-2"><strong>8- Carteira do Beneficiário:</strong> ${carteirinha}</div>
+            <div class="col-6 border p-2"><strong>10- Nome do Beneficiário:</strong> ${pacienteNome}</div>
+            <div class="col-4 border p-2"><strong>13- CNPJ Contratado:</strong> 17.218.471/0001-05</div>
+            <div class="col-8 border p-2"><strong>14- Nome Contratado:</strong> HOSPITAL ESPÍRITA ANDRÉ LUIZ</div>
+            <div class="col-4 border p-2"><strong>16- Caráter Atendimento:</strong> Urgência/Emergência</div>
+            <div class="col-4 border p-2"><strong>17- Tipo Faturamento:</strong> Total</div>
+            <div class="col-4 border p-2"><strong>18- Início Faturamento:</strong> ${d.DT_ENTRADA_FMT || dataHoraHoje}</div>
+            <div class="col-6 border p-2"><strong>22- Tipo Internação:</strong> Clínica / Psiquiátrica</div>
+            <div class="col-6 border p-2"><strong>23- Regime Internação:</strong> Hospitalar Integral</div>
+          </div>
+        </div>
+      `;
+      break;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>${titulo} — Atendimento #${nrAtendimento}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #f8fafc; padding: 20px; }
+    .report-container { max-width: 900px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 35px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .hospital-header { border-bottom: 2px solid #0284c7; padding-bottom: 15px; margin-bottom: 20px; }
+    .patient-box { background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-bottom: 20px; font-size: 0.9rem; }
+    .signature-box { margin-top: 45px; page-break-inside: avoid; }
+    .sig-line { border-top: 1px solid #334155; width: 85%; margin: 0 auto 5px auto; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .report-container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="report-container">
+    <!-- BARRA DE AÇÕES (NÃO IMPRIME) -->
+    <div class="no-print d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded border">
+      <div>
+        <span class="badge bg-primary fs-6 me-2">TASY Oficial</span>
+        <strong>${titulo}</strong> — Atendimento #${nrAtendimento}
+      </div>
+      <div>
+        <button class="btn btn-primary me-2" onclick="window.print()">
+          <i class="bi bi-printer-fill"></i> Imprimir Documento
+        </button>
+        <button class="btn btn-outline-secondary" onclick="window.close()">
+          <i class="bi bi-x-circle"></i> Fechar
+        </button>
+      </div>
+    </div>
+
+    <!-- CABEÇALHO HOSPITALAR OFICIAL -->
+    <div class="hospital-header d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="fw-bold mb-0 text-primary">HOSPITAL ESPÍRITA ANDRÉ LUIZ</h4>
+        <small class="text-muted">Fundação Espírita André Luiz | CNPJ: 17.218.471/0001-05</small><br>
+        <small class="text-muted">Rua Úrsula Paulino, 7 — Salgado Filho — Belo Horizonte/MG — CEP 30550-000</small>
+      </div>
+      <div class="text-end">
+        <h6 class="fw-bold text-secondary mb-0">${titulo}</h6>
+        <span class="badge bg-dark">Atendimento: #${nrAtendimento}</span>
+      </div>
+    </div>
+
+    <!-- QUADRO DO PACIENTE & ATENDIMENTO -->
+    <div class="patient-box">
+      <div class="row g-2">
+        <div class="col-md-6"><strong>Paciente:</strong> ${pacienteNome}</div>
+        <div class="col-md-3"><strong>Prontuário:</strong> ${prontuario}</div>
+        <div class="col-md-3"><strong>Atendimento:</strong> ${nrAtendimento}</div>
+        <div class="col-md-3"><strong>CPF:</strong> ${cpf}</div>
+        <div class="col-md-3"><strong>RG:</strong> ${rg}</div>
+        <div class="col-md-3"><strong>Dt. Nasc:</strong> ${dtNasc}</div>
+        <div class="col-md-3"><strong>Idade/Sexo:</strong> ${idade} / ${sexo}</div>
+        <div class="col-md-6"><strong>Convênio:</strong> ${convenio}</div>
+        <div class="col-md-6"><strong>Carteira / Guia:</strong> ${carteirinha}</div>
+        <div class="col-md-8"><strong>Endereço:</strong> ${endereco}, ${bairro} — ${cidade}</div>
+        <div class="col-md-4"><strong>Telefone:</strong> ${telefone}</div>
+        <div class="col-md-6"><strong>Médico Assistente:</strong> ${medicoResp}</div>
+        <div class="col-md-6"><strong>Setor Admissão:</strong> ${setor}</div>
+      </div>
+    </div>
+
+    <!-- CORPO ESPECÍFICO DO RELATÓRIO -->
+    ${corpoConteudo}
+
+    <!-- ASSINATURAS E DATA -->
+    <div class="signature-box text-center mt-5">
+      <p class="mb-4">Belo Horizonte, ${dataHoje}.</p>
+      <div class="row mt-4">
+        <div class="col-6">
+          <div class="sig-line"></div>
+          <strong>${responsavel}</strong><br>
+          <small class="text-muted">Paciente / Responsável Legal (CPF: ${cpfResp})</small>
+        </div>
+        <div class="col-6">
+          <div class="sig-line"></div>
+          <strong>${medicoResp}</strong><br>
+          <small class="text-muted">Hospital Espírita André Luiz / Recepção</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- RODAPÉ TASY SISTÊMICO -->
+    <div class="mt-5 pt-3 border-top text-muted small d-flex justify-content-between no-print">
+      <span>Conecta HEAL 2.0 &bull; Integração TASY Oficial</span>
+      <span>Gerado em: ${dataHoraHoje}</span>
+    </div>
+  </div>
+
+</body>
+</html>`;
 }
 
 async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
@@ -870,6 +1243,7 @@ module.exports = {
   listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
+  gerarRelatorioAtendimento,
   listarDocumentosGED,
   anexarDocumentoGED
 };
