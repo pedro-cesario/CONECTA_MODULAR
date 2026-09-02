@@ -28,7 +28,7 @@ async function listarSenhasEspera(nrSeqFila) {
   const conn = await getConnection();
   try {
     const binds = {};
-    let whereClause = `psf.dt_inutilizacao IS NULL AND psf.dt_fim_atendimento IS NULL AND TRUNC(psf.dt_geracao_senha) >= TRUNC(SYSDATE) - 1`;
+    let whereClause = `psf.dt_inutilizacao IS NULL AND psf.dt_fim_atendimento IS NULL`;
     
     if (nrSeqFila) {
       whereClause += ` AND psf.nr_seq_fila_senha = :fila`;
@@ -82,7 +82,6 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
            AND dt_inutilizacao IS NULL
            AND dt_fim_atendimento IS NULL
            AND dt_chamada IS NULL
-           AND TRUNC(dt_geracao_senha) >= TRUNC(SYSDATE) - 1
          ORDER BY nr_prioridade ASC, dt_geracao_senha ASC
        ) WHERE ROWNUM = 1`,
       { fila: parseInt(nrSeqFila, 10) }

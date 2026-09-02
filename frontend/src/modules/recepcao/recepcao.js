@@ -32,19 +32,50 @@ export function enterRecepcaoMode() {
   initRecepcao();
 }
 
+let queuePollInterval = null;
+
+export function stopQueuePolling() {
+  if (queuePollInterval) {
+    clearInterval(queuePollInterval);
+    queuePollInterval = null;
+  }
+}
+
+export function startQueuePolling() {
+  stopQueuePolling();
+  queuePollInterval = setInterval(() => {
+    if (state.mode === 'recepcao') {
+      carregarSenhas();
+    } else {
+      stopQueuePolling();
+    }
+  }, 10000);
+}
+
 export async function initRecepcao() {
+  window.conectaCore = window.conectaCore || {};
+  window.conectaCore.irParaPasso = irParaPasso;
+  window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
+  window.conectaCore.selecionarPacienteBusca = selecionarPacienteBusca;
+  window.conectaCore.emitirRelatorioTasy = emitirRelatorioTasy;
+  window.conectaCore.visualizarGedDoc = visualizarGedDoc;
+
   bindRecepcaoEvents();
   await carregarFilas();
   await carregarSenhas();
+  startQueuePolling();
   irParaPasso(1);
 }
 
 function bindRecepcaoEvents() {
   const selectFila = document.getElementById('recepcao-select-fila');
-  selectFila?.addEventListener('change', (e) => {
-    recepcaoState.filaSelecionada = e.target.value;
-    carregarSenhas();
-  });
+  if (selectFila && !selectFila.dataset.bound) {
+    selectFila.dataset.bound = '1';
+    selectFila.addEventListener('change', (e) => {
+      recepcaoState.filaSelecionada = e.target.value;
+      carregarSenhas();
+    });
+  }
 
   document.getElementById('btn-recepcao-chamar-proximo')?.addEventListener('click', chamarProximaSenha);
   document.getElementById('btn-recepcao-rechamar')?.addEventListener('click', rechamarSenha);
