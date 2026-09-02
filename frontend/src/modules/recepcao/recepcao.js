@@ -5,8 +5,7 @@ import { escapeHtml } from '../../core/utils.js';
 
 /**
  * Módulo de Recepção & Acolhimento — Conecta HEAL 2.0
- * Orquestrador dos 5 Pilares Clínico-Operacionais:
- * 1. Senhas & Guichê -> 2. Cadastro Pessoa -> 3. Endereço -> 4. Atendimento -> 5. Documentos TASY & GED
+ * Fluxo: Painel de Senhas em Espera (Board) -> Modal de Atendimento em 5 Etapas (TASY)
  */
 
 let recepcaoState = {
@@ -14,12 +13,14 @@ let recepcaoState = {
   senhaAtiva: null,
   pessoaSelecionada: null,
   atendimentoCriado: null,
-  passoAtual: 1, // 1: Senhas, 2: Pessoa, 3: Endereço, 4: Atendimento, 5: Documentos
+  passoAtual: 1, // 1: Identificação, 2: Endereço, 3: Convênio, 4: Atendimento, 5: Relatórios/GED
   filasDisponiveis: [],
   senhasFila: [],
   relatorios: [],
   documentosGED: []
 };
+
+let queuePollInterval = null;
 
 export function enterRecepcaoMode() {
   const ws = document.getElementById('workspace-recepcao');
@@ -32,8 +33,6 @@ export function enterRecepcaoMode() {
   }
   initRecepcao();
 }
-
-let queuePollInterval = null;
 
 export function stopQueuePolling() {
   if (queuePollInterval) {
@@ -50,7 +49,7 @@ export function startQueuePolling() {
     } else {
       stopQueuePolling();
     }
-  }, 10000);
+  }, 8000);
 }
 
 export async function initRecepcao() {
@@ -60,6 +59,7 @@ export async function initRecepcao() {
   window.conectaCore.selecionarPaciente = selecionarPaciente;
   window.conectaCore.novoPaciente = novoPaciente;
   window.conectaCore.imprimirRelatorio = imprimirRelatorio;
+  window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
 
   bindRecepcaoEvents();
   await carregarFilas();
@@ -68,7 +68,6 @@ export async function initRecepcao() {
   await carregarConvenios();
   await carregarClassificacoesAtendimento();
   startQueuePolling();
-  irParaPasso(1);
 }
 
 function bindRecepcaoEvents() {
@@ -89,18 +88,31 @@ function bindRecepcaoEvents() {
     });
   }
 
+  // Ações do Topo do Painel
+  document.getElementById('btn-recepcao-refresh')?.addEventListener('click', () => carregarSenhas(true));
   document.getElementById('btn-recepcao-chamar-proximo')?.addEventListener('click', chamarProximaSenha);
   document.getElementById('btn-recepcao-rechamar')?.addEventListener('click', rechamarSenha);
+  document.getElementById('btn-recepcao-novo-avulso')?.addEventListener('click', iniciarAtendimentoAvulso);
 
-  // Stepper navigation
-  document.querySelectorAll('.stepper-item').forEach(item => {
+  // Filtro de Senhas no Board
+  const searchSenha = document.getElementById('recepcao-search-senha');
+  searchSenha?.addEventListener('input', (e) => {
+    filtrarGridSenhas(e.target.value);
+  });
+
+  // Modal Stepper Navigation
+  document.querySelectorAll('.modal-step-item').forEach(item => {
     item.addEventListener('click', () => {
       const step = parseInt(item.dataset.step, 10);
       if (step) irParaPasso(step);
     });
   });
 
-  // Busca de Paciente
+  // Modal Footer Navigation
+  document.getElementById('modal-btn-voltar-passo')?.addEventListener('click', voltarPassoModal);
+  document.getElementById('modal-btn-avancar-passo')?.addEventListener('click', avancarPassoModal);
+
+  // Busca de Paciente no Modal
   const inputBusca = document.getElementById('recepcao-busca-paciente');
   let searchTimeout = null;
   inputBusca?.addEventListener('input', (e) => {
@@ -119,36 +131,15 @@ function bindRecepcaoEvents() {
     consultarCep(e.target.value);
   });
 
-  // Salvar Pessoa & Endereço
-  document.getElementById('btn-recepcao-salvar-pessoa')?.addEventListener('click', salvarPessoaEEndereco);
-
   // Abertura de Atendimento
   document.getElementById('btn-recepcao-abrir-atendimento')?.addEventListener('click', abrirAtendimento);
-
-  // Novo Atendimento / Reiniciar Ciclo
-  document.getElementById('btn-recepcao-reiniciar')?.addEventListener('click', reiniciarFluxo);
 
   // GED Upload
   document.getElementById('btn-recepcao-upload-ged')?.addEventListener('click', abrirUploadGED);
 }
 
-export function irParaPasso(passo) {
-  recepcaoState.passoAtual = passo;
-
-  document.querySelectorAll('.stepper-item').forEach(item => {
-    const s = parseInt(item.dataset.step, 10);
-    item.classList.toggle('active', s === passo);
-    item.classList.toggle('completed', s < passo);
-  });
-
-  document.querySelectorAll('.recepcao-step-panel').forEach(panel => {
-    const s = parseInt(panel.dataset.step, 10);
-    panel.classList.toggle('d-none', s !== passo);
-  });
-}
-
 // ============================================================================
-// PILAR 1: GERENCIAMENTO DE SENHAS
+// 1. CARREGAMENTO E RENDERIZAÇÃO DO BOARD DE SENHAS
 // ============================================================================
 
 export async function carregarFilas() {
@@ -177,44 +168,56 @@ export async function carregarFilas() {
   }
 }
 
-export async function carregarSenhas() {
-  const container = document.getElementById('recepcao-queue-list');
+export async function carregarSenhas(showFeedback = false) {
+  const container = document.getElementById('recepcao-senhas-grid');
   try {
     const fila = recepcaoState.filaSelecionada || '';
     const res = await api.get(`/api/recepcao/senhas?fila=${fila}`);
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.senhasFila = res.data;
-      renderFilaSenhas();
+      renderizarBoardSenhas();
+      if (showFeedback) {
+        ui.showToast('Fila de senhas atualizada com sucesso!', 'info');
+      }
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar senhas:', err);
     if (container && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
       container.innerHTML = `
-        <div class="p-3 text-center text-muted">
-          <i class="bi bi-inbox fs-3 d-block mb-1"></i>
-          Nenhuma senha aguardando no momento
+        <div class="col-12 p-5 text-center text-muted">
+          <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+          <h5 class="fw-bold">Nenhuma senha aguardando no momento</h5>
+          <p class="small text-muted">Novas senhas emitidas no totem aparecerão automaticamente aqui.</p>
         </div>`;
     }
   }
 }
 
-function renderFilaSenhas() {
-  const container = document.getElementById('recepcao-queue-list');
+function renderizarBoardSenhas(listaFiltrada = null) {
+  const container = document.getElementById('recepcao-senhas-grid');
   const countBadge = document.getElementById('recepcao-queue-count');
+  const kpiTotal = document.getElementById('kpi-total-espera');
   if (!container) return;
 
-  if (countBadge) countBadge.textContent = recepcaoState.senhasFila.length;
+  const lista = listaFiltrada !== null ? listaFiltrada : recepcaoState.senhasFila;
 
-  if (recepcaoState.senhasFila.length === 0) {
+  if (countBadge) countBadge.textContent = lista.length;
+  if (kpiTotal) kpiTotal.textContent = recepcaoState.senhasFila.length;
+
+  if (lista.length === 0) {
     container.innerHTML = `
-      <div class="p-3 text-center text-muted">
-        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
-        Nenhuma senha aguardando no momento
+      <div class="col-12 p-5 text-center text-muted w-100" style="grid-column: 1 / -1;">
+        <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
+        <h5 class="fw-bold">Nenhuma senha aguardando atendimento</h5>
+        <p class="small text-muted mb-3">O guichê está livre. Clique em "Chamar Próxima Senha" ou "Atendimento Avulso" para iniciar.</p>
+        <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.abrirModalAtendimento()">
+          <i class="bi bi-person-plus"></i> Abrir Atendimento Avulso
+        </button>
       </div>`;
     return;
   }
 
-  container.innerHTML = recepcaoState.senhasFila.map(s => {
+  container.innerHTML = lista.map(s => {
     const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
     const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
     const dsPrioridade = s.DS_PRIORIDADE ?? s.ds_prioridade ?? 'Normal';
@@ -222,24 +225,60 @@ function renderFilaSenhas() {
     const nrPrioridade = s.NR_PRIORIDADE ?? s.nr_prioridade;
     const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
     const hrGeracao = s.HR_GERACAO ?? s.hr_geracao ?? '';
-    const badgeClass = nrPrioridade === 1 ? 'bg-danger' : (nrPrioridade === 2 ? 'bg-warning text-dark' : 'bg-primary');
+
+    let prioridadeClasse = 'normal';
+    let badgeClass = 'bg-primary-subtle text-primary border border-primary-subtle';
+    if (nrPrioridade === 1) {
+      prioridadeClasse = 'urgente';
+      badgeClass = 'bg-danger-subtle text-danger border border-danger-subtle';
+    } else if (nrPrioridade === 2) {
+      prioridadeClasse = 'preferencial';
+      badgeClass = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
+    }
 
     return `
-      <div class="guiche-queue-item" data-id="${nrSeq}" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})">
-        <div>
-          <div class="guiche-queue-number">#${cdSenha}</div>
-          <small class="text-muted">${escapeHtml(dsPrioridade)} • ${escapeHtml(dsFila)}</small>
+      <div class="senha-ticket-card ${prioridadeClasse}" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})">
+        <div class="senha-ticket-header">
+          <div class="senha-ticket-number">#${escapeHtml(cdSenha)}</div>
+          <span class="senha-ticket-badge ${badgeClass}">${escapeHtml(dsPrioridade)}</span>
         </div>
-        <div class="text-end">
-          <span class="badge ${badgeClass}">
-            ${minEspera} min
+
+        <div class="senha-ticket-meta">
+          <div><i class="bi bi-diagram-3"></i> <strong>${escapeHtml(dsFila)}</strong></div>
+          <div><i class="bi bi-clock"></i> Chegada: ${escapeHtml(hrGeracao)}</div>
+        </div>
+
+        <div class="senha-ticket-footer">
+          <span class="senha-ticket-wait-time">
+            <i class="bi bi-hourglass-split"></i> Espera: <strong>${minEspera} min</strong>
           </span>
-          <div class="guiche-queue-time">${escapeHtml(hrGeracao)}</div>
+          <button class="btn btn-sm btn-primary fw-bold px-3" type="button">
+            Atender <i class="bi bi-arrow-right"></i>
+          </button>
         </div>
       </div>
     `;
   }).join('');
 }
+
+function filtrarGridSenhas(termo) {
+  if (!termo || termo.trim() === '') {
+    renderizarBoardSenhas();
+    return;
+  }
+  const q = termo.toLowerCase().trim();
+  const filtradas = recepcaoState.senhasFila.filter(s => {
+    const cd = String(s.CD_SENHA_GERADA ?? s.cd_senha_gerada ?? '').toLowerCase();
+    const prio = String(s.DS_PRIORIDADE ?? s.ds_prioridade ?? '').toLowerCase();
+    const fila = String(s.DS_FILA ?? s.ds_fila ?? '').toLowerCase();
+    return cd.includes(q) || prio.includes(q) || fila.includes(q);
+  });
+  renderizarBoardSenhas(filtradas);
+}
+
+// ============================================================================
+// 2. CHAMADA DE GUICHÊ & ABERTURA DO MODAL
+// ============================================================================
 
 export async function chamarProximaSenha() {
   const btn = document.getElementById('btn-recepcao-chamar-proximo');
@@ -257,7 +296,7 @@ export async function chamarProximaSenha() {
       atualizarDisplaySenha(res.data.cd_senha_gerada, 'Chamado');
       ui.showToast(`Senha #${res.data.cd_senha_gerada} chamada no guichê!`, 'success');
       await carregarSenhas();
-      irParaPasso(2); // Avança para identificação da pessoa
+      abrirModalAtendimento(res.data);
     } else {
       ui.showToast(res.message || 'Nenhuma senha aguardando nesta fila.', 'info');
     }
@@ -270,7 +309,7 @@ export async function chamarProximaSenha() {
 
 export async function rechamarSenha() {
   if (!recepcaoState.senhaAtiva) {
-    ui.showToast('Nenhuma senha ativa para rechamar.', 'warning');
+    ui.showToast('Nenhuma senha ativa no guichê para rechamar.', 'warning');
     return;
   }
   try {
@@ -278,7 +317,7 @@ export async function rechamarSenha() {
       nr_sequencia: recepcaoState.senhaAtiva.nr_sequencia,
       ds_maquina: 'GUICHE-' + (state.usuario?.nm_usuario || '1')
     });
-    ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada!`, 'info');
+    ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada no painel!`, 'info');
   } catch (err) {
     ui.showToast('Erro ao rechamar senha: ' + err.message, 'error');
   }
@@ -289,10 +328,47 @@ export function selecionarSenhaFila(nrSequencia) {
   if (senha) {
     recepcaoState.senhaAtiva = {
       nr_sequencia: senha.NR_SEQUENCIA,
-      cd_senha_gerada: senha.CD_SENHA_GERADA
+      cd_senha_gerada: senha.CD_SENHA_GERADA,
+      ds_prioridade: senha.DS_PRIORIDADE
     };
     atualizarDisplaySenha(senha.CD_SENHA_GERADA, senha.DS_PRIORIDADE);
-    irParaPasso(2);
+    abrirModalAtendimento(recepcaoState.senhaAtiva);
+  }
+}
+
+export function iniciarAtendimentoAvulso() {
+  recepcaoState.senhaAtiva = null;
+  atualizarDisplaySenha(null, 'Atendimento Avulso');
+  abrirModalAtendimento(null);
+}
+
+export function abrirModalAtendimento(senhaObj = null) {
+  // Configura badge de senha no header do modal
+  const badgeEl = document.getElementById('modal-atend-senha-badge');
+  if (badgeEl) {
+    if (senhaObj && senhaObj.cd_senha_gerada) {
+      badgeEl.innerHTML = `<i class="bi bi-ticket-perforated-fill text-warning me-1"></i> Senha: <strong>#${escapeHtml(senhaObj.cd_senha_gerada)}</strong>`;
+    } else {
+      badgeEl.innerHTML = `<i class="bi bi-person-fill me-1"></i> Atendimento Avulso (Sem Senha)`;
+    }
+  }
+
+  // Reseta estado para novo fluxo
+  recepcaoState.pessoaSelecionada = null;
+  recepcaoState.atendimentoCriado = null;
+  limparFormularioPaciente();
+  document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
+  document.getElementById('recepcao-search-results').innerHTML = '';
+  document.getElementById('recepcao-busca-paciente').value = '';
+
+  // Abre na Etapa 1 (Identificação)
+  irParaPasso(1);
+
+  // Instancia e abre o Modal Bootstrap
+  const modalEl = document.getElementById('modal-atendimento-recepcao');
+  if (modalEl && window.bootstrap?.Modal) {
+    const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
   }
 }
 
@@ -300,11 +376,95 @@ function atualizarDisplaySenha(numero, tipo) {
   const numEl = document.getElementById('guiche-active-number');
   const typeEl = document.getElementById('guiche-active-type');
   if (numEl) numEl.textContent = numero ? `#${numero}` : '---';
-  if (typeEl) typeEl.textContent = tipo || 'Aguardando chamada';
+  if (typeEl) typeEl.textContent = tipo || 'Nenhuma senha chamada';
 }
 
 // ============================================================================
-// PILAR 2: CADASTRO E BUSCA DE PESSOA FÍSICA
+// 3. NAVEGAÇÃO ENTRE ETAPAS DO MODAL (STEPPER)
+// ============================================================================
+
+export function irParaPasso(passo) {
+  recepcaoState.passoAtual = passo;
+
+  // Atualiza indicadores do Stepper no Modal
+  document.querySelectorAll('.modal-step-item').forEach(item => {
+    const s = parseInt(item.dataset.step, 10);
+    item.classList.toggle('active', s === passo);
+    item.classList.toggle('completed', s < passo);
+  });
+
+  // Exibe o painel do passo correspondente
+  document.querySelectorAll('.modal-step-pane').forEach(panel => {
+    const s = parseInt(panel.dataset.step, 10);
+    panel.classList.toggle('d-none', s !== passo);
+  });
+
+  // Atualiza botões do Footer do Modal
+  const btnVoltar = document.getElementById('modal-btn-voltar-passo');
+  const btnAvancar = document.getElementById('modal-btn-avancar-passo');
+  const btnFechar = document.getElementById('modal-btn-fechar-atendimento');
+
+  if (btnVoltar) {
+    btnVoltar.disabled = (passo === 1 || passo === 5);
+  }
+
+  if (btnAvancar && btnFechar) {
+    if (passo === 5) {
+      btnAvancar.classList.add('d-none');
+      btnFechar.classList.remove('d-none');
+    } else {
+      btnAvancar.classList.remove('d-none');
+      btnFechar.classList.add('d-none');
+
+      if (passo === 4) {
+        btnAvancar.innerHTML = '<i class="bi bi-check2-circle"></i> Abrir Atendimento no TASY';
+        btnAvancar.className = 'btn btn-success fw-bold';
+      } else {
+        btnAvancar.innerHTML = 'Avançar <i class="bi bi-arrow-right"></i>';
+        btnAvancar.className = 'btn btn-primary';
+      }
+    }
+  }
+}
+
+export function voltarPassoModal() {
+  if (recepcaoState.passoAtual > 1) {
+    irParaPasso(recepcaoState.passoAtual - 1);
+  }
+}
+
+export async function avancarPassoModal() {
+  const p = recepcaoState.passoAtual;
+
+  if (p === 1) {
+    // Valida se há nome preenchido ou paciente selecionado
+    const nome = document.getElementById('recepcao-nome-completo')?.value?.trim();
+    if (!nome) {
+      ui.showToast('Informe o nome completo do paciente ou selecione um cadastro.', 'warning');
+      document.getElementById('recepcao-nome-completo')?.focus();
+      return;
+    }
+    irParaPasso(2);
+  } else if (p === 2) {
+    // Salva Pessoa e Endereço antes de avançar para convênio
+    await salvarPessoaEEndereco();
+  } else if (p === 3) {
+    // Valida Convênio
+    const conv = document.getElementById('recepcao-convenio')?.value;
+    if (!conv) {
+      ui.showToast('Selecione o Convênio do paciente.', 'warning');
+      document.getElementById('recepcao-convenio')?.focus();
+      return;
+    }
+    irParaPasso(4);
+  } else if (p === 4) {
+    // Abre atendimento oficial no TASY
+    await abrirAtendimento();
+  }
+}
+
+// ============================================================================
+// 4. CADASTRO DE PESSOA FÍSICA & BUSCA TASY
 // ============================================================================
 
 export async function buscarPacientes(termo) {
@@ -324,9 +484,9 @@ export async function buscarPacientes(termo) {
       if (res.data.length === 0) {
         container.innerHTML = `
           <div class="p-3 text-center text-muted border rounded">
-            Nenhum paciente localizado com "${termo}".
+            Nenhum paciente localizado com "${escapeHtml(termo)}".
             <button class="btn btn-sm btn-outline-primary ms-2" type="button" onclick="window.conectaCore.novoPaciente()">
-              <i class="bi bi-person-plus"></i> Cadastrar Novo
+              <i class="bi bi-person-plus"></i> Preencher Novo Cadastro
             </button>
           </div>`;
         return;
@@ -335,9 +495,9 @@ export async function buscarPacientes(termo) {
       container.innerHTML = res.data.map(p => `
         <div class="paciente-result-item" onclick="window.conectaCore.selecionarPaciente('${p.CD_PESSOA_FISICA}')">
           <div>
-            <strong>${p.NM_PESSOA_FISICA}</strong> ${p.NM_SOCIAL ? `<small class="text-muted">(${p.NM_SOCIAL})</small>` : ''}
+            <strong>${escapeHtml(p.NM_PESSOA_FISICA)}</strong> ${p.NM_SOCIAL ? `<small class="text-muted">(${escapeHtml(p.NM_SOCIAL)})</small>` : ''}
             <div class="text-muted small">
-              CPF: ${p.NR_CPF || 'Não informado'} • Nasc: ${p.DT_NASC_FMT || '-'} • Mãe: ${p.NM_MAE || '-'}
+              CPF: ${escapeHtml(p.NR_CPF || 'Não informado')} • Nasc: ${escapeHtml(p.DT_NASC_FMT || '-')} • Mãe: ${escapeHtml(p.NM_MAE || '-')}
             </div>
           </div>
           <button class="btn btn-sm btn-primary" type="button">
@@ -360,118 +520,10 @@ export async function selecionarPaciente(cdPessoaFisica) {
       exibirCardPacienteSelecionado(res.data);
       document.getElementById('recepcao-search-results').innerHTML = '';
       await carregarUltimoConvenioPaciente(cdPessoaFisica);
-      ui.showToast('Paciente carregado com sucesso!', 'success');
-      irParaPasso(3); // Avança para conferência de endereço
+      ui.showToast('Cadastro carregado do TASY!', 'success');
     }
   } catch (err) {
     ui.showToast('Erro ao carregar dados do paciente: ' + err.message, 'error');
-  }
-}
-
-export async function carregarSetoresAtendimento() {
-  const select = document.getElementById('recepcao-setor-atend');
-  if (!select) return;
-
-  try {
-    const res = await api.get('/api/recepcao/setores');
-    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-      select.innerHTML = res.data.map(s => {
-        const cd = s.CD_SETOR_ATENDIMENTO ?? s.cd_setor_atendimento;
-        const nome = s.DS_SETOR_ATENDIMENTO ?? s.ds_setor_atendimento;
-        const isSel = cd === 39 || String(cd) === '39'; // 39 - PA padrão
-        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${cd} - ${escapeHtml(nome)}</option>`;
-      }).join('');
-    }
-  } catch (err) {
-    console.error('[Recepção] Erro ao carregar setores:', err);
-  }
-}
-
-export async function carregarConvenios() {
-  const select = document.getElementById('recepcao-convenio');
-  if (!select) return;
-
-  try {
-    const res = await api.get('/api/recepcao/convenios');
-    if (res && res.success && Array.isArray(res.data)) {
-      select.innerHTML = '<option value="">Selecione o convênio...</option>' +
-        res.data.map(c => {
-          const cd = c.CD_CONVENIO ?? c.cd_convenio;
-          const nome = c.DS_CONVENIO ?? c.ds_convenio;
-          return `<option value="${cd}">${escapeHtml(nome)}</option>`;
-        }).join('');
-    }
-  } catch (err) {
-    console.error('[Recepção] Erro ao carregar convênios:', err);
-  }
-}
-
-export async function carregarClassificacoesAtendimento() {
-  const select = document.getElementById('recepcao-classificacao');
-  if (!select) return;
-
-  try {
-    const res = await api.get('/api/recepcao/classificacoes');
-    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-      select.innerHTML = res.data.map(c => {
-        const seq = c.NR_SEQUENCIA ?? c.nr_sequencia;
-        const nome = c.DS_CLASSIFICACAO ?? c.ds_classificacao;
-        const isSel = seq === 2 || String(seq) === '2'; // 2 = Voluntário padrão
-        return `<option value="${seq}" ${isSel ? 'selected' : ''}>${seq} - ${escapeHtml(nome)}</option>`;
-      }).join('');
-    }
-  } catch (err) {
-    console.error('[Recepção] Erro ao carregar classificações:', err);
-  }
-}
-
-export async function carregarCategoriasConvenio(cdConvenio, selectedCat = null) {
-  const select = document.getElementById('recepcao-categoria');
-  if (!select) return;
-
-  if (!cdConvenio) {
-    select.innerHTML = '<option value="">Selecione o convênio primeiro...</option>';
-    return;
-  }
-
-  try {
-    const res = await api.get(`/api/recepcao/convenios/${cdConvenio}/categorias`);
-    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-      select.innerHTML = res.data.map(cat => {
-        const cd = cat.CD_CATEGORIA ?? cat.cd_categoria;
-        const nome = cat.DS_CATEGORIA ?? cat.ds_categoria;
-        const isSel = selectedCat && String(cd) === String(selectedCat);
-        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
-      }).join('');
-    } else {
-      select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
-    }
-  } catch (err) {
-    select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
-  }
-}
-
-export async function carregarUltimoConvenioPaciente(cdPessoaFisica) {
-  if (!cdPessoaFisica) return;
-
-  try {
-    const res = await api.get(`/api/recepcao/pessoas/${cdPessoaFisica}/ultimo-convenio`);
-    if (res && res.success && res.data) {
-      const conv = res.data;
-      const selectConv = document.getElementById('recepcao-convenio');
-      const inputCart = document.getElementById('recepcao-carteirinha');
-
-      if (selectConv && conv.CD_CONVENIO) {
-        selectConv.value = conv.CD_CONVENIO;
-        await carregarCategoriasConvenio(conv.CD_CONVENIO, conv.CD_CATEGORIA);
-      }
-      if (inputCart && conv.CD_USUARIO_CONVENIO) {
-        inputCart.value = conv.CD_USUARIO_CONVENIO;
-      }
-      ui.showToast(`Convênio anterior (${conv.DS_CONVENIO || ''}) recuperado automaticamente!`, 'info');
-    }
-  } catch (err) {
-    console.warn('[Recepção] Sem convênio prévio para este paciente:', err);
   }
 }
 
@@ -480,15 +532,13 @@ export function novoPaciente() {
   limparFormularioPaciente();
   document.getElementById('recepcao-search-results').innerHTML = '';
   document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
-  document.getElementById('form-paciente-container')?.classList.remove('d-none');
-  irParaPasso(2);
+  document.getElementById('recepcao-nome-completo')?.focus();
 }
 
 export function limparPaciente() {
   recepcaoState.pessoaSelecionada = null;
   limparFormularioPaciente();
   document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
-  document.getElementById('form-paciente-container')?.classList.remove('d-none');
 }
 
 function preencherFormularioPaciente(p) {
@@ -551,7 +601,7 @@ function exibirCardPacienteSelecionado(p) {
 }
 
 // ============================================================================
-// PILAR 3: CADASTRO E VALIDAÇÃO DE ENDEREÇO
+// 5. ENDEREÇO & CONVÊNIO
 // ============================================================================
 
 export async function consultarCep(cepRaw) {
@@ -575,8 +625,8 @@ export async function consultarCep(cepRaw) {
 }
 
 export async function salvarPessoaEEndereco() {
-  const btn = document.getElementById('btn-recepcao-salvar-pessoa');
-  if (btn) ui.setLoading(btn, true);
+  const btnAvancar = document.getElementById('modal-btn-avancar-passo');
+  if (btnAvancar) ui.setLoading(btnAvancar, true);
 
   try {
     const payload = {
@@ -605,6 +655,7 @@ export async function salvarPessoaEEndereco() {
 
     if (!payload.nm_pessoa_fisica || !payload.dt_nascimento) {
       ui.showToast('Nome completo e data de nascimento são obrigatórios.', 'warning');
+      irParaPasso(1);
       return;
     }
 
@@ -617,35 +668,150 @@ export async function salvarPessoaEEndereco() {
         NM_PESSOA_FISICA: payload.nm_pessoa_fisica
       };
       exibirCardPacienteSelecionado(recepcaoState.pessoaSelecionada);
-      ui.showToast('Dados cadastrais e endereço salvos com sucesso!', 'success');
-      irParaPasso(4); // Avança para abertura do atendimento
+      ui.showToast('Dados cadastrais sincronizados no TASY!', 'success');
+      irParaPasso(3); // Avança para convênio
     }
   } catch (err) {
     ui.showToast('Erro ao salvar paciente: ' + err.message, 'error');
   } finally {
-    if (btn) ui.setLoading(btn, false);
+    if (btnAvancar) ui.setLoading(btnAvancar, false);
+  }
+}
+
+export async function carregarSetoresAtendimento() {
+  const select = document.getElementById('recepcao-setor-atend');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/setores');
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(s => {
+        const cd = s.CD_SETOR_ATENDIMENTO ?? s.cd_setor_atendimento;
+        const nome = s.DS_SETOR_ATENDIMENTO ?? s.ds_setor_atendimento;
+        const isSel = cd === 39 || String(cd) === '39';
+        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${cd} - ${escapeHtml(nome)}</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar setores:', err);
+  }
+}
+
+export async function carregarConvenios() {
+  const select = document.getElementById('recepcao-convenio');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/convenios');
+    if (res && res.success && Array.isArray(res.data)) {
+      select.innerHTML = '<option value="">Selecione o convênio...</option>' +
+        res.data.map(c => {
+          const cd = c.CD_CONVENIO ?? c.cd_convenio;
+          const nome = c.DS_CONVENIO ?? c.ds_convenio;
+          const isSus = cd === 3 || String(cd) === '3';
+          return `<option value="${cd}" ${isSus ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
+        }).join('');
+      
+      // Carrega categorias do padrão SUS (3)
+      carregarCategoriasConvenio(3);
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar convênios:', err);
+  }
+}
+
+export async function carregarClassificacoesAtendimento() {
+  const select = document.getElementById('recepcao-classificacao');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/classificacoes');
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(c => {
+        const seq = c.NR_SEQUENCIA ?? c.nr_sequencia;
+        const nome = c.DS_CLASSIFICACAO ?? c.ds_classificacao;
+        const isSel = seq === 2 || String(seq) === '2';
+        return `<option value="${seq}" ${isSel ? 'selected' : ''}>${seq} - ${escapeHtml(nome)}</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar classificações:', err);
+  }
+}
+
+export async function carregarCategoriasConvenio(cdConvenio, selectedCat = null) {
+  const select = document.getElementById('recepcao-categoria');
+  if (!select) return;
+
+  if (!cdConvenio) {
+    select.innerHTML = '<option value="">Selecione o convênio primeiro...</option>';
+    return;
+  }
+
+  try {
+    const res = await api.get(`/api/recepcao/convenios/${cdConvenio}/categorias`);
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(cat => {
+        const cd = cat.CD_CATEGORIA ?? cat.cd_categoria;
+        const nome = cat.DS_CATEGORIA ?? cat.ds_categoria;
+        const isSel = selectedCat && String(cd) === String(selectedCat);
+        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
+      }).join('');
+    } else {
+      select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
+    }
+  } catch (err) {
+    select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
+  }
+}
+
+export async function carregarUltimoConvenioPaciente(cdPessoaFisica) {
+  if (!cdPessoaFisica) return;
+
+  try {
+    const res = await api.get(`/api/recepcao/pessoas/${cdPessoaFisica}/ultimo-convenio`);
+    if (res && res.success && res.data) {
+      const conv = res.data;
+      const selectConv = document.getElementById('recepcao-convenio');
+      const inputCart = document.getElementById('recepcao-carteirinha');
+
+      if (selectConv && conv.CD_CONVENIO) {
+        selectConv.value = conv.CD_CONVENIO;
+        await carregarCategoriasConvenio(conv.CD_CONVENIO, conv.CD_CATEGORIA);
+      }
+      if (inputCart && conv.CD_USUARIO_CONVENIO) {
+        inputCart.value = conv.CD_USUARIO_CONVENIO;
+      }
+      ui.showToast(`Convênio anterior (${conv.DS_CONVENIO || ''}) recuperado automaticamente!`, 'info');
+    }
+  } catch (err) {
+    console.warn('[Recepção] Sem convênio prévio para este paciente:', err);
   }
 }
 
 // ============================================================================
-// PILAR 4: ABERTURA DO ATENDIMENTO ÂNCORA
+// 6. ABERTURA DE ATENDIMENTO OFICIAL NO TASY
 // ============================================================================
 
 export async function abrirAtendimento() {
   const cdPf = document.getElementById('recepcao-cd-pessoa').value || recepcaoState.pessoaSelecionada?.CD_PESSOA_FISICA;
   if (!cdPf) {
-    ui.showToast('Nenhum paciente selecionado para abrir atendimento.', 'warning');
+    ui.showToast('Nenhum paciente identificado para abrir atendimento.', 'warning');
+    irParaPasso(1);
     return;
   }
 
   const convVal = document.getElementById('recepcao-convenio')?.value;
   if (!convVal) {
     ui.showToast('Selecione o Convênio para abrir o atendimento.', 'warning');
+    irParaPasso(3);
     return;
   }
 
-  const btn = document.getElementById('btn-recepcao-abrir-atendimento');
-  if (btn) ui.setLoading(btn, true);
+  const btnAvancar = document.getElementById('modal-btn-avancar-passo');
+  const btnAbrir = document.getElementById('btn-recepcao-abrir-atendimento');
+  if (btnAvancar) ui.setLoading(btnAvancar, true);
+  if (btnAbrir) ui.setLoading(btnAbrir, true);
 
   try {
     const payload = {
@@ -671,17 +837,19 @@ export async function abrirAtendimento() {
       
       await carregarRelatorios();
       await carregarDocumentosGED();
+      await carregarSenhas();
       irParaPasso(5); // Avança para Relatórios e GED
     }
   } catch (err) {
     ui.showToast('Erro ao abrir atendimento: ' + (err.message || JSON.stringify(err)), 'error');
   } finally {
-    if (btn) ui.setLoading(btn, false);
+    if (btnAvancar) ui.setLoading(btnAvancar, false);
+    if (btnAbrir) ui.setLoading(btnAbrir, false);
   }
 }
 
 // ============================================================================
-// PILAR 5: RELATÓRIOS TASY & GED
+// 7. EMISSÃO NATIVA DE RELATÓRIOS TASYREPORTS & GED
 // ============================================================================
 
 export async function carregarRelatorios() {
@@ -756,8 +924,8 @@ export async function carregarDocumentosGED() {
       container.innerHTML = res.data.map(doc => `
         <div class="ged-file-item">
           <i class="bi bi-file-earmark-text ged-file-icon"></i>
-          <strong>${doc.DS_TITULO}</strong>
-          <small class="text-muted">${doc.DT_REGISTRO_FMT} • Por: ${doc.NM_USUARIO}</small>
+          <strong>${escapeHtml(doc.DS_TITULO)}</strong>
+          <small class="text-muted">${escapeHtml(doc.DT_REGISTRO_FMT || '')} • Por: ${escapeHtml(doc.NM_USUARIO || '')}</small>
         </div>
       `).join('');
     }
@@ -813,29 +981,11 @@ export function abrirUploadGED() {
   input.click();
 }
 
-export function reiniciarFluxo() {
-  recepcaoState = {
-    filaSelecionada: null,
-    senhaAtiva: null,
-    pessoaSelecionada: null,
-    atendimentoCriado: null,
-    passoAtual: 1,
-    filasDisponiveis: recepcaoState.filasDisponiveis,
-    senhasFila: [],
-    relatorios: [],
-    documentosGED: []
-  };
-  atualizarDisplaySenha(null, null);
-  limparFormularioPaciente();
-  document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
-  irParaPasso(1);
-  carregarSenhas();
-  ui.showToast('Novo ciclo de atendimento iniciado no guichê.', 'info');
-}
-
-// Expõe no window.conectaCore para chamadas inline no HTML
+// Expõe métodos globais para callbacks de HTML inline
 if (!window.conectaCore) window.conectaCore = {};
 window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
 window.conectaCore.selecionarPaciente = selecionarPaciente;
 window.conectaCore.novoPaciente = novoPaciente;
 window.conectaCore.imprimirRelatorio = imprimirRelatorio;
+window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
+window.conectaCore.irParaPasso = irParaPasso;

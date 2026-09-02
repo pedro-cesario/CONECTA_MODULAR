@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/main.css?v=318" rel="stylesheet">
+  <link href="css/main.css?v=319" rel="stylesheet">
   <script>
     if (sessionStorage.getItem('session_active') === '1') {
       document.documentElement.classList.add('has-session');
@@ -738,367 +738,423 @@
       </div>
     </section>
 
-    <!-- MÓDULO DE RECEPÇÃO & ACOLHIMENTO (5 PILARES) -->
+    <!-- MÓDULO DE RECEPÇÃO & ACOLHIMENTO (PAINEL DE SENHAS + MODAL DE ATENDIMENTO) -->
     <section class="recepcao-workspace d-none" id="workspace-recepcao">
-      <header class="livro-page-header">
-        <div class="livro-page-heading">
+      <!-- 1. Header do Painel -->
+      <header class="recepcao-header-card">
+        <div class="recepcao-header-title">
           <button class="livro-page-back" id="btn-recepcao-voltar-home" type="button" aria-label="Voltar ao menu principal" onclick="window.conectaCore.showModeChooser()">
             <i class="bi bi-arrow-left"></i>
           </button>
-          <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
+          <div class="recepcao-header-icon">
+            <i class="bi bi-person-badge"></i>
+          </div>
           <div>
-            <span class="livro-page-eyebrow">Atendimento Inicial</span>
-            <h2>Recepção & Acolhimento</h2>
-            <p>Guichê de senhas, identificação de pessoas, abertura de atendimentos e emissão de documentos TASY.</p>
+            <span class="livro-page-eyebrow">Gestão de Recepção & Guichê</span>
+            <h2 class="m-0 fw-bold" style="font-size: 1.5rem; color: var(--slate-900);">Painel de Recepção & Acolhimento</h2>
+            <p class="m-0 text-muted small">Acompanhamento das senhas em tempo real, chamador de guichê e acolhimento hospitalar no TASY.</p>
           </div>
         </div>
-        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro TASY</span>
+        <div class="recepcao-header-actions">
+          <button class="btn btn-outline-secondary" id="btn-recepcao-refresh" type="button" title="Atualizar fila">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+          <button class="btn btn-outline-warning" id="btn-recepcao-rechamar" type="button">
+            <i class="bi bi-arrow-repeat"></i> Rechamar
+          </button>
+          <button class="btn btn-outline-primary" id="btn-recepcao-novo-avulso" type="button">
+            <i class="bi bi-person-plus"></i> Atendimento Avulso
+          </button>
+          <button class="btn btn-primary fw-bold" id="btn-recepcao-chamar-proximo" type="button">
+            <i class="bi bi-megaphone-fill"></i> Chamar Próxima Senha
+          </button>
+        </div>
       </header>
 
-      <!-- Stepper dos 5 Pilares -->
-      <nav class="recepcao-stepper" aria-label="Etapas da recepção">
-        <button class="stepper-item active" data-step="1" type="button">
-          <span class="stepper-badge">1</span>
-          <span>Senhas & Guichê</span>
-        </button>
-        <span class="stepper-divider"></span>
-        <button class="stepper-item" data-step="2" type="button">
-          <span class="stepper-badge">2</span>
-          <span>Identificação / Pessoa</span>
-        </button>
-        <span class="stepper-divider"></span>
-        <button class="stepper-item" data-step="3" type="button">
-          <span class="stepper-badge">3</span>
-          <span>Endereço & Contato</span>
-        </button>
-        <span class="stepper-divider"></span>
-        <button class="stepper-item" data-step="4" type="button">
-          <span class="stepper-badge">4</span>
-          <span>Abertura Atendimento</span>
-        </button>
-        <span class="stepper-divider"></span>
-        <button class="stepper-item" data-step="5" type="button">
-          <span class="stepper-badge">5</span>
-          <span>Documentos & GED</span>
-        </button>
-      </nav>
-
-      <div class="recepcao-panel">
-        <!-- Coluna Esquerda: Guichê e Chamador de Senhas -->
-        <aside class="guiche-card">
-          <div class="guiche-display">
-            <span class="guiche-display-label">Senha em Atendimento</span>
-            <div class="guiche-display-number" id="guiche-active-number">---</div>
-            <span class="guiche-display-type" id="guiche-active-type">Aguardando chamada</span>
+      <!-- 2. KPIs & Resumo Operacional -->
+      <div class="recepcao-kpi-row">
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon primary">
+            <i class="bi bi-people-fill"></i>
           </div>
-
-          <div class="guiche-actions">
-            <button class="btn btn-primary" id="btn-recepcao-chamar-proximo" type="button">
-              <i class="bi bi-megaphone"></i> Chamar Próximo
-            </button>
-            <button class="btn btn-outline-secondary" id="btn-recepcao-rechamar" type="button">
-              <i class="bi bi-arrow-repeat"></i> Rechamar
-            </button>
+          <div>
+            <div class="recepcao-kpi-value" id="kpi-total-espera">0</div>
+            <div class="recepcao-kpi-label">Senhas em Espera</div>
           </div>
+        </div>
 
-          <div class="livro-field mt-2">
-            <label for="recepcao-select-fila"><i class="bi bi-funnel"></i> Filtrar Fila</label>
-            <select id="recepcao-select-fila" class="form-select">
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon warning">
+            <i class="bi bi-ticket-detailed-fill"></i>
+          </div>
+          <div>
+            <div class="recepcao-kpi-value" id="guiche-active-number" style="font-family: monospace;">---</div>
+            <div class="recepcao-kpi-label" id="guiche-active-type">Nenhuma senha chamada</div>
+          </div>
+        </div>
+
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon info">
+            <i class="bi bi-funnel-fill"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="recepcao-kpi-label mb-1">Filtrar por Fila</div>
+            <select id="recepcao-select-fila" class="form-select form-select-sm fw-bold">
               <option value="">Carregando filas...</option>
             </select>
           </div>
+        </div>
 
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon success">
+            <i class="bi bi-shield-check"></i>
+          </div>
           <div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <strong><i class="bi bi-people"></i> Fila de Espera</strong>
-              <span class="badge bg-secondary" id="recepcao-queue-count">0</span>
-            </div>
-            <div class="guiche-queue-list" id="recepcao-queue-list">
-              <div class="loading-placeholder">Carregando fila...</div>
-            </div>
+            <div class="recepcao-kpi-value text-success" style="font-size: 1.25rem;">Online</div>
+            <div class="recepcao-kpi-label">Sincronizado com TASY</div>
           </div>
-        </aside>
+        </div>
+      </div>
 
-        <!-- Coluna Direita: Painéis dos Passos -->
-        <main class="recepcao-main-card">
-          <!-- PASSO 1: Boas-vindas / Senhas -->
-          <div class="recepcao-step-panel" data-step="1">
-            <div class="recepcao-section-title">
-              <i class="bi bi-ticket-perforated"></i> 1. Gerenciamento de Senhas do Guichê
-            </div>
-            <p class="text-muted">
-              Selecione uma senha da fila de espera ao lado ou clique em <strong>"Chamar Próximo"</strong> para iniciar o acolhimento do paciente.
-            </p>
-            <div class="alert alert-info d-flex align-items-center gap-3">
-              <i class="bi bi-info-circle fs-3"></i>
-              <div>
-                Ao chamar o paciente, o Conecta sincroniza a chamada com a TV da recepção e registra o carimbo de tempo de atendimento no TASY.
-              </div>
-            </div>
-            <div class="d-flex justify-content-end mt-4">
-              <button class="btn btn-primary" type="button" onclick="window.conectaCore.irParaPasso(2)">
-                Continuar para Identificação da Pessoa <i class="bi bi-arrow-right"></i>
-              </button>
-            </div>
+      <!-- 3. Board Central de Senhas Pendentes -->
+      <div class="senhas-board-card">
+        <div class="senhas-board-header">
+          <div>
+            <h4 class="m-0 fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history text-primary"></i> Fila de Senhas Aguardando Atendimento
+              <span class="badge bg-primary rounded-pill fs-6" id="recepcao-queue-count">0</span>
+            </h4>
+            <small class="text-muted">Clique em qualquer senha abaixo para iniciar o acolhimento e abertura de atendimento no TASY</small>
           </div>
 
-          <!-- PASSO 2: Identificação e Cadastro da Pessoa Física -->
-          <div class="recepcao-step-panel d-none" data-step="2">
-            <div class="recepcao-section-title">
-              <i class="bi bi-person-bounding-box"></i> 2. Identificação da Pessoa Física (Cadastro Permanente)
-            </div>
-
-            <!-- Busca Rápida -->
-            <div class="paciente-search-box">
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="recepcao-busca-paciente" placeholder="Digite CPF, Cartão SUS ou Nome do paciente para buscar no TASY...">
-              </div>
-              <button class="btn btn-outline-primary text-nowrap" id="btn-recepcao-novo-paciente" type="button">
-                <i class="bi bi-person-plus"></i> Novo Cadastro
-              </button>
-            </div>
-
-            <div class="paciente-search-results" id="recepcao-search-results"></div>
-
-            <!-- Card de Paciente Selecionado -->
-            <div class="paciente-badge-selected d-none mt-3" id="card-paciente-selecionado">
-              <div>
-                <strong id="paciente-sel-nome" class="fs-5 text-primary"></strong>
-                <div id="paciente-sel-details" class="text-muted small"></div>
-              </div>
-              <button class="btn btn-sm btn-outline-secondary" id="btn-recepcao-limpar-paciente" type="button">
-                <i class="bi bi-x-circle"></i> Trocar Paciente
-              </button>
-            </div>
-
-            <!-- Formulário de Pessoa Física -->
-            <div id="form-paciente-container" class="mt-3">
-              <input type="hidden" id="recepcao-cd-pessoa">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="recepcao-nome-completo" class="form-label">Nome Completo <span class="required-star">*</span></label>
-                  <input type="text" class="form-control" id="recepcao-nome-completo" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="recepcao-nome-social" class="form-label">Nome Social</label>
-                  <input type="text" class="form-control" id="recepcao-nome-social">
-                </div>
-                <div class="col-md-3">
-                  <label for="recepcao-dt-nascimento" class="form-label">Data de Nascimento <span class="required-star">*</span></label>
-                  <input type="date" class="form-control" id="recepcao-dt-nascimento" required>
-                </div>
-                <div class="col-md-3">
-                  <label for="recepcao-sexo" class="form-label">Sexo <span class="required-star">*</span></label>
-                  <select class="form-select" id="recepcao-sexo">
-                    <option value="M">Masculino</option>
-                    <option value="F">Feminino</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label for="recepcao-cpf" class="form-label">CPF</label>
-                  <input type="text" class="form-control" id="recepcao-cpf" placeholder="000.000.000-00">
-                </div>
-                <div class="col-md-3">
-                  <label for="recepcao-rg" class="form-label">RG / Identidade</label>
-                  <input type="text" class="form-control" id="recepcao-rg">
-                </div>
-                <div class="col-md-6">
-                  <label for="recepcao-nome-mae" class="form-label">Nome da Mãe</label>
-                  <input type="text" class="form-control" id="recepcao-nome-mae">
-                </div>
-                <div class="col-md-6">
-                  <label for="recepcao-nome-pai" class="form-label">Nome do Pai</label>
-                  <input type="text" class="form-control" id="recepcao-nome-pai">
-                </div>
-                <div class="col-md-4">
-                  <label for="recepcao-cns" class="form-label">Cartão SUS (CNS)</label>
-                  <input type="text" class="form-control" id="recepcao-cns">
-                </div>
-                <div class="col-md-4">
-                  <label for="recepcao-celular" class="form-label">Telefone Celular</label>
-                  <input type="text" class="form-control" id="recepcao-celular" placeholder="(00) 00000-0000">
-                </div>
-                <div class="col-md-4">
-                  <label for="recepcao-email" class="form-label">E-mail</label>
-                  <input type="email" class="form-control" id="recepcao-email" placeholder="paciente@email.com">
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-              <button class="btn btn-secondary" type="button" onclick="window.conectaCore.irParaPasso(1)">
-                <i class="bi bi-arrow-left"></i> Voltar para Senhas
-              </button>
-              <button class="btn btn-primary" type="button" onclick="window.conectaCore.irParaPasso(3)">
-                Avançar para Endereço <i class="bi bi-arrow-right"></i>
-              </button>
+          <div class="senhas-board-filters">
+            <div class="input-group input-group-sm" style="max-width: 260px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="recepcao-search-senha" placeholder="Filtrar por número...">
             </div>
           </div>
+        </div>
 
-          <!-- PASSO 3: Cadastro e Validação de Endereço -->
-          <div class="recepcao-step-panel d-none" data-step="3">
-            <div class="recepcao-section-title">
-              <i class="bi bi-geo-alt"></i> 3. Cadastro e Atualização de Endereço (COMPL_PESSOA_FISICA)
+        <!-- Grade de Senhas em Espera -->
+        <div class="senhas-grid" id="recepcao-senhas-grid">
+          <div class="col-12 py-5 text-center text-muted">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>Carregando fila de senhas do TASY...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL DE ACOLHIMENTO & ABERTURA DE ATENDIMENTO (WIZARD 5 ETAPAS) -->
+    <div class="modal fade" id="modal-atendimento-recepcao" tabindex="-1" aria-labelledby="modalAtendimentoLabel" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          
+          <!-- Header do Modal -->
+          <div class="modal-header modal-recepcao-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <h5 class="modal-recepcao-title" id="modalAtendimentoLabel">
+                <i class="bi bi-person-badge"></i> Acolhimento & Atendimento
+              </h5>
+              <span class="modal-recepcao-senha-badge" id="modal-atend-senha-badge">
+                <i class="bi bi-ticket-perforated"></i> Senha: ---
+              </span>
             </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
 
-            <div class="row g-3">
-              <div class="col-md-3">
-                <label for="recepcao-cep" class="form-label">CEP (com busca automática)</label>
+          <!-- Stepper de Navegação no Topo do Modal -->
+          <nav class="modal-stepper" aria-label="Etapas do Atendimento">
+            <button class="modal-step-item active" data-step="1" type="button">
+              <span class="modal-step-badge">1</span>
+              <span>Identificação</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="2" type="button">
+              <span class="modal-step-badge">2</span>
+              <span>Endereço</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="3" type="button">
+              <span class="modal-step-badge">3</span>
+              <span>Convênio</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="4" type="button">
+              <span class="modal-step-badge">4</span>
+              <span>Atendimento</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="5" type="button">
+              <span class="modal-step-badge">5</span>
+              <span>Relatórios & GED</span>
+            </button>
+          </nav>
+
+          <!-- Corpo do Modal com os Passos -->
+          <div class="modal-body p-0">
+            
+            <!-- ETAPA 1: Identificação e Cadastro do Paciente -->
+            <div class="modal-step-pane" data-step="1">
+              <div class="recepcao-section-title">
+                <i class="bi bi-person-bounding-box"></i> 1. Identificação do Paciente (Pessoa Física TASY)
+              </div>
+
+              <!-- Busca Rápida -->
+              <div class="paciente-search-box mb-3">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="recepcao-cep" placeholder="00000-000">
                   <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" id="recepcao-busca-paciente" placeholder="Digite CPF, Cartão SUS ou Nome do paciente para buscar no TASY...">
                 </div>
-              </div>
-              <div class="col-md-7">
-                <label for="recepcao-logradouro" class="form-label">Logradouro / Rua</label>
-                <input type="text" class="form-control" id="recepcao-logradouro" placeholder="Av, Rua, Praça...">
-              </div>
-              <div class="col-md-2">
-                <label for="recepcao-numero" class="form-label">Número</label>
-                <input type="text" class="form-control" id="recepcao-numero" placeholder="123">
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-complemento" class="form-label">Complemento</label>
-                <input type="text" class="form-control" id="recepcao-complemento" placeholder="Apto, Bloco, Casa...">
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-bairro" class="form-label">Bairro</label>
-                <input type="text" class="form-control" id="recepcao-bairro">
-              </div>
-              <div class="col-md-3">
-                <label for="recepcao-cidade" class="form-label">Cidade</label>
-                <input type="text" class="form-control" id="recepcao-cidade">
-              </div>
-              <div class="col-md-1">
-                <label for="recepcao-uf" class="form-label">UF</label>
-                <input type="text" class="form-control" id="recepcao-uf" maxlength="2" placeholder="MG">
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-              <button class="btn btn-secondary" type="button" onclick="window.conectaCore.irParaPasso(2)">
-                <i class="bi bi-arrow-left"></i> Voltar para Pessoa
-              </button>
-              <button class="btn btn-success" id="btn-recepcao-salvar-pessoa" type="button">
-                <i class="bi bi-check2-circle"></i> Salvar Dados e Avançar para Atendimento <i class="bi bi-arrow-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- PASSO 4: Abertura do Atendimento Âncora -->
-          <div class="recepcao-step-panel d-none" data-step="4">
-            <div class="recepcao-section-title">
-              <i class="bi bi-hospital"></i> 4. Abertura do Atendimento Hospitalar (ATENDIMENTO_PACIENTE)
-            </div>
-
-            <p class="text-muted">
-              O atendimento é a âncora de todo o episódio assistencial, faturamento e prontuário no TASY.
-            </p>
-
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label for="recepcao-setor-atend" class="form-label">Setor de Atendimento <span class="required-star">*</span></label>
-                <select class="form-select" id="recepcao-setor-atend">
-                  <option value="39" selected>39 - Pronto Atendimento</option>
-                  <option value="37">37 - Sala de Observação</option>
-                  <option value="32">32 - Unidade de Internação</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-convenio" class="form-label">Convênio <span class="required-star">*</span></label>
-                <select class="form-select" id="recepcao-convenio">
-                  <option value="">Carregando convênios...</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-categoria" class="form-label">Categoria / Plano <span class="required-star">*</span></label>
-                <select class="form-select" id="recepcao-categoria">
-                  <option value="">Selecione o convênio...</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-classificacao" class="form-label">Classificação <span class="required-star">*</span></label>
-                <select class="form-select" id="recepcao-classificacao">
-                  <option value="2" selected>2 - Voluntário</option>
-                  <option value="1">1 - Involuntário</option>
-                  <option value="3">3 - Compulsória / determinação judicial</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-carteirinha" class="form-label">Nº Carteirinha / Guia</label>
-                <input type="text" class="form-control" id="recepcao-carteirinha" placeholder="000000000000">
-              </div>
-              <div class="col-md-4">
-                <label for="recepcao-procedencia" class="form-label">Procedência</label>
-                <select class="form-select" id="recepcao-procedencia">
-                  <option value="1" selected>1 - Residência / Própria</option>
-                  <option value="2">2 - SAMU / Resgate</option>
-                  <option value="3">3 - Transferência Hospitalar</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="alert alert-warning mt-3 d-flex align-items-center gap-3">
-              <i class="bi bi-ticket-detailed fs-3"></i>
-              <div>
-                <strong>Vínculo de Senha:</strong> A senha em atendimento no guichê será vinculada diretamente a este atendimento e transferida automaticamente para a <strong>Fila de Triagem / Consultório Médico</strong>.
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-              <button class="btn btn-secondary" type="button" onclick="window.conectaCore.irParaPasso(3)">
-                <i class="bi bi-arrow-left"></i> Voltar para Endereço
-              </button>
-              <button class="btn btn-primary btn-lg" id="btn-recepcao-abrir-atendimento" type="button">
-                <i class="bi bi-plus-circle"></i> Abrir Atendimento no TASY
-              </button>
-            </div>
-          </div>
-
-          <!-- PASSO 5: Relatórios Oficiais TASY e GED -->
-          <div class="recepcao-step-panel d-none" data-step="5">
-            <div class="recepcao-section-title">
-              <i class="bi bi-file-earmark-text"></i> 5. Documentos Oficiais TASY & GED
-            </div>
-
-            <div class="alert alert-success d-flex justify-content-between align-items-center">
-              <div>
-                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                Atendimento gerado com sucesso: <strong class="fs-5" id="recepcao-atendimento-numero">---</strong>
-              </div>
-              <button class="btn btn-sm btn-outline-success" id="btn-recepcao-reiniciar" type="button">
-                <i class="bi bi-arrow-repeat"></i> Iniciar Novo Atendimento
-              </button>
-            </div>
-
-            <!-- Bloco A: Relatórios Oficiais TASY -->
-            <div class="mt-3">
-              <h5 class="fw-bold mb-2"><i class="bi bi-printer text-primary"></i> Emissão de Documentos do TASY</h5>
-              <div class="relatorios-grid" id="recepcao-relatorios-list">
-                <div class="loading-placeholder">Carregando modelos de relatórios...</div>
-              </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Bloco B: GED (Anexos do Atendimento) -->
-            <div class="ged-container">
-              <div class="d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0"><i class="bi bi-folder text-primary"></i> GED — Documentos Anexados</h5>
-                <button class="btn btn-sm btn-outline-primary" id="btn-recepcao-upload-ged" type="button">
-                  <i class="bi bi-upload"></i> Anexar Documento / Foto
+                <button class="btn btn-outline-primary text-nowrap" id="btn-recepcao-novo-paciente" type="button">
+                  <i class="bi bi-person-plus"></i> Novo Cadastro
                 </button>
               </div>
 
-              <div class="ged-files-grid" id="recepcao-ged-list">
-                <div class="p-3 text-center text-muted col-12">Nenhum documento anexado para este atendimento.</div>
+              <div class="paciente-search-results" id="recepcao-search-results"></div>
+
+              <!-- Card de Paciente Selecionado -->
+              <div class="paciente-badge-selected d-none my-3" id="card-paciente-selecionado">
+                <div>
+                  <strong id="paciente-sel-nome" class="fs-5 text-primary"></strong>
+                  <div id="paciente-sel-details" class="text-muted small"></div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-recepcao-limpar-paciente" type="button">
+                  <i class="bi bi-x-circle"></i> Trocar Paciente
+                </button>
+              </div>
+
+              <!-- Formulário de Pessoa Física -->
+              <div id="form-paciente-container" class="mt-3">
+                <input type="hidden" id="recepcao-cd-pessoa">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-completo" class="form-label small fw-bold">Nome Completo <span class="required-star">*</span></label>
+                    <input type="text" class="form-control" id="recepcao-nome-completo" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-social" class="form-label small fw-bold">Nome Social</label>
+                    <input type="text" class="form-control" id="recepcao-nome-social">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-dt-nascimento" class="form-label small fw-bold">Data de Nascimento <span class="required-star">*</span></label>
+                    <input type="date" class="form-control" id="recepcao-dt-nascimento" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-sexo" class="form-label small fw-bold">Sexo <span class="required-star">*</span></label>
+                    <select class="form-select" id="recepcao-sexo">
+                      <option value="M">Masculino</option>
+                      <option value="F">Feminino</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-cpf" class="form-label small fw-bold">CPF</label>
+                    <input type="text" class="form-control" id="recepcao-cpf" placeholder="000.000.000-00">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-rg" class="form-label small fw-bold">RG / Identidade</label>
+                    <input type="text" class="form-control" id="recepcao-rg">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-mae" class="form-label small fw-bold">Nome da Mãe</label>
+                    <input type="text" class="form-control" id="recepcao-nome-mae">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-pai" class="form-label small fw-bold">Nome do Pai</label>
+                    <input type="text" class="form-control" id="recepcao-nome-pai">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-cns" class="form-label small fw-bold">Cartão SUS (CNS)</label>
+                    <input type="text" class="form-control" id="recepcao-cns">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-celular" class="form-label small fw-bold">Telefone Celular</label>
+                    <input type="text" class="form-control" id="recepcao-celular" placeholder="(00) 00000-0000">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-email" class="form-label small fw-bold">E-mail</label>
+                    <input type="email" class="form-control" id="recepcao-email" placeholder="paciente@email.com">
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- ETAPA 2: Endereço e Contato -->
+            <div class="modal-step-pane d-none" data-step="2">
+              <div class="recepcao-section-title">
+                <i class="bi bi-geo-alt"></i> 2. Endereço & Localização (COMPL_PESSOA_FISICA)
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label for="recepcao-cep" class="form-label small fw-bold">CEP (com busca automática)</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="recepcao-cep" placeholder="00000-000">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  </div>
+                </div>
+                <div class="col-md-7">
+                  <label for="recepcao-logradouro" class="form-label small fw-bold">Logradouro / Rua</label>
+                  <input type="text" class="form-control" id="recepcao-logradouro" placeholder="Av, Rua, Praça...">
+                </div>
+                <div class="col-md-2">
+                  <label for="recepcao-numero" class="form-label small fw-bold">Número</label>
+                  <input type="text" class="form-control" id="recepcao-numero" placeholder="123">
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-complemento" class="form-label small fw-bold">Complemento</label>
+                  <input type="text" class="form-control" id="recepcao-complemento" placeholder="Apto, Bloco, Casa...">
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-bairro" class="form-label small fw-bold">Bairro</label>
+                  <input type="text" class="form-control" id="recepcao-bairro">
+                </div>
+                <div class="col-md-3">
+                  <label for="recepcao-cidade" class="form-label small fw-bold">Cidade</label>
+                  <input type="text" class="form-control" id="recepcao-cidade">
+                </div>
+                <div class="col-md-1">
+                  <label for="recepcao-uf" class="form-label small fw-bold">UF</label>
+                  <input type="text" class="form-control" id="recepcao-uf" maxlength="2" placeholder="MG">
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 3: Convênio e Procedência -->
+            <div class="modal-step-pane d-none" data-step="3">
+              <div class="recepcao-section-title">
+                <i class="bi bi-credit-card-2-front"></i> 3. Convênio, Plano & Procedência de Entrada
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="recepcao-convenio" class="form-label small fw-bold">Convênio <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-convenio">
+                    <option value="">Carregando convênios...</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-categoria" class="form-label small fw-bold">Categoria / Plano <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-categoria">
+                    <option value="">Selecione o convênio...</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-carteirinha" class="form-label small fw-bold">Nº Carteirinha / Guia</label>
+                  <input type="text" class="form-control" id="recepcao-carteirinha" placeholder="000000000000">
+                </div>
+                <div class="col-md-6">
+                  <label for="recepcao-procedencia" class="form-label small fw-bold">Procedência da Entrada</label>
+                  <select class="form-select" id="recepcao-procedencia">
+                    <option value="1" selected>1 - Residência / Própria</option>
+                    <option value="2">2 - SAMU / Resgate</option>
+                    <option value="3">3 - Transferência Hospitalar</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 4: Abertura do Atendimento no TASY -->
+            <div class="modal-step-pane d-none" data-step="4">
+              <div class="recepcao-section-title">
+                <i class="bi bi-hospital"></i> 4. Classificação & Abertura Oficial de Atendimento (ATENDIMENTO_PACIENTE)
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="recepcao-setor-atend" class="form-label small fw-bold">Setor de Atendimento <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-setor-atend">
+                    <option value="39" selected>39 - Pronto Atendimento</option>
+                    <option value="37">37 - Sala de Observação</option>
+                    <option value="32">32 - Unidade de Internação</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="recepcao-classificacao" class="form-label small fw-bold">Classificação do Atendimento <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-classificacao">
+                    <option value="2" selected>2 - Voluntário</option>
+                    <option value="1">1 - Involuntário</option>
+                    <option value="3">3 - Compulsória / determinação judicial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="alert alert-warning mt-4 d-flex align-items-center gap-3">
+                <i class="bi bi-ticket-detailed fs-2 text-warning"></i>
+                <div>
+                  <strong>Vínculo de Senha Automático:</strong> A senha vinculada será transferida no TASY diretamente para a <strong>Fila de Triagem / Consultório Médico</strong> com a abertura do episódio.
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-center mt-4">
+                <button class="btn btn-primary btn-lg fw-bold px-5 py-3 shadow" id="btn-recepcao-abrir-atendimento" type="button" style="border-radius: 12px;">
+                  <i class="bi bi-check2-circle fs-5 me-2"></i> Abrir Atendimento Oficial no TASY
+                </button>
+              </div>
+            </div>
+
+            <!-- ETAPA 5: Emissão Nativa de Relatórios TASY e GED -->
+            <div class="modal-step-pane d-none" data-step="5">
+              <div class="recepcao-section-title">
+                <i class="bi bi-file-earmark-text"></i> 5. Documentos Oficiais TasyReports & GED
+              </div>
+
+              <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                  Atendimento gerado com sucesso no TASY: <strong class="fs-5" id="recepcao-atendimento-numero">---</strong>
+                </div>
+              </div>
+
+              <!-- Relatórios Oficiais TasyReports -->
+              <div class="mb-4">
+                <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-printer text-primary"></i> Relatórios Oficiais Emitidos via TasyAppServer
+                </h6>
+                <div class="relatorios-grid" id="recepcao-relatorios-list">
+                  <div class="loading-placeholder">Carregando modelos de relatórios...</div>
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <!-- Repositório GED TASY -->
+              <div class="ged-container">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-folder-fill text-primary"></i> Repositório GED (TASY Storage)
+                  </h6>
+                  <button class="btn btn-sm btn-outline-primary" id="btn-recepcao-upload-ged" type="button">
+                    <i class="bi bi-upload"></i> Anexar Documento ao GED
+                  </button>
+                </div>
+
+                <div class="ged-files-grid" id="recepcao-ged-list">
+                  <div class="p-3 text-center text-muted col-12">Nenhum documento anexado para este atendimento.</div>
+                </div>
+              </div>
+            </div>
+
           </div>
-        </main>
+
+          <!-- Footer do Modal com Botões de Navegação -->
+          <div class="modal-footer bg-light d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" id="modal-btn-voltar-passo">
+              <i class="bi bi-arrow-left"></i> Voltar
+            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" id="modal-btn-avancar-passo">
+                Avançar <i class="bi bi-arrow-right"></i>
+              </button>
+              <button type="button" class="btn btn-success d-none" id="modal-btn-fechar-atendimento" data-bs-dismiss="modal">
+                <i class="bi bi-check-lg"></i> Concluir Atendimento
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </section>
+    </div>
 
     <section class="livro-sub-menu d-none" id="livro-sub-menu">
       <div class="livro-choice-shell">
@@ -1743,6 +1799,7 @@
     </div>
   </div>
 
-  <script type="module" src="src/main.js?v=318"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="src/main.js?v=319"></script>
 </body>
 </html>

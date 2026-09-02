@@ -1,6 +1,6 @@
 /* ==========================================================================
    CONECTA HEAL — MÓDULO DE RECEPÇÃO & ACOLHIMENTO
-   Design System Compliance: 5 Pilares Clínico-Operacionais
+   Design System: Painel de Senhas & Modal de Abertura de Atendimento (TASY)
    ========================================================================== */
 
 .recepcao-workspace {
@@ -8,198 +8,364 @@
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 1.5rem;
 }
 
-/* Stepper de Progresso dos 5 Pilares */
-.recepcao-stepper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ==========================================================================
+   1. CABEÇALHO & BARRA DE AÇÕES DO PAINEL
+   ========================================================================== */
+.recepcao-header-card {
   background: #ffffff;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg, 12px);
-  padding: 1rem 1.5rem;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
-  overflow-x: auto;
+}
+
+.recepcao-header-title {
+  display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
-.stepper-item {
+.recepcao-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.recepcao-header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: all 0.2s ease-in-out;
-  white-space: nowrap;
-  border: none;
-  background: transparent;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md, 8px);
+  flex-wrap: wrap;
 }
 
-.stepper-item:hover {
-  opacity: 0.8;
-  background: var(--slate-50);
+/* ==========================================================================
+   2. KPIS / CARDS DE RESUMO DO GUICHÊ
+   ========================================================================== */
+.recepcao-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
 }
 
-.stepper-item.active {
-  opacity: 1;
+.recepcao-kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md, 10px);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.recepcao-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+.recepcao-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.recepcao-kpi-icon.primary {
   background: var(--primary-50);
   color: var(--primary);
+}
+
+.recepcao-kpi-icon.success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.recepcao-kpi-icon.warning {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.recepcao-kpi-icon.info {
+  background: #f0fdf4;
+  color: #0284c7;
+}
+
+.recepcao-kpi-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--slate-900);
+}
+
+.recepcao-kpi-label {
+  font-size: 0.8rem;
+  color: var(--slate-500);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.stepper-item.completed {
-  opacity: 0.9;
-  color: var(--green-600);
+/* ==========================================================================
+   3. BOARD DE SENHAS EM ESPERA (GRID DE TICKETS)
+   ========================================================================== */
+.senhas-board-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.stepper-badge {
+.senhas-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+.senhas-board-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.senhas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.senha-ticket-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.senha-ticket-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+}
+
+.senha-ticket-card.preferencial::before {
+  background: #f59e0b;
+}
+
+.senha-ticket-card.urgente::before {
+  background: #ef4444;
+}
+
+.senha-ticket-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md, 0 8px 16px -4px rgba(0, 56, 122, 0.12));
+}
+
+.senha-ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.senha-ticket-number {
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--slate-900);
+  line-height: 1;
+}
+
+.senha-ticket-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.senha-ticket-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--slate-600);
+}
+
+.senha-ticket-meta i {
+  color: var(--slate-400);
+  margin-right: 0.35rem;
+}
+
+.senha-ticket-footer {
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--slate-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.senha-ticket-wait-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ==========================================================================
+   4. MODAL DE ACOLHIMENTO & ATENDIMENTO (STEPPER)
+   ========================================================================== */
+.modal-recepcao-header {
+  background: linear-gradient(135deg, var(--slate-900), var(--primary-dark));
+  color: #ffffff;
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-recepcao-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.modal-recepcao-senha-badge {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+/* Stepper no Topo do Modal */
+.modal-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 0.85rem 1.5rem;
+  overflow-x: auto;
+  gap: 0.5rem;
+}
+
+.modal-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--slate-500);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.modal-step-item:hover {
+  background: var(--slate-200);
+  color: var(--slate-800);
+}
+
+.modal-step-item.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--slate-200);
+}
+
+.modal-step-item.completed {
+  color: #059669;
+}
+
+.modal-step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--slate-300);
+  color: var(--slate-700);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--slate-200);
-  color: var(--slate-700);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
-.stepper-item.active .stepper-badge {
+.modal-step-item.active .modal-step-badge {
   background: var(--primary);
   color: #ffffff;
 }
 
-.stepper-item.completed .stepper-badge {
-  background: var(--green-500);
+.modal-step-item.completed .modal-step-badge {
+  background: #059669;
   color: #ffffff;
 }
 
-.stepper-divider {
+.modal-step-divider {
   flex: 1;
   height: 2px;
   background: var(--slate-200);
-  min-width: 20px;
+  min-width: 12px;
 }
 
-/* Painel de Conteúdo dos Passos */
-.recepcao-panel {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-@media (max-width: 992px) {
-  .recepcao-panel {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Cartão do Guichê e Chamador de Senhas */
-.guiche-card {
-  background: #ffffff;
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-lg, 12px);
+/* Painéis de Conteúdo das Etapas dentro do Modal */
+.modal-step-pane {
   padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  min-height: 380px;
 }
 
-.guiche-display {
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-  color: #ffffff;
-  border-radius: var(--radius-md, 8px);
-  padding: 1.5rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.guiche-display-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.85;
-}
-
-.guiche-display-number {
-  font-size: 3rem;
-  font-weight: 800;
-  line-height: 1;
-  font-family: monospace;
-}
-
-.guiche-display-type {
-  font-size: 0.875rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  font-weight: 600;
-}
-
-.guiche-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.guiche-queue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-height: 350px;
-  overflow-y: auto;
-}
-
-.guiche-queue-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: var(--slate-50);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md, 8px);
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.guiche-queue-item:hover {
-  background: var(--primary-50);
-  border-color: var(--primary-100);
-}
-
-.guiche-queue-number {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--slate-900);
-}
-
-.guiche-queue-time {
-  font-size: 0.75rem;
-  color: var(--slate-500);
-}
-
-/* Área Principal de Formulários e Atendimento */
-.recepcao-main-card {
-  background: #ffffff;
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-lg, 12px);
-  padding: 1.75rem;
-  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.modal-step-pane.d-none {
+  display: none !important;
 }
 
 .recepcao-section-title {
@@ -211,6 +377,7 @@
   color: var(--slate-900);
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--slate-200);
+  margin-bottom: 1.25rem;
 }
 
 .recepcao-section-title i {
@@ -229,7 +396,7 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.5rem;
-  max-height: 240px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
@@ -260,7 +427,7 @@
   justify-content: space-between;
 }
 
-/* Grid de Documentos e Relatórios TASY */
+/* Grid de Relatórios Oficiais */
 .relatorios-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -295,21 +462,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.ged-upload-dropzone {
-  border: 2px dashed var(--slate-300);
-  border-radius: var(--radius-md, 8px);
-  padding: 2rem;
-  text-align: center;
-  background: var(--slate-50);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ged-upload-dropzone:hover {
-  border-color: var(--primary);
-  background: var(--primary-50);
 }
 
 .ged-files-grid {
