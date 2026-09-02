@@ -1,6 +1,7 @@
 import { api } from '../../core/api.js';
 import { state } from '../../core/state.js';
 import * as ui from '../../core/ui.js';
+import { escapeHtml } from '../../core/utils.js';
 
 /**
  * Módulo de Recepção & Acolhimento — Conecta HEAL 2.0
@@ -9,7 +10,7 @@ import * as ui from '../../core/ui.js';
  */
 
 let recepcaoState = {
-  filaSelecionada: null,
+  filaSelecionada: 9, // PA - NORMAL por padrão
   senhaAtiva: null,
   pessoaSelecionada: null,
   atendimentoCriado: null,
@@ -146,20 +147,21 @@ export async function carregarFilas() {
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.filasDisponiveis = res.data;
       if (select) {
-        select.innerHTML = '<option value="">Todas as Filas Ativas</option>' +
-          res.data.map(f => {
-            const seq = f.NR_SEQUENCIA ?? f.nr_sequencia;
-            const nome = f.DS_FILA ?? f.ds_fila ?? `Fila ${seq}`;
-            return `<option value="${seq}">${escapeHtml(nome)}</option>`;
-          }).join('');
+        select.innerHTML = res.data.map(f => {
+          const seq = f.NR_SEQUENCIA ?? f.nr_sequencia;
+          const nome = f.DS_FILA ?? f.ds_fila ?? `Fila ${seq}`;
+          const isSelected = seq === 9 || String(seq) === '9';
+          return `<option value="${seq}" ${isSelected ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
+        }).join('') + '<option value="">Todas as Filas Ativas</option>';
       }
+      recepcaoState.filaSelecionada = 9;
     } else if (select) {
-      select.innerHTML = '<option value="">Todas as Filas Ativas</option>';
+      select.innerHTML = '<option value="9" selected>PA - NORMAL</option><option value="">Todas as Filas Ativas</option>';
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar filas:', err);
     if (select) {
-      select.innerHTML = '<option value="">Todas as Filas Ativas</option>';
+      select.innerHTML = '<option value="9" selected>PA - NORMAL</option><option value="">Todas as Filas Ativas</option>';
     }
   }
 }
