@@ -6,6 +6,7 @@ oracledb.autoCommit = false;
 const path = require('path');
 const candidatePaths = [
   process.env.OCI_LIB_DIR,
+  '/tmp/ic19',
   '/opt/oracle/instantclient',
   path.resolve(__dirname, '../../../instantclient-files'),
   path.resolve(__dirname, '../../../../instantclient-files')

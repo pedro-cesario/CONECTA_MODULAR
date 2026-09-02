@@ -296,6 +296,9 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, 
     };
   }
 
+  throw new Error('Falha ao gerar relatório após tentativas de autenticação.');
+}
+
 async function uploadArquivoTasyStorage(fileBuffer, fileName, mimeType = 'application/pdf', userAuth = null) {
   let auth = null;
   if (userAuth && userAuth.token) {
