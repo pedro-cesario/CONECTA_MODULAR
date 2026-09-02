@@ -14,7 +14,7 @@ async function listarFilasSenhas() {
   try {
     const result = await conn.execute(
       `SELECT nr_sequencia, ds_fila, ie_situacao
-       FROM fila_senha
+       FROM fila_espera_senha
        WHERE ie_situacao = 'A'
        ORDER BY ds_fila`
     );
@@ -58,7 +58,7 @@ async function listarSenhasEspera(nrSeqFila) {
          pf.nm_social,
          ROUND((SYSDATE - psf.dt_geracao_senha) * 1440) AS minutos_espera
        FROM paciente_senha_fila psf
-       LEFT JOIN fila_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+       LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
        LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = psf.cd_pessoa_fisica
        WHERE ${whereClause}
        ORDER BY psf.nr_prioridade ASC, psf.dt_geracao_senha ASC`,
@@ -182,7 +182,7 @@ async function buscarPessoas(termo) {
       whereClause = `pf.nr_cpf = :cpf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') = :cpf`;
       binds.cpf = apenasDigitos;
     } else if (apenasDigitos.length >= 15) {
-      whereClause = `pf.nr_cns = :cns`;
+      whereClause = `pf.nr_cartao_nac_sus = :cns`;
       binds.cns = apenasDigitos;
     } else {
       whereClause = `UPPER(pf.nm_pessoa_fisica) LIKE :nome OR UPPER(pf.nm_social) LIKE :nome`;
@@ -199,9 +199,9 @@ async function buscarPessoas(termo) {
          pf.ie_sexo,
          pf.nr_cpf,
          pf.nr_identidade,
-         pf.nm_mae,
-         pf.nm_pai,
-         pf.nr_cns,
+         pf.nm_sobrenome_mae AS nm_mae,
+         pf.nm_sobrenome_pai AS nm_pai,
+         pf.nr_cartao_nac_sus AS nr_cns,
          pf.nr_telefone_celular,
          c.ds_endereco,
          c.nr_endereco,
@@ -236,12 +236,12 @@ async function obterPessoaCompleta(cdPessoaFisica) {
          pf.ie_sexo,
          pf.nr_cpf,
          pf.nr_identidade,
-         pf.ds_orgao_emissor,
-         pf.nm_mae,
-         pf.nm_pai,
-         pf.nr_cns,
+         pf.ds_orgao_emissor_ci AS ds_orgao_emissor,
+         pf.nm_sobrenome_mae AS nm_mae,
+         pf.nm_sobrenome_pai AS nm_pai,
+         pf.nr_cartao_nac_sus AS nr_cns,
          pf.nr_telefone_celular,
-         pf.ds_email,
+         c.ds_email,
          c.ds_endereco,
          c.nr_endereco,
          c.ds_complemento,
@@ -277,12 +277,12 @@ async function salvarPessoaFisica(dados, nmUsuario) {
       await conn.execute(
         `INSERT INTO pessoa_fisica (
            cd_pessoa_fisica, nm_pessoa_fisica, nm_social, dt_nascimento, ie_sexo,
-           nr_cpf, nr_identidade, ds_orgao_emissor, nm_mae, nm_pai, nr_cns,
-           nr_telefone_celular, ds_email, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
+           nr_cpf, nr_identidade, ds_orgao_emissor_ci, nm_sobrenome_mae, nm_sobrenome_pai, nr_cartao_nac_sus,
+           nr_telefone_celular, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
          ) VALUES (
            :cd, :nome, :social, TO_DATE(:nasc, 'YYYY-MM-DD'), :sexo,
            :cpf, :rg, :emissor, :mae, :pai, :cns,
-           :cel, :email, SYSDATE, :usuario, SYSDATE, :usuario
+           :cel, SYSDATE, :usuario, SYSDATE, :usuario
          )`,
         {
           cd: cdPessoaFisica,
@@ -297,7 +297,6 @@ async function salvarPessoaFisica(dados, nmUsuario) {
           pai: dados.nm_pai || null,
           cns: dados.nr_cns || null,
           cel: dados.nr_telefone_celular || null,
-          email: dados.ds_email || null,
           usuario: nmUsuario
         }
       );
@@ -310,12 +309,11 @@ async function salvarPessoaFisica(dados, nmUsuario) {
              ie_sexo = :sexo,
              nr_cpf = :cpf,
              nr_identidade = :rg,
-             ds_orgao_emissor = :emissor,
-             nm_mae = :mae,
-             nm_pai = :pai,
-             nr_cns = :cns,
+             ds_orgao_emissor_ci = :emissor,
+             nm_sobrenome_mae = :mae,
+             nm_sobrenome_pai = :pai,
+             nr_cartao_nac_sus = :cns,
              nr_telefone_celular = :cel,
-             ds_email = :email,
              dt_atualizacao = SYSDATE,
              nm_usuario = :usuario
          WHERE cd_pessoa_fisica = :cd`,
@@ -332,7 +330,6 @@ async function salvarPessoaFisica(dados, nmUsuario) {
           pai: dados.nm_pai || null,
           cns: dados.nr_cns || null,
           cel: dados.nr_telefone_celular || null,
-          email: dados.ds_email || null,
           usuario: nmUsuario
         }
       );

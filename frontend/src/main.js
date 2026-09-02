@@ -301,6 +301,10 @@ async function initApp() {
     const mod = await loadModule('auditorias');
     mod.showAuditorias();
   });
+  document.getElementById('btn-abrir-recepcao')?.addEventListener('click', async () => {
+    const mod = await loadModule('recepcao');
+    mod.enterRecepcaoMode();
+  });
 
   // 9. Topbar Buttons Direct Handlers (Lazy Loaded)
   document.getElementById('nav-passagem')?.addEventListener('click', async () => {
@@ -330,6 +334,10 @@ async function initApp() {
   document.getElementById('nav-auditorias')?.addEventListener('click', async () => {
     const mod = await loadModule('auditorias');
     mod.showAuditorias();
+  });
+  document.getElementById('nav-recepcao')?.addEventListener('click', async () => {
+    const mod = await loadModule('recepcao');
+    mod.enterRecepcaoMode();
   });
   document.getElementById('nav-admin')?.addEventListener('click', () => { window.location.href = '/admin'; });
 
