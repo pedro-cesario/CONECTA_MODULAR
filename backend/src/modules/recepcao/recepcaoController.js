@@ -145,13 +145,41 @@ async function gerarRelatorioAtendimento(req, res, next) {
   try {
     const { id } = req.params;
     const { nr_atendimento } = req.query;
+    console.log(`[TasyReports] Gerando relatório ${id} para atendimento #${nr_atendimento}`);
     const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento);
     res.setHeader('Content-Type', contentType || 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${fileName || `relatorio_${id}_${nr_atendimento}.pdf`}"`);
     res.setHeader('Content-Length', buffer.length);
     res.send(buffer);
   } catch (err) {
-    next(err);
+    console.error(`[TasyReports] Erro ao emitir relatório ${req.params?.id} para atend ${req.query?.nr_atendimento}:`, err);
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      res.status(err.status || 500).setHeader('Content-Type', 'text/html; charset=utf-8').send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Aviso - Relatório TASY</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; max-width: 540px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+            h2 { color: #f87171; margin-top: 0; }
+            p { color: #94a3b8; line-height: 1.6; }
+            .btn { display: inline-block; margin-top: 1.5rem; padding: 0.6rem 1.2rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500; cursor: pointer; border: none; }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h2>⚠️ Aviso ao Emitir Relatório TASY</h2>
+            <p>${err.message || 'Ocorreu um erro ao comunicar com o servidor TasyReports.'}</p>
+            <p><small style="color: #64748b;">Relatório: ${req.params.id} | Atendimento: #${req.query.nr_atendimento || 'Não informado'}</small></p>
+            <button class="btn" onclick="window.close()">Fechar Janela</button>
+          </div>
+        </body>
+        </html>
+      `);
+    } else {
+      next(err);
+    }
   }
 }
 

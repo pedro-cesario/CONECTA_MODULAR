@@ -724,15 +724,18 @@ export async function carregarRelatorios() {
 }
 
 export function imprimirRelatorio(cdRelatorio, titulo) {
-  const nrAtendimento = recepcaoState.atendimentoCriado || document.getElementById('recepcao-atendimento-numero')?.textContent || null;
+  let nrAtendimento = recepcaoState.atendimentoCriado || document.getElementById('recepcao-atendimento-numero')?.textContent || null;
+  if (nrAtendimento) {
+    nrAtendimento = String(nrAtendimento).replace(/[^0-9]/g, '').trim();
+  }
   
-  if (!nrAtendimento || nrAtendimento === '---') {
+  if (!nrAtendimento || nrAtendimento === '' || nrAtendimento === '0') {
     ui.showToast('Abra ou selecione um atendimento antes de emitir o relatório.', 'warning');
     return;
   }
 
   ui.showToast(`Gerando PDF oficial do TASY para "${titulo}" (Atendimento #${nrAtendimento})...`, 'info');
-  window.open(`/api/recepcao/relatorios/${cdRelatorio}/gerar?nr_atendimento=${nrAtendimento}`, '_blank');
+  window.open(`/api/recepcao/relatorios/${cdRelatorio}/gerar?nr_atendimento=${encodeURIComponent(nrAtendimento)}`, '_blank');
 }
 
 export async function carregarDocumentosGED() {

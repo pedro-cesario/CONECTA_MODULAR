@@ -1228,6 +1228,26 @@ async function anexarDocumentoGED(dados, nmUsuario) {
   }
 }
 
+async function obterContaPaciente(nrAtendimento) {
+  if (!nrAtendimento) return null;
+  const conn = await getConnection();
+  try {
+    const res = await conn.execute(
+      `SELECT nr_interno_conta FROM conta_paciente WHERE nr_atendimento = :atend ORDER BY dt_atualizacao DESC`,
+      { atend: Number(nrAtendimento) }
+    );
+    if (res.rows && res.rows.length > 0) {
+      return String(res.rows[0].NR_INTERNO_CONTA);
+    }
+    return null;
+  } catch (err) {
+    console.error('[Recepção] Erro ao obter conta paciente:', err);
+    return null;
+  } finally {
+    await conn.close();
+  }
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
@@ -1242,6 +1262,7 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  obterContaPaciente,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,
   listarDocumentosGED,

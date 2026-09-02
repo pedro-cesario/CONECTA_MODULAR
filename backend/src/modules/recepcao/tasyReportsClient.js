@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
-const { getConnection } = require('../../core/database');
+const recepcaoRepository = require('./recepcaoRepository');
 
 const TASY_URL = process.env.TASY_REPORTS_URL || 'http://192.168.1.25/TasyAppServer';
 const TASY_USER = process.env.TASY_REPORTS_USER || 'pedro.cesario';
@@ -113,22 +113,11 @@ async function loginTasy(forceRefresh = false) {
 }
 
 async function obterNumeroContaPaciente(nrAtendimento) {
-  let conn;
   try {
-    conn = await getConnection();
-    const res = await conn.execute(
-      `SELECT nr_interno_conta FROM conta_paciente WHERE nr_atendimento = :atend ORDER BY dt_atualizacao DESC`,
-      { atend: Number(nrAtendimento) }
-    );
-    if (res.rows && res.rows.length > 0) {
-      return String(res.rows[0].NR_INTERNO_CONTA);
-    }
-    return null;
+    return await recepcaoRepository.obterContaPaciente(nrAtendimento);
   } catch (err) {
     console.error('[TasyReports] Erro ao buscar conta do paciente:', err);
     return null;
-  } finally {
-    if (conn) await conn.close();
   }
 }
 
