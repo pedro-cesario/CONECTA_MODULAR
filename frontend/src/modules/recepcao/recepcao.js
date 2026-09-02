@@ -64,6 +64,7 @@ export async function initRecepcao() {
   bindRecepcaoEvents();
   await carregarFilas();
   await carregarSenhas();
+  await carregarSetoresAtendimento();
   await carregarConvenios();
   startQueuePolling();
   irParaPasso(1);
@@ -363,6 +364,25 @@ export async function selecionarPaciente(cdPessoaFisica) {
     }
   } catch (err) {
     ui.showToast('Erro ao carregar dados do paciente: ' + err.message, 'error');
+  }
+}
+
+export async function carregarSetoresAtendimento() {
+  const select = document.getElementById('recepcao-setor-atend');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/setores');
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(s => {
+        const cd = s.CD_SETOR_ATENDIMENTO ?? s.cd_setor_atendimento;
+        const nome = s.DS_SETOR_ATENDIMENTO ?? s.ds_setor_atendimento;
+        const isSel = cd === 39 || String(cd) === '39'; // 39 - PA padrão
+        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${cd} - ${escapeHtml(nome)}</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar setores:', err);
   }
 }
 

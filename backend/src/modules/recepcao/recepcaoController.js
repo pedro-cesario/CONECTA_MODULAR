@@ -104,6 +104,15 @@ async function obterUltimoConvenioPaciente(req, res, next) {
   }
 }
 
+async function listarSetoresAtendimento(req, res, next) {
+  try {
+    const data = await recepcaoService.listarSetoresAtendimento();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function abrirAtendimento(req, res, next) {
   try {
     const usuario = req.session?.usuario?.nm_usuario || 'CONECTA_USER';
@@ -154,6 +163,7 @@ module.exports = {
   listarConvenios,
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
+  listarSetoresAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

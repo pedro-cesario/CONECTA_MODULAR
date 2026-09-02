@@ -494,6 +494,26 @@ async function obterUltimoConvenioPaciente(cdPessoaFisica) {
 }
 
 // ============================================================================
+// SETORES ASSISTENCIAIS ATIVOS
+// ============================================================================
+
+async function listarSetoresAtendimento() {
+  const conn = await getConnection();
+  try {
+    const result = await conn.execute(
+      `SELECT DISTINCT sa.cd_setor_atendimento, sa.ds_setor_atendimento
+       FROM setor_atendimento sa
+       JOIN unidade_atendimento ua ON ua.cd_setor_atendimento = sa.cd_setor_atendimento
+       WHERE sa.ie_situacao = 'A'
+       ORDER BY sa.ds_setor_atendimento`
+    );
+    return result.rows || [];
+  } finally {
+    await conn.close();
+  }
+}
+
+// ============================================================================
 // PILAR 4: ABERTURA DO ATENDIMENTO HOSPITALAR (O Evento Âncora)
 // ============================================================================
 
@@ -509,7 +529,13 @@ async function abrirAtendimento(dados, nmUsuario) {
     const cdPlano = dados.cd_plano_convenio ? String(dados.cd_plano_convenio) : null;
     const cdUsuarioConv = dados.cd_usuario_convenio ? String(dados.cd_usuario_convenio) : '0';
     const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : 1;
-    const cdMedico = dados.cd_medico_resp || '407801';
+    
+    // Médico responsável conforme regra do fluxo CETAS (42 -> 1472, padrão -> 338850 ou informado)
+    let cdMedico = dados.cd_medico_resp;
+    if (!cdMedico) {
+      cdMedico = cdConvenio === 42 ? '1472' : '338850';
+    }
+
     const nrSeqSenha = dados.nr_seq_pac_senha_fila ? parseInt(dados.nr_seq_pac_senha_fila, 10) : null;
 
     // 1. Criação do ATENDIMENTO_PACIENTE
@@ -518,18 +544,20 @@ async function abrirAtendimento(dados, nmUsuario) {
          nr_atendimento, cd_pessoa_fisica, dt_entrada, cd_estabelecimento,
          cd_procedencia, ie_tipo_atendimento, cd_medico_resp,
          nr_seq_pac_senha_fila, ie_status_atendimento,
-         dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
+         dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
+         ie_clinica, ie_carater_inter_sus, nr_seq_classificacao, ie_responsavel
        ) VALUES (
          :atend, :cd_pf, SYSDATE, 1,
-         :proc, 3, :med,
+         :proc, 1, :med,
          :senha, 'E',
-         SYSDATE, :usuario, SYSDATE, :usuario
+         SYSDATE, :usuario, SYSDATE, :usuario,
+         5, 1, 2, 3
        )`,
       {
         atend: nrAtendimento,
         cd_pf: String(dados.cd_pessoa_fisica),
         proc: cdProcedencia,
-        med: cdMedico,
+        med: String(cdMedico),
         senha: nrSeqSenha,
         usuario: nmUsuario
       }
@@ -559,7 +587,124 @@ async function abrirAtendimento(dados, nmUsuario) {
       }
     );
 
-    // 3. Se houver senha vinculada, move para a fila do consultório/triagem
+    // 3. Alocação de Setor e Unidade/Leito em ATEND_PACIENTE_UNIDADE (Regra Obrigatória TASY)
+    await conn.execute(
+      `INSERT INTO atend_paciente_unidade (
+         nr_seq_interno, nr_atendimento, nr_sequencia,
+         cd_setor_atendimento, cd_unidade_basica, cd_unidade_compl,
+         dt_entrada_unidade, nm_usuario, cd_tipo_acomodacao,
+         dt_atualizacao, dt_atualizacao_nrec, nm_usuario_nrec, cd_procedencia_atend
+       )
+       SELECT
+         TASY.ATEND_PACIENTE_UNIDADE_SEQ.NEXTVAL,
+         :atend,
+         1,
+         ua.cd_setor_atendimento,
+         ua.cd_unidade_basica,
+         ua.cd_unidade_compl,
+         SYSDATE,
+         :usuario,
+         NVL(ua.cd_tipo_acomodacao, 3),
+         SYSDATE,
+         SYSDATE,
+         :usuario,
+         :proc
+       FROM unidade_atendimento ua
+       WHERE ua.cd_setor_atendimento = :setor
+         AND ROWNUM = 1`,
+      {
+        atend: nrAtendimento,
+        setor: cdSetor,
+        usuario: nmUsuario,
+        proc: cdProcedencia
+      }
+    );
+
+    // 4. Abertura da Conta do Paciente em CONTA_PACIENTE (Regra Oficial CETAS)
+    await conn.execute(
+      `MERGE INTO CONTA_PACIENTE cp
+       USING (
+           SELECT 
+               acc.nr_atendimento,
+               MAX(acc.cd_convenio) cd_convenio,
+               MAX(acc.cd_categoria) cd_categoria,
+               MAX(acc.cd_plano_convenio) cd_plano_convenio
+           FROM ATEND_CATEGORIA_CONVENIO acc
+           WHERE acc.nr_atendimento = :atend
+           GROUP BY acc.nr_atendimento
+       ) x
+       ON (cp.nr_atendimento = x.nr_atendimento)
+       WHEN NOT MATCHED THEN
+       INSERT (
+           NR_INTERNO_CONTA,
+           NR_ATENDIMENTO,
+           CD_ESTABELECIMENTO,
+           CD_CONVENIO_PARAMETRO,
+           CD_CATEGORIA_PARAMETRO,
+           DT_PERIODO_INICIAL,
+           DT_MESANO_REFERENCIA,
+           IE_TIPO_ATEND_CONTA,
+           NM_USUARIO,
+           DT_ATUALIZACAO,
+           IE_STATUS_ACERTO,
+           CD_PLANO,
+           DT_ACERTO_CONTA,
+           DT_PERIODO_FINAL
+       )
+       VALUES (
+           TASY.CONTA_PACIENTE_SEQ.NEXTVAL,
+           x.nr_atendimento,
+           1,
+           x.cd_convenio,
+           x.cd_categoria,
+           SYSDATE,
+           TRUNC(SYSDATE, 'MM'),
+           1,
+           :usuario,
+           SYSDATE,
+           1,
+           x.cd_plano_convenio,
+           SYSDATE,
+           SYSDATE
+       )`,
+      {
+        atend: nrAtendimento,
+        usuario: nmUsuario
+      }
+    );
+
+    // 5. Lançamento Automático de Procedimentos da Conta
+    await conn.execute(
+      `DECLARE
+        v_nr_interno_conta NUMBER;
+      BEGIN
+        SELECT MAX(nr_interno_conta)
+        INTO v_nr_interno_conta
+        FROM conta_paciente
+        WHERE nr_atendimento = :atend;
+
+        IF (v_nr_interno_conta IS NOT NULL) THEN
+          GERAR_LANCAMENTO_AUTOMATICO(
+            NM_USUARIO_P        => :usuario,
+            NR_INTERNO_CONTA_P  => TO_CHAR(v_nr_interno_conta),
+            NR_ATENDIMENTO_P    => TO_CHAR(:atend),
+            DS_ADICIONAL_1_P    => NULL,
+            DS_ADICIONAL_2_P    => NULL,
+            DS_ADICIONAL_3_P    => NULL,
+            NR_SEQ_EVENTO_P     => 26,
+            NR_SEQUENCIA_P      => NULL,
+            DS_ADICIONAL_4_P    => NULL,
+            CD_LOCAL_ESTOQUE_P  => NULL
+          );
+        END IF;
+      END;`,
+      {
+        atend: nrAtendimento,
+        usuario: nmUsuario
+      }
+    );
+
+    // 6. Se houver senha vinculada, move para a fila do consultório/triagem
     if (nrSeqSenha && dados.nr_fila_destino) {
       await conn.execute(
         `UPDATE paciente_senha_fila
@@ -701,6 +846,7 @@ module.exports = {
   listarConvenios,
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
+  listarSetoresAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,
