@@ -56,9 +56,9 @@ export async function initRecepcao() {
   window.conectaCore = window.conectaCore || {};
   window.conectaCore.irParaPasso = irParaPasso;
   window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
-  window.conectaCore.selecionarPacienteBusca = selecionarPacienteBusca;
-  window.conectaCore.emitirRelatorioTasy = emitirRelatorioTasy;
-  window.conectaCore.visualizarGedDoc = visualizarGedDoc;
+  window.conectaCore.selecionarPaciente = selecionarPaciente;
+  window.conectaCore.novoPaciente = novoPaciente;
+  window.conectaCore.imprimirRelatorio = imprimirRelatorio;
 
   bindRecepcaoEvents();
   await carregarFilas();
