@@ -23,12 +23,11 @@ export async function checkSession() {
       const userNameEl = document.getElementById('user-name');
       if (userNameEl) userNameEl.textContent = state.usuario.nome || state.usuario.nm_usuario;
 
-      showScreen('app');
+      await loadModulosFromBackend();
 
+      showScreen('app');
       updateProfileLabels();
       initializeDraftSession();
-
-      await loadModulosFromBackend();
       renderSetorDropdown();
 
       if (router.shouldShowModeSelector()) {

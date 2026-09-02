@@ -143,10 +143,12 @@ async function initApp() {
         state.usuario = result.data;
         const userNameEl = document.getElementById('user-name');
         if (userNameEl) userNameEl.textContent = state.usuario.nome || state.usuario.nm_usuario;
+        
+        await auth.loadModulosFromBackend();
+
         router.showScreen('app');
         auth.updateProfileLabels();
         draft.initializeDraftSession();
-        await auth.loadModulosFromBackend();
         auth.renderSetorDropdown();
 
         if (router.shouldShowModeSelector()) {
