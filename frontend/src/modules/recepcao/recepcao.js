@@ -5,10 +5,11 @@ import { escapeHtml } from '../../core/utils.js';
 
 /**
  * Módulo de Recepção & Acolhimento — Conecta HEAL 2.0
- * Fluxo: Painel de Senhas em Espera (Board) -> Modal de Atendimento em 5 Etapas (TASY)
+ * Padrão Conecta: Fila de Espera (Guichê) + Histórico de Atendimentos do Dia (GED) + Modal Wizard
  */
 
 let recepcaoState = {
+  abaAtiva: 'senhas', // 'senhas' | 'historico'
   filaSelecionada: 9, // PA - NORMAL por padrão
   senhaAtiva: null,
   pessoaSelecionada: null,
@@ -16,6 +17,7 @@ let recepcaoState = {
   passoAtual: 1, // 1: Identificação, 2: Endereço, 3: Convênio, 4: Atendimento, 5: Relatórios/GED
   filasDisponiveis: [],
   senhasFila: [],
+  atendimentosHoje: [],
   relatorios: [],
   documentosGED: []
 };
@@ -45,7 +47,11 @@ export function startQueuePolling() {
   stopQueuePolling();
   queuePollInterval = setInterval(() => {
     if (state.mode === 'recepcao') {
-      carregarSenhas();
+      if (recepcaoState.abaAtiva === 'senhas') {
+        carregarSenhas();
+      } else {
+        carregarAtendimentosHoje();
+      }
     } else {
       stopQueuePolling();
     }
@@ -60,10 +66,13 @@ export async function initRecepcao() {
   window.conectaCore.novoPaciente = novoPaciente;
   window.conectaCore.imprimirRelatorio = imprimirRelatorio;
   window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
+  window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
+  window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
 
   bindRecepcaoEvents();
   await carregarFilas();
   await carregarSenhas();
+  await carregarAtendimentosHoje();
   await carregarSetoresAtendimento();
   await carregarConvenios();
   await carregarClassificacoesAtendimento();
@@ -89,15 +98,20 @@ function bindRecepcaoEvents() {
   }
 
   // Ações do Topo do Painel
-  document.getElementById('btn-recepcao-refresh')?.addEventListener('click', () => carregarSenhas(true));
+  document.getElementById('btn-recepcao-refresh')?.addEventListener('click', () => {
+    carregarSenhas(true);
+    carregarAtendimentosHoje(true);
+  });
   document.getElementById('btn-recepcao-chamar-proximo')?.addEventListener('click', chamarProximaSenha);
   document.getElementById('btn-recepcao-rechamar')?.addEventListener('click', rechamarSenha);
   document.getElementById('btn-recepcao-novo-avulso')?.addEventListener('click', iniciarAtendimentoAvulso);
 
-  // Filtro de Senhas no Board
-  const searchSenha = document.getElementById('recepcao-search-senha');
-  searchSenha?.addEventListener('input', (e) => {
+  // Filtros de busca
+  document.getElementById('recepcao-search-senha')?.addEventListener('input', (e) => {
     filtrarGridSenhas(e.target.value);
+  });
+  document.getElementById('recepcao-search-historico')?.addEventListener('input', (e) => {
+    filtrarTabelaAtendimentosHoje(e.target.value);
   });
 
   // Modal Stepper Navigation
@@ -139,7 +153,34 @@ function bindRecepcaoEvents() {
 }
 
 // ============================================================================
-// 1. CARREGAMENTO E RENDERIZAÇÃO DO BOARD DE SENHAS
+// 1. ALTERNÂNCIA DE ABAS NO PADRÃO CONECTA
+// ============================================================================
+
+export function trocarAbaRecepcao(aba) {
+  recepcaoState.abaAtiva = aba;
+
+  const btnSenhas = document.getElementById('tab-btn-senhas');
+  const btnHistorico = document.getElementById('tab-btn-historico');
+  const paneSenhas = document.getElementById('pane-recepcao-senhas');
+  const paneHistorico = document.getElementById('pane-recepcao-historico');
+
+  if (aba === 'senhas') {
+    btnSenhas?.classList.add('active');
+    btnHistorico?.classList.remove('active');
+    paneSenhas?.classList.remove('d-none');
+    paneHistorico?.classList.add('d-none');
+    carregarSenhas();
+  } else {
+    btnSenhas?.classList.remove('active');
+    btnHistorico?.classList.add('active');
+    paneSenhas?.classList.add('d-none');
+    paneHistorico?.classList.remove('d-none');
+    carregarAtendimentosHoje();
+  }
+}
+
+// ============================================================================
+// 2. CARREGAMENTO E RENDERIZAÇÃO DO BOARD DE SENHAS
 // ============================================================================
 
 export async function carregarFilas() {
@@ -177,7 +218,7 @@ export async function carregarSenhas(showFeedback = false) {
       recepcaoState.senhasFila = res.data;
       renderizarBoardSenhas();
       if (showFeedback) {
-        ui.showToast('Fila de senhas atualizada com sucesso!', 'info');
+        ui.showToast('Fila de senhas atualizada!', 'info');
       }
     }
   } catch (err) {
@@ -196,12 +237,14 @@ export async function carregarSenhas(showFeedback = false) {
 function renderizarBoardSenhas(listaFiltrada = null) {
   const container = document.getElementById('recepcao-senhas-grid');
   const countBadge = document.getElementById('recepcao-queue-count');
+  const tabBadge = document.getElementById('tab-badge-espera');
   const kpiTotal = document.getElementById('kpi-total-espera');
   if (!container) return;
 
   const lista = listaFiltrada !== null ? listaFiltrada : recepcaoState.senhasFila;
 
   if (countBadge) countBadge.textContent = lista.length;
+  if (tabBadge) tabBadge.textContent = lista.length;
   if (kpiTotal) kpiTotal.textContent = recepcaoState.senhasFila.length;
 
   if (lista.length === 0) {
@@ -277,7 +320,155 @@ function filtrarGridSenhas(termo) {
 }
 
 // ============================================================================
-// 2. CHAMADA DE GUICHÊ & ABERTURA DO MODAL
+// 3. CARREGAMENTO E RENDERIZAÇÃO DE ATENDIMENTOS DE HOJE (HISTÓRICO + GED)
+// ============================================================================
+
+export async function carregarAtendimentosHoje(showFeedback = false) {
+  const tbody = document.getElementById('recepcao-historico-tbody');
+  try {
+    const res = await api.get('/api/recepcao/atendimentos/hoje');
+    if (res && res.success && Array.isArray(res.data)) {
+      recepcaoState.atendimentosHoje = res.data;
+      renderizarTabelaAtendimentosHoje();
+      if (showFeedback) {
+        ui.showToast('Histórico de atendimentos atualizado!', 'info');
+      }
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar atendimentos de hoje:', err);
+    if (tbody && (!recepcaoState.atendimentosHoje || recepcaoState.atendimentosHoje.length === 0)) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-4 text-muted">
+            <i class="bi bi-exclamation-circle text-danger me-1"></i> Erro ao carregar atendimentos de hoje: ${escapeHtml(err.message)}
+          </td>
+        </tr>`;
+    }
+  }
+}
+
+function renderizarTabelaAtendimentosHoje(listaFiltrada = null) {
+  const tbody = document.getElementById('recepcao-historico-tbody');
+  const countBadge = document.getElementById('recepcao-hoje-count');
+  const tabBadge = document.getElementById('tab-badge-hoje');
+  const kpiHoje = document.getElementById('kpi-total-hoje');
+  if (!tbody) return;
+
+  const lista = listaFiltrada !== null ? listaFiltrada : recepcaoState.atendimentosHoje;
+
+  if (countBadge) countBadge.textContent = lista.length;
+  if (tabBadge) tabBadge.textContent = lista.length;
+  if (kpiHoje) kpiHoje.textContent = recepcaoState.atendimentosHoje.length;
+
+  if (lista.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center py-5 text-muted">
+          <i class="bi bi-folder-x fs-2 d-block mb-2 text-secondary"></i>
+          <strong>Nenhum atendimento realizado hoje até o momento</strong>
+          <p class="small text-muted mb-0">Os atendimentos gerados aparecerão automaticamente nesta lista.</p>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(item => {
+    const atend = item.NR_ATENDIMENTO ?? item.nr_atendimento;
+    const hr = item.HR_ENTRADA ?? item.hr_entrada ?? '--:--';
+    const cdPf = item.CD_PESSOA_FISICA ?? item.cd_pessoa_fisica;
+    const nome = item.NM_PESSOA_FISICA ?? item.nm_pessoa_fisica ?? 'Não informado';
+    const cpf = item.NR_CPF ?? item.nr_cpf ?? '-';
+    const senha = item.CD_SENHA_GERADA ?? item.cd_senha_gerada;
+    const conv = item.DS_CONVENIO ?? item.ds_convenio ?? 'Particular / SUS';
+    const setor = item.DS_SETOR ?? item.ds_setor ?? 'P.A.';
+    const qtdGed = item.QTD_GED ?? item.qtd_ged ?? 0;
+
+    const badgeGed = qtdGed > 0 
+      ? `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-paperclip"></i> ${qtdGed} doc(s)</span>`
+      : `<span class="badge bg-light text-muted border"><i class="bi bi-file-earmark"></i> 0 docs</span>`;
+
+    const senhaPill = senha 
+      ? `<span class="senha-pill-sm">#${escapeHtml(senha)}</span>` 
+      : `<span class="text-muted small">Avulso</span>`;
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(hr)}</strong></td>
+        <td>${senhaPill}</td>
+        <td>
+          <div class="fw-bold text-dark">${escapeHtml(nome)}</div>
+          <small class="text-muted">Cód TASY: ${cdPf}</small>
+        </td>
+        <td><small class="text-secondary">${escapeHtml(cpf)}</small></td>
+        <td><span class="atend-badge-numero">#${atend}</span></td>
+        <td>
+          <div class="small fw-semibold">${escapeHtml(conv)}</div>
+          <small class="text-muted">${escapeHtml(setor)}</small>
+        </td>
+        <td>${badgeGed}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-primary fw-bold" type="button" onclick="window.conectaCore.abrirDocumentosAtendimento(${atend}, '${cdPf}', '${escapeHtml(nome)}', '${senha || ''}')">
+            <i class="bi bi-printer-fill me-1"></i> Documentos & GED
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filtrarTabelaAtendimentosHoje(termo) {
+  if (!termo || termo.trim() === '') {
+    renderizarTabelaAtendimentosHoje();
+    return;
+  }
+  const q = termo.toLowerCase().trim();
+  const filtrados = recepcaoState.atendimentosHoje.filter(item => {
+    const nome = String(item.NM_PESSOA_FISICA ?? item.nm_pessoa_fisica ?? '').toLowerCase();
+    const cpf = String(item.NR_CPF ?? item.nr_cpf ?? '').toLowerCase();
+    const atend = String(item.NR_ATENDIMENTO ?? item.nr_atendimento ?? '').toLowerCase();
+    const senha = String(item.CD_SENHA_GERADA ?? item.cd_senha_gerada ?? '').toLowerCase();
+    const conv = String(item.DS_CONVENIO ?? item.ds_convenio ?? '').toLowerCase();
+    return nome.includes(q) || cpf.includes(q) || atend.includes(q) || senha.includes(q) || conv.includes(q);
+  });
+  renderizarTabelaAtendimentosHoje(filtrados);
+}
+
+/**
+ * Abertura Direta do Modal na Etapa 5 (Documentos Oficiais TasyReports & GED)
+ */
+export async function abrirDocumentosAtendimento(nrAtendimento, cdPessoaFisica, nmPaciente, cdSenha = '') {
+  recepcaoState.atendimentoCriado = nrAtendimento;
+  recepcaoState.pessoaSelecionada = {
+    CD_PESSOA_FISICA: cdPessoaFisica,
+    NM_PESSOA_FISICA: nmPaciente
+  };
+  recepcaoState.senhaAtiva = cdSenha ? { cd_senha_gerada: cdSenha } : null;
+
+  // Atualiza badge de senha no header do modal
+  const badgeEl = document.getElementById('modal-atend-senha-badge');
+  if (badgeEl) {
+    badgeEl.innerHTML = `<i class="bi bi-folder-fill text-info me-1"></i> Atendimento: <strong>#${nrAtendimento}</strong> (${escapeHtml(nmPaciente)})`;
+  }
+
+  const numAtendEl = document.getElementById('recepcao-atendimento-numero');
+  if (numAtendEl) numAtendEl.textContent = nrAtendimento;
+
+  // Carrega os relatórios oficiais e documentos GED vinculados
+  await carregarRelatorios();
+  await carregarDocumentosGED();
+
+  // Abre direto no Passo 5 (Relatórios & GED)
+  irParaPasso(5);
+
+  const modalEl = document.getElementById('modal-atendimento-recepcao');
+  if (modalEl && window.bootstrap?.Modal) {
+    const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+// ============================================================================
+// 4. CHAMADA DE GUICHÊ & ABERTURA DO MODAL
 // ============================================================================
 
 export async function chamarProximaSenha() {
@@ -380,7 +571,7 @@ function atualizarDisplaySenha(numero, tipo) {
 }
 
 // ============================================================================
-// 3. NAVEGAÇÃO ENTRE ETAPAS DO MODAL (STEPPER)
+// 5. NAVEGAÇÃO ENTRE ETAPAS DO MODAL (STEPPER)
 // ============================================================================
 
 export function irParaPasso(passo) {
@@ -437,7 +628,6 @@ export async function avancarPassoModal() {
   const p = recepcaoState.passoAtual;
 
   if (p === 1) {
-    // Valida se há nome preenchido ou paciente selecionado
     const nome = document.getElementById('recepcao-nome-completo')?.value?.trim();
     if (!nome) {
       ui.showToast('Informe o nome completo do paciente ou selecione um cadastro.', 'warning');
@@ -446,10 +636,8 @@ export async function avancarPassoModal() {
     }
     irParaPasso(2);
   } else if (p === 2) {
-    // Salva Pessoa e Endereço antes de avançar para convênio
     await salvarPessoaEEndereco();
   } else if (p === 3) {
-    // Valida Convênio
     const conv = document.getElementById('recepcao-convenio')?.value;
     if (!conv) {
       ui.showToast('Selecione o Convênio do paciente.', 'warning');
@@ -458,13 +646,12 @@ export async function avancarPassoModal() {
     }
     irParaPasso(4);
   } else if (p === 4) {
-    // Abre atendimento oficial no TASY
     await abrirAtendimento();
   }
 }
 
 // ============================================================================
-// 4. CADASTRO DE PESSOA FÍSICA & BUSCA TASY
+// 6. CADASTRO DE PESSOA FÍSICA & BUSCA TASY
 // ============================================================================
 
 export async function buscarPacientes(termo) {
@@ -601,7 +788,7 @@ function exibirCardPacienteSelecionado(p) {
 }
 
 // ============================================================================
-// 5. ENDEREÇO & CONVÊNIO
+// 7. ENDEREÇO & CONVÊNIO
 // ============================================================================
 
 export async function consultarCep(cepRaw) {
@@ -712,7 +899,6 @@ export async function carregarConvenios() {
           return `<option value="${cd}" ${isSus ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
         }).join('');
       
-      // Carrega categorias do padrão SUS (3)
       carregarCategoriasConvenio(3);
     }
   } catch (err) {
@@ -790,7 +976,7 @@ export async function carregarUltimoConvenioPaciente(cdPessoaFisica) {
 }
 
 // ============================================================================
-// 6. ABERTURA DE ATENDIMENTO OFICIAL NO TASY
+// 8. ABERTURA DE ATENDIMENTO OFICIAL NO TASY
 // ============================================================================
 
 export async function abrirAtendimento() {
@@ -838,6 +1024,7 @@ export async function abrirAtendimento() {
       await carregarRelatorios();
       await carregarDocumentosGED();
       await carregarSenhas();
+      await carregarAtendimentosHoje();
       irParaPasso(5); // Avança para Relatórios e GED
     }
   } catch (err) {
@@ -849,7 +1036,7 @@ export async function abrirAtendimento() {
 }
 
 // ============================================================================
-// 7. EMISSÃO NATIVA DE RELATÓRIOS TASYREPORTS & GED
+// 9. EMISSÃO NATIVA DE RELATÓRIOS TASYREPORTS & GED
 // ============================================================================
 
 export async function carregarRelatorios() {
@@ -964,6 +1151,7 @@ export function abrirUploadGED() {
 
           ui.showToast('Documento anexado e sincronizado com o GED do TASY com sucesso!', 'success');
           await carregarDocumentosGED();
+          await carregarAtendimentosHoje();
         } catch (postErr) {
           ui.showToast('Erro ao salvar documento no GED: ' + (postErr.message || JSON.stringify(postErr)), 'error');
         }
@@ -989,3 +1177,5 @@ window.conectaCore.novoPaciente = novoPaciente;
 window.conectaCore.imprimirRelatorio = imprimirRelatorio;
 window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
 window.conectaCore.irParaPasso = irParaPasso;
+window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
+window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;

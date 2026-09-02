@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/main.css?v=319" rel="stylesheet">
+  <link href="css/main.css?v=320" rel="stylesheet">
   <script>
     if (sessionStorage.getItem('session_active') === '1') {
       document.documentElement.classList.add('has-session');
@@ -738,40 +738,57 @@
       </div>
     </section>
 
-    <!-- MÓDULO DE RECEPÇÃO & ACOLHIMENTO (PAINEL DE SENHAS + MODAL DE ATENDIMENTO) -->
+    <!-- MÓDULO DE RECEPÇÃO & ACOLHIMENTO (PADRÃO CONECTA: SENHAS + HISTÓRICO ATENDIMENTOS HOJE) -->
     <section class="recepcao-workspace d-none" id="workspace-recepcao">
-      <!-- 1. Header do Painel -->
-      <header class="recepcao-header-card">
-        <div class="recepcao-header-title">
+      <!-- 1. Header Padrão Conecta -->
+      <header class="livro-page-header" id="recepcao-page-header">
+        <div class="livro-page-heading">
           <button class="livro-page-back" id="btn-recepcao-voltar-home" type="button" aria-label="Voltar ao menu principal" onclick="window.conectaCore.showModeChooser()">
             <i class="bi bi-arrow-left"></i>
           </button>
-          <div class="recepcao-header-icon">
-            <i class="bi bi-person-badge"></i>
-          </div>
+          <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
           <div>
-            <span class="livro-page-eyebrow">Gestão de Recepção & Guichê</span>
-            <h2 class="m-0 fw-bold" style="font-size: 1.5rem; color: var(--slate-900);">Painel de Recepção & Acolhimento</h2>
-            <p class="m-0 text-muted small">Acompanhamento das senhas em tempo real, chamador de guichê e acolhimento hospitalar no TASY.</p>
+            <span class="livro-page-eyebrow">RECEPÇÃO & ACOLHIMENTO HOSPITALAR</span>
+            <h2>Painel de Recepção & Guichê</h2>
+            <p>Acompanhamento de senhas em tempo real, chamador de guichê e prontuário TASY.</p>
           </div>
         </div>
-        <div class="recepcao-header-actions">
-          <button class="btn btn-outline-secondary" id="btn-recepcao-refresh" type="button" title="Atualizar fila">
-            <i class="bi bi-arrow-clockwise"></i> Atualizar
-          </button>
-          <button class="btn btn-outline-warning" id="btn-recepcao-rechamar" type="button">
-            <i class="bi bi-arrow-repeat"></i> Rechamar
-          </button>
-          <button class="btn btn-outline-primary" id="btn-recepcao-novo-avulso" type="button">
-            <i class="bi bi-person-plus"></i> Atendimento Avulso
-          </button>
-          <button class="btn btn-primary fw-bold" id="btn-recepcao-chamar-proximo" type="button">
-            <i class="bi bi-megaphone-fill"></i> Chamar Próxima Senha
-          </button>
+        <div class="livro-page-status">
+          <span class="status-indicator active"></span>
+          <span>TASY Integrado</span>
         </div>
       </header>
 
-      <!-- 2. KPIs & Resumo Operacional -->
+      <!-- 2. Sub-Navegação em Abas & Barra de Ações Rápidas -->
+      <div class="recepcao-sub-nav">
+        <div class="recepcao-tab-pills">
+          <button class="recepcao-tab-pill active" id="tab-btn-senhas" type="button" onclick="window.conectaCore.trocarAbaRecepcao('senhas')">
+            <i class="bi bi-ticket-perforated"></i> Fila de Espera (Guichê)
+            <span class="badge" id="tab-badge-espera">0</span>
+          </button>
+          <button class="recepcao-tab-pill" id="tab-btn-historico" type="button" onclick="window.conectaCore.trocarAbaRecepcao('historico')">
+            <i class="bi bi-clock-history"></i> Atendimentos Realizados Hoje
+            <span class="badge" id="tab-badge-hoje">0</span>
+          </button>
+        </div>
+
+        <div class="recepcao-action-buttons">
+          <button class="btn btn-sm btn-outline-secondary" id="btn-recepcao-refresh" type="button" title="Atualizar fila">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+          <button class="btn btn-sm btn-outline-warning" id="btn-recepcao-rechamar" type="button">
+            <i class="bi bi-arrow-repeat"></i> Rechamar
+          </button>
+          <button class="btn btn-sm btn-outline-primary" id="btn-recepcao-novo-avulso" type="button">
+            <i class="bi bi-person-plus"></i> Atendimento Avulso
+          </button>
+          <button class="btn btn-sm btn-primary fw-bold" id="btn-recepcao-chamar-proximo" type="button">
+            <i class="bi bi-megaphone-fill"></i> Chamar Próxima Senha
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. KPIs & Resumo Operacional -->
       <div class="recepcao-kpi-row">
         <div class="recepcao-kpi-card">
           <div class="recepcao-kpi-icon primary">
@@ -795,6 +812,16 @@
 
         <div class="recepcao-kpi-card">
           <div class="recepcao-kpi-icon info">
+            <i class="bi bi-check2-all"></i>
+          </div>
+          <div>
+            <div class="recepcao-kpi-value text-primary" id="kpi-total-hoje">0</div>
+            <div class="recepcao-kpi-label">Atendidos Hoje</div>
+          </div>
+        </div>
+
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon success">
             <i class="bi bi-funnel-fill"></i>
           </div>
           <div class="flex-grow-1">
@@ -804,26 +831,16 @@
             </select>
           </div>
         </div>
-
-        <div class="recepcao-kpi-card">
-          <div class="recepcao-kpi-icon success">
-            <i class="bi bi-shield-check"></i>
-          </div>
-          <div>
-            <div class="recepcao-kpi-value text-success" style="font-size: 1.25rem;">Online</div>
-            <div class="recepcao-kpi-label">Sincronizado com TASY</div>
-          </div>
-        </div>
       </div>
 
-      <!-- 3. Board Central de Senhas Pendentes -->
-      <div class="senhas-board-card">
+      <!-- 4. ABA 1: BOARD DE SENHAS EM ESPERA -->
+      <div id="pane-recepcao-senhas" class="senhas-board-card">
         <div class="senhas-board-header">
           <div>
-            <h4 class="m-0 fw-bold d-flex align-items-center gap-2">
-              <i class="bi bi-clock-history text-primary"></i> Fila de Senhas Aguardando Atendimento
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-ticket-perforated text-primary"></i> Fila de Senhas Aguardando Atendimento
               <span class="badge bg-primary rounded-pill fs-6" id="recepcao-queue-count">0</span>
-            </h4>
+            </h5>
             <small class="text-muted">Clique em qualquer senha abaixo para iniciar o acolhimento e abertura de atendimento no TASY</small>
           </div>
 
@@ -841,6 +858,50 @@
             <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
             <div>Carregando fila de senhas do TASY...</div>
           </div>
+        </div>
+      </div>
+
+      <!-- 5. ABA 2: HISTÓRICO DE ATENDIMENTOS REALIZADOS HOJE (COM GESTÃO GED) -->
+      <div id="pane-recepcao-historico" class="atendimentos-hoje-card d-none">
+        <div class="senhas-board-header">
+          <div>
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history text-primary"></i> Atendimentos Gerados Hoje
+              <span class="badge bg-success rounded-pill fs-6" id="recepcao-hoje-count">0</span>
+            </h5>
+            <small class="text-muted">Consulte atendimentos já abertos, emita relatórios oficiais ou anexe novos documentos no GED TASY</small>
+          </div>
+
+          <div class="senhas-board-filters">
+            <div class="input-group input-group-sm" style="max-width: 280px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="recepcao-search-historico" placeholder="Buscar paciente, CPF ou Nº...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table-conecta-recepcao">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Senha</th>
+                <th>Paciente</th>
+                <th>CPF</th>
+                <th>Nº Atendimento</th>
+                <th>Convênio / Setor</th>
+                <th>GED</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="recepcao-historico-tbody">
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div> Carregando atendimentos de hoje...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1800,6 +1861,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="src/main.js?v=319"></script>
+  <script type="module" src="src/main.js?v=320"></script>
 </body>
 </html>

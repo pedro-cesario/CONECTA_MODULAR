@@ -22,7 +22,8 @@ router.get('/convenios/:cdConvenio/categorias', recepcaoController.listarCategor
 router.get('/setores', recepcaoController.listarSetoresAtendimento);
 router.get('/classificacoes', recepcaoController.listarClassificacoesAtendimento);
 
-// PILAR 4: Abertura do Atendimento Âncora
+// PILAR 4: Abertura do Atendimento Âncora & Histórico do Dia
+router.get('/atendimentos/hoje', recepcaoController.listarAtendimentosHoje);
 router.post('/atendimentos', recepcaoController.abrirAtendimento);
 
 // PILAR 5: Relatórios TASY e GED

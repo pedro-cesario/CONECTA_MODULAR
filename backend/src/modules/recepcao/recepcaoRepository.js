@@ -1347,6 +1347,59 @@ async function obterContaPaciente(nrAtendimento) {
   }
 }
 
+async function listarAtendimentosHoje() {
+  const conn = await getConnection();
+  try {
+    const maxRes = await conn.execute(`SELECT NVL(MAX(nr_atendimento), 0) AS max_id FROM atendimento_paciente`);
+    const maxId = (maxRes.rows && maxRes.rows[0]) ? Number(maxRes.rows[0].MAX_ID) : 0;
+    const minId = Math.max(0, maxId - 500);
+
+    const res = await conn.execute(
+      `SELECT 
+         a.nr_atendimento,
+         TO_CHAR(a.dt_entrada, 'HH24:MI') AS hr_entrada,
+         TO_CHAR(a.dt_entrada, 'DD/MM/YYYY HH24:MI') AS dt_entrada_fmt,
+         a.cd_pessoa_fisica,
+         pf.nm_pessoa_fisica,
+         pf.nr_cpf,
+         a.nr_seq_pac_senha_fila,
+         s.cd_senha_gerada,
+         s.nr_prioridade,
+         CASE 
+           WHEN s.nr_prioridade = 1 THEN 'Urgência'
+           WHEN s.nr_prioridade = 2 THEN 'Preferencial'
+           ELSE 'Normal'
+         END AS ds_prioridade,
+         f.ds_fila,
+         (SELECT conv.ds_convenio 
+          FROM atend_categoria_convenio acc 
+          JOIN convenio conv ON conv.cd_convenio = acc.cd_convenio 
+          WHERE acc.nr_atendimento = a.nr_atendimento 
+          AND ROWNUM = 1) AS ds_convenio,
+         (SELECT sa.ds_setor_atendimento 
+          FROM atend_paciente_unidade apu 
+          JOIN setor_atendimento sa ON sa.cd_setor_atendimento = apu.cd_setor_atendimento 
+          WHERE apu.nr_atendimento = a.nr_atendimento 
+          AND ROWNUM = 1) AS ds_setor,
+         (SELECT COUNT(*) FROM ged_atendimento g WHERE g.nr_atendimento = a.nr_atendimento) AS qtd_ged
+       FROM atendimento_paciente a
+       JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = a.cd_pessoa_fisica
+       LEFT JOIN paciente_senha_fila s ON s.nr_sequencia = a.nr_seq_pac_senha_fila
+       LEFT JOIN fila_espera_senha f ON f.nr_sequencia = s.nr_seq_fila_senha
+       WHERE a.nr_atendimento >= :minId
+         AND a.dt_entrada >= TRUNC(SYSDATE)
+       ORDER BY a.nr_atendimento DESC`,
+      { minId }
+    );
+    return res.rows || [];
+  } catch (err) {
+    console.error('[Recepção] Erro ao listar atendimentos hoje:', err);
+    throw err;
+  } finally {
+    await conn.close();
+  }
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
@@ -1361,6 +1414,7 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  listarAtendimentosHoje,
   obterContaPaciente,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,

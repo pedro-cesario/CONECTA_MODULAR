@@ -156,6 +156,10 @@ async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
   return recepcaoRepository.anexarDocumentoGED(dados, nmUsuario);
 }
 
+async function listarAtendimentosHoje() {
+  return recepcaoRepository.listarAtendimentosHoje();
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
@@ -170,6 +174,7 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  listarAtendimentosHoje,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,
   listarDocumentosGED,

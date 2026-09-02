@@ -203,6 +203,15 @@ async function gerarRelatorioAtendimento(req, res, next) {
   }
 }
 
+async function listarAtendimentosHoje(req, res, next) {
+  try {
+    const data = await recepcaoService.listarAtendimentosHoje();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listarDocumentosGED(req, res, next) {
   try {
     const { nr_atendimento, cd_pessoa_fisica } = req.query;
@@ -243,6 +252,7 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  listarAtendimentosHoje,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,
   listarDocumentosGED,
