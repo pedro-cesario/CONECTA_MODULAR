@@ -706,9 +706,14 @@ export async function carregarRelatorios() {
             </div>
             <div class="relatorio-card-title"><i class="bi ${icone} text-primary me-1"></i> ${escapeHtml(titulo)}</div>
           </div>
-          <button class="btn btn-sm btn-outline-primary w-100 mt-2" type="button" onclick="window.conectaCore.imprimirRelatorio(${cd}, '${escapeHtml(titulo)}')">
-            <i class="bi bi-printer"></i> Visualizar & Imprimir
-          </button>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-sm btn-primary flex-grow-1" type="button" onclick="window.conectaCore.imprimirRelatorio(${cd}, '${escapeHtml(titulo)}')">
+              <i class="bi bi-printer"></i> Visualizar & Imprimir
+            </button>
+            <a class="btn btn-sm btn-outline-secondary" href="http://192.168.1.25" target="_blank" title="Abrir no TASY HTML5">
+              <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+          </div>
         </div>
       `;
       }).join('');
