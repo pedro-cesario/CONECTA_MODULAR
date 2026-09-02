@@ -71,6 +71,20 @@ async function salvarPessoa(dados, nmUsuario) {
   return recepcaoRepository.salvarPessoaFisica(dados, nmUsuario);
 }
 
+async function listarConvenios() {
+  return recepcaoRepository.listarConvenios();
+}
+
+async function listarCategoriasConvenio(cdConvenio) {
+  if (!cdConvenio) return [];
+  return recepcaoRepository.listarCategoriasConvenio(cdConvenio);
+}
+
+async function obterUltimoConvenioPaciente(cdPessoaFisica) {
+  if (!cdPessoaFisica) return null;
+  return recepcaoRepository.obterUltimoConvenioPaciente(cdPessoaFisica);
+}
+
 async function abrirAtendimento(dados, nmUsuario) {
   if (!dados.cd_pessoa_fisica) {
     const err = new Error('Pessoa física é obrigatória para abrir atendimento');
@@ -110,6 +124,9 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoa,
+  listarConvenios,
+  listarCategoriasConvenio,
+  obterUltimoConvenioPaciente,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

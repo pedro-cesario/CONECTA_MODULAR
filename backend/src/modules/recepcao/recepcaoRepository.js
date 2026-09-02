@@ -428,6 +428,72 @@ async function salvarPessoaFisica(dados, nmUsuario) {
 }
 
 // ============================================================================
+// CONVÊNIOS E PLANOS (ATEND_CATEGORIA_CONVENIO)
+// ============================================================================
+
+async function listarConvenios() {
+  const conn = await getConnection();
+  try {
+    const result = await conn.execute(
+      `SELECT cd_convenio, ds_convenio
+       FROM convenio
+       WHERE ie_situacao = 'A'
+       ORDER BY ds_convenio`
+    );
+    return result.rows || [];
+  } finally {
+    await conn.close();
+  }
+}
+
+async function listarCategoriasConvenio(cdConvenio) {
+  const conn = await getConnection();
+  try {
+    const result = await conn.execute(
+      `SELECT cd_categoria, ds_categoria
+       FROM categoria_convenio
+       WHERE cd_convenio = :cd AND ie_situacao = 'A'
+       ORDER BY ds_categoria`,
+      { cd: parseInt(cdConvenio, 10) }
+    );
+    return result.rows || [];
+  } finally {
+    await conn.close();
+  }
+}
+
+async function obterUltimoConvenioPaciente(cdPessoaFisica) {
+  const conn = await getConnection();
+  try {
+    const result = await conn.execute(
+      `SELECT * FROM (
+         SELECT
+           acc.cd_convenio,
+           c.ds_convenio,
+           acc.cd_categoria,
+           cat.ds_categoria,
+           acc.cd_plano_convenio,
+           acc.cd_usuario_convenio,
+           acc.dt_validade_carteira,
+           TO_CHAR(acc.dt_validade_carteira, 'YYYY-MM-DD') AS dt_validade_iso,
+           acc.nr_doc_convenio,
+           acc.cd_tipo_acomodacao
+         FROM atendimento_paciente ap
+         JOIN atend_categoria_convenio acc ON acc.nr_atendimento = ap.nr_atendimento
+         JOIN convenio c ON c.cd_convenio = acc.cd_convenio
+         LEFT JOIN categoria_convenio cat ON cat.cd_categoria = acc.cd_categoria AND cat.cd_convenio = acc.cd_convenio
+         WHERE ap.cd_pessoa_fisica = :cd_pf
+         ORDER BY acc.dt_atualizacao DESC
+       ) WHERE ROWNUM = 1`,
+      { cd_pf: String(cdPessoaFisica) }
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  } finally {
+    await conn.close();
+  }
+}
+
+// ============================================================================
 // PILAR 4: ABERTURA DO ATENDIMENTO HOSPITALAR (O Evento Âncora)
 // ============================================================================
 
@@ -439,33 +505,61 @@ async function abrirAtendimento(dados, nmUsuario) {
 
     const cdSetor = dados.cd_setor_atendimento ? parseInt(dados.cd_setor_atendimento, 10) : 39; // 39 = PA
     const cdConvenio = dados.cd_convenio ? parseInt(dados.cd_convenio, 10) : 3; // 3 = SUS
+    const cdCategoria = dados.cd_categoria ? String(dados.cd_categoria) : '1';
+    const cdPlano = dados.cd_plano_convenio ? String(dados.cd_plano_convenio) : null;
+    const cdUsuarioConv = dados.cd_usuario_convenio ? String(dados.cd_usuario_convenio) : '0';
     const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : 1;
-    const cdMedico = dados.cd_medico_resp || '1';
+    const cdMedico = dados.cd_medico_resp || '407801';
     const nrSeqSenha = dados.nr_seq_pac_senha_fila ? parseInt(dados.nr_seq_pac_senha_fila, 10) : null;
 
+    // 1. Criação do ATENDIMENTO_PACIENTE
     await conn.execute(
       `INSERT INTO atendimento_paciente (
          nr_atendimento, cd_pessoa_fisica, dt_entrada, cd_estabelecimento,
-         cd_setor_atendimento, cd_convenio, cd_medico_resp, cd_procedencia,
-         ie_tipo_atendimento, nr_seq_pac_senha_fila, dt_atualizacao, nm_usuario
+         cd_procedencia, ie_tipo_atendimento, cd_medico_resp,
+         nr_seq_pac_senha_fila, ie_status_atendimento,
+         dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
        ) VALUES (
          :atend, :cd_pf, SYSDATE, 1,
-         :setor, :conv, :med, :proc,
-         1, :senha, SYSDATE, :usuario
+         :proc, 3, :med,
+         :senha, 'E',
+         SYSDATE, :usuario, SYSDATE, :usuario
        )`,
       {
         atend: nrAtendimento,
         cd_pf: String(dados.cd_pessoa_fisica),
-        setor: cdSetor,
-        conv: cdConvenio,
-        med: cdMedico,
         proc: cdProcedencia,
+        med: cdMedico,
         senha: nrSeqSenha,
         usuario: nmUsuario
       }
     );
 
-    // Se houver senha vinculada, move para a fila do consultório/triagem
+    // 2. Criação do Vínculo de Convênio em ATEND_CATEGORIA_CONVENIO
+    await conn.execute(
+      `INSERT INTO atend_categoria_convenio (
+         nr_seq_interno, nr_atendimento, cd_convenio, cd_categoria, cd_plano_convenio,
+         cd_usuario_convenio, dt_inicio_vigencia, dt_atualizacao, nm_usuario,
+         nr_doc_convenio, cd_tipo_acomodacao, ie_tipo_guia, ie_regime_internacao,
+         nm_usuario_original, cd_municipio_convenio
+       ) VALUES (
+         ATEND_CATEGORIA_CONVENIO_SEQ.NEXTVAL, :atend, :conv, :cat, :plano,
+         :carteira, SYSDATE, SYSDATE, :usuario,
+         :doc_conv, 3, 'C', '1',
+         :usuario, 30570000
+       )`,
+      {
+        atend: nrAtendimento,
+        conv: cdConvenio,
+        cat: cdCategoria,
+        plano: cdPlano,
+        carteira: cdUsuarioConv,
+        usuario: nmUsuario,
+        doc_conv: String(nrAtendimento)
+      }
+    );
+
+    // 3. Se houver senha vinculada, move para a fila do consultório/triagem
     if (nrSeqSenha && dados.nr_fila_destino) {
       await conn.execute(
         `UPDATE paciente_senha_fila
@@ -604,6 +698,9 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoaFisica,
+  listarConvenios,
+  listarCategoriasConvenio,
+  obterUltimoConvenioPaciente,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

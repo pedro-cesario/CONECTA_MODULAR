@@ -75,6 +75,35 @@ async function salvarPessoa(req, res, next) {
   }
 }
 
+async function listarConvenios(req, res, next) {
+  try {
+    const data = await recepcaoService.listarConvenios();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listarCategoriasConvenio(req, res, next) {
+  try {
+    const { cdConvenio } = req.params;
+    const data = await recepcaoService.listarCategoriasConvenio(cdConvenio);
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function obterUltimoConvenioPaciente(req, res, next) {
+  try {
+    const { id } = req.params;
+    const data = await recepcaoService.obterUltimoConvenioPaciente(id);
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function abrirAtendimento(req, res, next) {
   try {
     const usuario = req.session?.usuario?.nm_usuario || 'CONECTA_USER';
@@ -122,6 +151,9 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoa,
+  listarConvenios,
+  listarCategoriasConvenio,
+  obterUltimoConvenioPaciente,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

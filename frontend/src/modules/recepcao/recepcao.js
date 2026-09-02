@@ -64,6 +64,7 @@ export async function initRecepcao() {
   bindRecepcaoEvents();
   await carregarFilas();
   await carregarSenhas();
+  await carregarConvenios();
   startQueuePolling();
   irParaPasso(1);
 }
@@ -75,6 +76,14 @@ function bindRecepcaoEvents() {
     selectFila.addEventListener('change', (e) => {
       recepcaoState.filaSelecionada = e.target.value;
       carregarSenhas();
+    });
+  }
+
+  const selectConv = document.getElementById('recepcao-convenio');
+  if (selectConv && !selectConv.dataset.bound) {
+    selectConv.dataset.bound = '1';
+    selectConv.addEventListener('change', (e) => {
+      carregarCategoriasConvenio(e.target.value);
     });
   }
 
@@ -348,11 +357,81 @@ export async function selecionarPaciente(cdPessoaFisica) {
       preencherFormularioPaciente(res.data);
       exibirCardPacienteSelecionado(res.data);
       document.getElementById('recepcao-search-results').innerHTML = '';
+      await carregarUltimoConvenioPaciente(cdPessoaFisica);
       ui.showToast('Paciente carregado com sucesso!', 'success');
       irParaPasso(3); // Avança para conferência de endereço
     }
   } catch (err) {
     ui.showToast('Erro ao carregar dados do paciente: ' + err.message, 'error');
+  }
+}
+
+export async function carregarConvenios() {
+  const select = document.getElementById('recepcao-convenio');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/convenios');
+    if (res && res.success && Array.isArray(res.data)) {
+      select.innerHTML = '<option value="">Selecione o convênio...</option>' +
+        res.data.map(c => {
+          const cd = c.CD_CONVENIO ?? c.cd_convenio;
+          const nome = c.DS_CONVENIO ?? c.ds_convenio;
+          return `<option value="${cd}">${escapeHtml(nome)}</option>`;
+        }).join('');
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar convênios:', err);
+  }
+}
+
+export async function carregarCategoriasConvenio(cdConvenio, selectedCat = null) {
+  const select = document.getElementById('recepcao-categoria');
+  if (!select) return;
+
+  if (!cdConvenio) {
+    select.innerHTML = '<option value="">Selecione o convênio primeiro...</option>';
+    return;
+  }
+
+  try {
+    const res = await api.get(`/api/recepcao/convenios/${cdConvenio}/categorias`);
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(cat => {
+        const cd = cat.CD_CATEGORIA ?? cat.cd_categoria;
+        const nome = cat.DS_CATEGORIA ?? cat.ds_categoria;
+        const isSel = selectedCat && String(cd) === String(selectedCat);
+        return `<option value="${cd}" ${isSel ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
+      }).join('');
+    } else {
+      select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
+    }
+  } catch (err) {
+    select.innerHTML = '<option value="1" selected>Padrão / Geral</option>';
+  }
+}
+
+export async function carregarUltimoConvenioPaciente(cdPessoaFisica) {
+  if (!cdPessoaFisica) return;
+
+  try {
+    const res = await api.get(`/api/recepcao/pessoas/${cdPessoaFisica}/ultimo-convenio`);
+    if (res && res.success && res.data) {
+      const conv = res.data;
+      const selectConv = document.getElementById('recepcao-convenio');
+      const inputCart = document.getElementById('recepcao-carteirinha');
+
+      if (selectConv && conv.CD_CONVENIO) {
+        selectConv.value = conv.CD_CONVENIO;
+        await carregarCategoriasConvenio(conv.CD_CONVENIO, conv.CD_CATEGORIA);
+      }
+      if (inputCart && conv.CD_USUARIO_CONVENIO) {
+        inputCart.value = conv.CD_USUARIO_CONVENIO;
+      }
+      ui.showToast(`Convênio anterior (${conv.DS_CONVENIO || ''}) recuperado automaticamente!`, 'info');
+    }
+  } catch (err) {
+    console.warn('[Recepção] Sem convênio prévio para este paciente:', err);
   }
 }
 
@@ -519,6 +598,12 @@ export async function abrirAtendimento() {
     return;
   }
 
+  const convVal = document.getElementById('recepcao-convenio')?.value;
+  if (!convVal) {
+    ui.showToast('Selecione o Convênio para abrir o atendimento.', 'warning');
+    return;
+  }
+
   const btn = document.getElementById('btn-recepcao-abrir-atendimento');
   if (btn) ui.setLoading(btn, true);
 
@@ -526,7 +611,9 @@ export async function abrirAtendimento() {
     const payload = {
       cd_pessoa_fisica: cdPf,
       cd_setor_atendimento: document.getElementById('recepcao-setor-atend')?.value || 39,
-      cd_convenio: document.getElementById('recepcao-convenio')?.value || 3,
+      cd_convenio: convVal,
+      cd_categoria: document.getElementById('recepcao-categoria')?.value || '1',
+      cd_usuario_convenio: document.getElementById('recepcao-carteirinha')?.value || '0',
       cd_procedencia: document.getElementById('recepcao-procedencia')?.value || 1,
       nr_seq_pac_senha_fila: recepcaoState.senhaAtiva?.nr_sequencia || null,
       nr_fila_destino: 18 // Fila de Triagem / P.A.
@@ -546,7 +633,7 @@ export async function abrirAtendimento() {
       irParaPasso(5); // Avança para Relatórios e GED
     }
   } catch (err) {
-    ui.showToast('Erro ao abrir atendimento: ' + err.message, 'error');
+    ui.showToast('Erro ao abrir atendimento: ' + (err.message || JSON.stringify(err)), 'error');
   } finally {
     if (btn) ui.setLoading(btn, false);
   }
