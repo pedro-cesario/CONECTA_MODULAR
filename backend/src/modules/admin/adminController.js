@@ -240,8 +240,7 @@ async function obterConfigSistema(req, res) {
 
 async function salvarConfigSistema(req, res) {
   try {
-    const { app_version, show_test_bar, ect_cd_agenda, ect_cd_procedimento } = req.body;
-    const configs = { app_version, show_test_bar, ect_cd_agenda, ect_cd_procedimento };
+    const configs = req.body || {};
     const result = await configCache.saveSystemConfig(configs);
     res.json({ success: true, data: result });
   } catch (err) {

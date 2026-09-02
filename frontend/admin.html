@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/style.css?v=301" rel="stylesheet">
+  <link href="css/style.css?v=318" rel="stylesheet">
 
   <style>
     .admin-container {
@@ -1547,11 +1547,87 @@
                         <label for="config-ect-procedimento" class="form-label small fw-bold">Procedimento TASY</label>
                         <select id="config-ect-procedimento" class="form-select">
                           <option value="">Carregando procedimentos...</option>
-                        </select>
                       </div>
                     </div>
                     <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-ect">
                       <i class="bi bi-check2-circle"></i> Salvar Apontamentos ECT
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CONFIGURAÇÕES DE RECEPÇÃO, TASYREPORTS & GED -->
+              <div class="col-md-12">
+                <div class="admin-card">
+                  <div class="admin-card-header">
+                    <div class="admin-card-title">
+                      <i class="bi bi-person-badge-fill text-primary"></i> Módulo de Recepção & Acolhimento — Parâmetros TASY, Reports & GED
+                    </div>
+                  </div>
+                  <div class="admin-card-body">
+                    <p class="text-muted small">Parâmetros operacionais para abertura de atendimentos, motor nativo do TasyReports e repositório de documentos GED.</p>
+                    
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-3">
+                        <label for="config-recepcao-tipo-atend" class="form-label small fw-bold">Tipo de Atendimento Padrão</label>
+                        <input type="number" id="config-recepcao-tipo-atend" class="form-control" placeholder="3 (Internação/PA)">
+                        <small class="text-muted" style="font-size: 11px;">IE_TIPO_ATENDIMENTO no TASY</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-med-resp" class="form-label small fw-bold">Médico Responsável Padrão</label>
+                        <input type="text" id="config-recepcao-med-resp" class="form-control" placeholder="408120">
+                        <small class="text-muted" style="font-size: 11px;">CD_MED_RESP no TASY</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-setor-padrao" class="form-label small fw-bold">Setor Padrão</label>
+                        <input type="number" id="config-recepcao-setor-padrao" class="form-control" placeholder="39 (PA)">
+                        <small class="text-muted" style="font-size: 11px;">CD_SETOR_ATENDIMENTO</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-conv-padrao" class="form-label small fw-bold">Convênio Padrão</label>
+                        <input type="number" id="config-recepcao-conv-padrao" class="form-control" placeholder="3 (SUS)">
+                        <small class="text-muted" style="font-size: 11px;">CD_CONVENIO sugerido</small>
+                      </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-3">
+                        <label for="config-recepcao-estab" class="form-label small fw-bold">Estabelecimento</label>
+                        <input type="number" id="config-recepcao-estab" class="form-control" placeholder="1">
+                        <small class="text-muted" style="font-size: 11px;">CD_ESTABELECIMENTO</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-procedencia" class="form-label small fw-bold">Procedência Padrão</label>
+                        <input type="number" id="config-recepcao-procedencia" class="form-control" placeholder="1">
+                        <small class="text-muted" style="font-size: 11px;">CD_PROCEDENCIA</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-fila-destino" class="form-label small fw-bold">Fila Destino (Triagem)</label>
+                        <input type="number" id="config-recepcao-fila-destino" class="form-control" placeholder="18">
+                        <small class="text-muted" style="font-size: 11px;">NR_FILA_DESTINO</small>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="config-recepcao-ged-tipo" class="form-label small fw-bold">Tipo Documento GED</label>
+                        <input type="number" id="config-recepcao-ged-tipo" class="form-control" placeholder="10">
+                        <small class="text-muted" style="font-size: 11px;">NR_SEQ_TIPO_ARQUIVO no TASY</small>
+                      </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                      <div class="col-md-6">
+                        <label for="config-tasy-reports-url" class="form-label small fw-bold">URL Servidor TasyAppServer</label>
+                        <input type="text" id="config-tasy-reports-url" class="form-control" placeholder="http://192.168.1.25/TasyAppServer">
+                        <small class="text-muted" style="font-size: 11px;">Endpoint do motor TasyReports</small>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="config-tasy-reports-user" class="form-label small fw-bold">Usuário Técnico TASY (Serviço)</label>
+                        <input type="text" id="config-tasy-reports-user" class="form-control" placeholder="pedro.cesario">
+                        <small class="text-muted" style="font-size: 11px;">Conta de fallback para emissão</small>
+                      </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-recepcao">
+                      <i class="bi bi-check2-circle"></i> Salvar Parâmetros da Recepção & TASY
                     </button>
                   </div>
                 </div>
@@ -2942,6 +3018,20 @@
           if (result.data.ect_cd_procedimento) {
             document.getElementById('config-ect-procedimento').value = result.data.ect_cd_procedimento;
           }
+
+          // Parâmetros da Recepção & TasyReports
+          if (document.getElementById('config-recepcao-tipo-atend')) {
+            document.getElementById('config-recepcao-tipo-atend').value = result.data.recepcao_ie_tipo_atendimento || '3';
+            document.getElementById('config-recepcao-med-resp').value = result.data.recepcao_cd_med_resp || '408120';
+            document.getElementById('config-recepcao-setor-padrao').value = result.data.recepcao_cd_setor_padrao || '39';
+            document.getElementById('config-recepcao-conv-padrao').value = result.data.recepcao_cd_convenio_padrao || '3';
+            document.getElementById('config-recepcao-estab').value = result.data.recepcao_cd_estabelecimento || '1';
+            document.getElementById('config-recepcao-procedencia').value = result.data.recepcao_cd_procedencia || '1';
+            document.getElementById('config-recepcao-fila-destino').value = result.data.recepcao_nr_fila_destino || '18';
+            document.getElementById('config-recepcao-ged-tipo').value = result.data.recepcao_ged_tipo_arquivo || '10';
+            document.getElementById('config-tasy-reports-url').value = result.data.tasy_reports_url || 'http://192.168.1.25/TasyAppServer';
+            document.getElementById('config-tasy-reports-user').value = result.data.tasy_reports_user || 'pedro.cesario';
+          }
         }
       } catch (err) {
         console.error('Erro ao carregar config sistema', err);
@@ -2986,6 +3076,41 @@
         });
         if (result.success) {
           showToast('Configurações ECT salvas com sucesso!', 'success');
+        } else {
+          showToast(result.message || 'Erro ao salvar configurações', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar configurações', 'error');
+      }
+    });
+
+    document.getElementById('btn-save-config-recepcao')?.addEventListener('click', async () => {
+      const recepcao_ie_tipo_atendimento = document.getElementById('config-recepcao-tipo-atend').value;
+      const recepcao_cd_med_resp = document.getElementById('config-recepcao-med-resp').value;
+      const recepcao_cd_setor_padrao = document.getElementById('config-recepcao-setor-padrao').value;
+      const recepcao_cd_convenio_padrao = document.getElementById('config-recepcao-conv-padrao').value;
+      const recepcao_cd_estabelecimento = document.getElementById('config-recepcao-estab').value;
+      const recepcao_cd_procedencia = document.getElementById('config-recepcao-procedencia').value;
+      const recepcao_nr_fila_destino = document.getElementById('config-recepcao-fila-destino').value;
+      const recepcao_ged_tipo_arquivo = document.getElementById('config-recepcao-ged-tipo').value;
+      const tasy_reports_url = document.getElementById('config-tasy-reports-url').value;
+      const tasy_reports_user = document.getElementById('config-tasy-reports-user').value;
+
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
+          recepcao_ie_tipo_atendimento,
+          recepcao_cd_med_resp,
+          recepcao_cd_setor_padrao,
+          recepcao_cd_convenio_padrao,
+          recepcao_cd_estabelecimento,
+          recepcao_cd_procedencia,
+          recepcao_nr_fila_destino,
+          recepcao_ged_tipo_arquivo,
+          tasy_reports_url,
+          tasy_reports_user
+        });
+        if (result.success) {
+          showToast('Parâmetros da Recepção & TASY salvos com sucesso!', 'success');
         } else {
           showToast(result.message || 'Erro ao salvar configurações', 'error');
         }
