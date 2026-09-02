@@ -18,8 +18,9 @@ router.post('/pessoas', recepcaoController.salvarPessoa);
 router.get('/convenios', recepcaoController.listarConvenios);
 router.get('/convenios/:cdConvenio/categorias', recepcaoController.listarCategoriasConvenio);
 
-// Setores Assistenciais
+// Setores Assistenciais & Classificações
 router.get('/setores', recepcaoController.listarSetoresAtendimento);
+router.get('/classificacoes', recepcaoController.listarClassificacoesAtendimento);
 
 // PILAR 4: Abertura do Atendimento Âncora
 router.post('/atendimentos', recepcaoController.abrirAtendimento);

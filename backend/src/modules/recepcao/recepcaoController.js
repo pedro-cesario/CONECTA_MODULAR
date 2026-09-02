@@ -113,6 +113,15 @@ async function listarSetoresAtendimento(req, res, next) {
   }
 }
 
+async function listarClassificacoesAtendimento(req, res, next) {
+  try {
+    const data = await recepcaoService.listarClassificacoesAtendimento();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function abrirAtendimento(req, res, next) {
   try {
     const usuario = req.session?.usuario?.nm_usuario || 'CONECTA_USER';
@@ -164,6 +173,7 @@ module.exports = {
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
   listarSetoresAtendimento,
+  listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

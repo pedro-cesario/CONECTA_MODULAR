@@ -514,6 +514,25 @@ async function listarSetoresAtendimento() {
 }
 
 // ============================================================================
+// CLASSIFICAÇÕES DE ATENDIMENTO
+// ============================================================================
+
+async function listarClassificacoesAtendimento() {
+  const conn = await getConnection();
+  try {
+    const result = await conn.execute(
+      `SELECT nr_sequencia, ds_classificacao
+       FROM classificacao_atendimento
+       WHERE ie_situacao = 'A'
+       ORDER BY nr_sequencia`
+    );
+    return result.rows || [];
+  } finally {
+    await conn.close();
+  }
+}
+
+// ============================================================================
 // PILAR 4: ABERTURA DO ATENDIMENTO HOSPITALAR (O Evento Âncora)
 // ============================================================================
 
@@ -530,15 +549,15 @@ async function abrirAtendimento(dados, nmUsuario) {
     const cdUsuarioConv = dados.cd_usuario_convenio ? String(dados.cd_usuario_convenio) : '0';
     const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : 1;
     
-    // Médico responsável conforme regra do fluxo CETAS (42 -> 1472, padrão -> 338850 ou informado)
-    let cdMedico = dados.cd_medico_resp;
-    if (!cdMedico) {
-      cdMedico = cdConvenio === 42 ? '1472' : '338850';
-    }
+    // Médico responsável: padrão 408120 ou informado
+    const cdMedico = dados.cd_medico_resp || '408120';
+    
+    // Classificação do atendimento (ex: 2 = Voluntário, 1 = Involuntário, 3 = Compulsória)
+    const nrSeqClassif = dados.nr_seq_classificacao ? parseInt(dados.nr_seq_classificacao, 10) : 2;
 
     const nrSeqSenha = dados.nr_seq_pac_senha_fila ? parseInt(dados.nr_seq_pac_senha_fila, 10) : null;
 
-    // 1. Criação do ATENDIMENTO_PACIENTE
+    // 1. Criação do ATENDIMENTO_PACIENTE (ie_tipo_atendimento = 3)
     await conn.execute(
       `INSERT INTO atendimento_paciente (
          nr_atendimento, cd_pessoa_fisica, dt_entrada, cd_estabelecimento,
@@ -548,16 +567,17 @@ async function abrirAtendimento(dados, nmUsuario) {
          ie_clinica, ie_carater_inter_sus, nr_seq_classificacao, ie_responsavel
        ) VALUES (
          :atend, :cd_pf, SYSDATE, 1,
-         :proc, 1, :med,
+         :proc, 3, :med,
          :senha, 'E',
          SYSDATE, :usuario, SYSDATE, :usuario,
-         5, 1, 2, 3
+         5, 1, :classif, 3
        )`,
       {
         atend: nrAtendimento,
         cd_pf: String(dados.cd_pessoa_fisica),
         proc: cdProcedencia,
         med: String(cdMedico),
+        classif: nrSeqClassif,
         senha: nrSeqSenha,
         usuario: nmUsuario
       }
@@ -847,6 +867,7 @@ module.exports = {
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
   listarSetoresAtendimento,
+  listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,

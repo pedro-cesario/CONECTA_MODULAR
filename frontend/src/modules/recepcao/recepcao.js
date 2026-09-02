@@ -66,6 +66,7 @@ export async function initRecepcao() {
   await carregarSenhas();
   await carregarSetoresAtendimento();
   await carregarConvenios();
+  await carregarClassificacoesAtendimento();
   startQueuePolling();
   irParaPasso(1);
 }
@@ -405,6 +406,25 @@ export async function carregarConvenios() {
   }
 }
 
+export async function carregarClassificacoesAtendimento() {
+  const select = document.getElementById('recepcao-classificacao');
+  if (!select) return;
+
+  try {
+    const res = await api.get('/api/recepcao/classificacoes');
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      select.innerHTML = res.data.map(c => {
+        const seq = c.NR_SEQUENCIA ?? c.nr_sequencia;
+        const nome = c.DS_CLASSIFICACAO ?? c.ds_classificacao;
+        const isSel = seq === 2 || String(seq) === '2'; // 2 = Voluntário padrão
+        return `<option value="${seq}" ${isSel ? 'selected' : ''}>${seq} - ${escapeHtml(nome)}</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('[Recepção] Erro ao carregar classificações:', err);
+  }
+}
+
 export async function carregarCategoriasConvenio(cdConvenio, selectedCat = null) {
   const select = document.getElementById('recepcao-categoria');
   if (!select) return;
@@ -634,6 +654,7 @@ export async function abrirAtendimento() {
       cd_convenio: convVal,
       cd_categoria: document.getElementById('recepcao-categoria')?.value || '1',
       cd_usuario_convenio: document.getElementById('recepcao-carteirinha')?.value || '0',
+      nr_seq_classificacao: document.getElementById('recepcao-classificacao')?.value || 2,
       cd_procedencia: document.getElementById('recepcao-procedencia')?.value || 1,
       nr_seq_pac_senha_fila: recepcaoState.senhaAtiva?.nr_sequencia || null,
       nr_fila_destino: 18 // Fila de Triagem / P.A.

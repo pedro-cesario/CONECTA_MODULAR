@@ -89,6 +89,10 @@ async function listarSetoresAtendimento() {
   return recepcaoRepository.listarSetoresAtendimento();
 }
 
+async function listarClassificacoesAtendimento() {
+  return recepcaoRepository.listarClassificacoesAtendimento();
+}
+
 async function abrirAtendimento(dados, nmUsuario) {
   if (!dados.cd_pessoa_fisica) {
     const err = new Error('Pessoa física é obrigatória para abrir atendimento');
@@ -132,6 +136,7 @@ module.exports = {
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
   listarSetoresAtendimento,
+  listarClassificacoesAtendimento,
   abrirAtendimento,
   listarRelatoriosAtendimento,
   listarDocumentosGED,
