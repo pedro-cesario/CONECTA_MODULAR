@@ -1197,24 +1197,49 @@ async function anexarDocumentoGED(dados, nmUsuario) {
     const seqRes = await conn.execute(`SELECT GED_ATENDIMENTO_SEQ.NEXTVAL AS id FROM dual`);
     const nrSeq = seqRes.rows[0].ID;
 
+    const cdProfissional = dados.cd_profissional || dados.cd_pessoa_fisica_usuario || '408120';
+    const tipoArquivo = dados.nr_seq_tipo_arquivo || 10; // 10 = Documento do Paciente / Recepção
+
     await conn.execute(
       `INSERT INTO ged_atendimento (
-         nr_sequencia, nr_atendimento, cd_pessoa_fisica, ds_titulo,
-         ds_arquivo, ds_extensao_arquivo, dt_registro, dt_atualizacao,
-         nm_usuario, cd_estabelecimento
+         nr_sequencia,
+         nr_atendimento,
+         cd_pessoa_fisica,
+         ds_titulo,
+         cd_profissional,
+         ds_arquivo,
+         ds_extensao_arquivo,
+         dt_registro,
+         dt_atualizacao,
+         nm_usuario,
+         cd_estabelecimento,
+         nr_seq_tipo_arquivo,
+         ie_situacao
        ) VALUES (
-         :seq, :atend, :pf, :titulo,
-         :arquivo, :ext, SYSDATE, SYSDATE,
-         :usuario, 1
+         :seq,
+         :atend,
+         :pf,
+         :titulo,
+         :prof,
+         :arquivo,
+         :ext,
+         SYSDATE,
+         SYSDATE,
+         :usuario,
+         1,
+         :tipoArq,
+         'A'
        )`,
       {
         seq: nrSeq,
         atend: dados.nr_atendimento ? parseInt(dados.nr_atendimento, 10) : null,
-        pf: String(dados.cd_pessoa_fisica),
+        pf: String(dados.cd_pessoa_fisica || '0'),
         titulo: dados.ds_titulo || 'Documento Anexado na Recepção',
-        arquivo: dados.ds_arquivo,
+        prof: String(cdProfissional),
+        arquivo: dados.ds_arquivo || 'documento.pdf',
         ext: dados.ds_extensao_arquivo || 'pdf',
-        usuario: nmUsuario
+        usuario: nmUsuario,
+        tipoArq: tipoArquivo
       }
     );
 
