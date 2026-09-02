@@ -1,4 +1,5 @@
 const { getConnection } = require('../../core/database');
+const configCache = require('../../core/config/configCache');
 
 /**
  * Módulo de Recepção & Acolhimento — Repositório Oracle TASY
@@ -539,25 +540,28 @@ async function listarClassificacoesAtendimento() {
 async function abrirAtendimento(dados, nmUsuario) {
   const conn = await getConnection();
   try {
+    const sysConfig = configCache.getSystemConfig() || {};
     const seqRes = await conn.execute(`SELECT ATENDIMENTO_PACIENTE_SEQ.NEXTVAL AS id FROM dual`);
     const nrAtendimento = seqRes.rows[0].ID;
 
-    const cdSetor = dados.cd_setor_atendimento ? parseInt(dados.cd_setor_atendimento, 10) : 39; // 39 = PA
-    const cdConvenio = dados.cd_convenio ? parseInt(dados.cd_convenio, 10) : 3; // 3 = SUS
-    const cdCategoria = dados.cd_categoria ? String(dados.cd_categoria) : '1';
+    const cdSetor = dados.cd_setor_atendimento ? parseInt(dados.cd_setor_atendimento, 10) : (parseInt(sysConfig.recepcao_cd_setor_padrao, 10) || 39);
+    const cdConvenio = dados.cd_convenio ? parseInt(dados.cd_convenio, 10) : (parseInt(sysConfig.recepcao_cd_convenio_padrao, 10) || 3);
+    const cdCategoria = dados.cd_categoria ? String(dados.cd_categoria) : (String(sysConfig.recepcao_cd_categoria_padrao || '1'));
     const cdPlano = dados.cd_plano_convenio ? String(dados.cd_plano_convenio) : null;
     const cdUsuarioConv = dados.cd_usuario_convenio ? String(dados.cd_usuario_convenio) : '0';
-    const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : 1;
+    const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : (parseInt(sysConfig.recepcao_cd_procedencia, 10) || 1);
+    const cdEstabelecimento = dados.cd_estabelecimento ? parseInt(dados.cd_estabelecimento, 10) : (parseInt(sysConfig.recepcao_cd_estabelecimento, 10) || 1);
+    const ieTipoAtendimento = dados.ie_tipo_atendimento ? parseInt(dados.ie_tipo_atendimento, 10) : (parseInt(sysConfig.recepcao_ie_tipo_atendimento, 10) || 3);
     
-    // Médico responsável: padrão 408120 ou informado
-    const cdMedico = dados.cd_medico_resp || '408120';
+    // Médico responsável: padrão configurável no Admin ou 408120
+    const cdMedico = dados.cd_medico_resp || sysConfig.recepcao_cd_med_resp || '408120';
     
     // Classificação do atendimento (ex: 2 = Voluntário, 1 = Involuntário, 3 = Compulsória)
-    const nrSeqClassif = dados.nr_seq_classificacao ? parseInt(dados.nr_seq_classificacao, 10) : 2;
+    const nrSeqClassif = dados.nr_seq_classificacao ? parseInt(dados.nr_seq_classificacao, 10) : (parseInt(sysConfig.recepcao_classificacao_padrao, 10) || 2);
 
     const nrSeqSenha = dados.nr_seq_pac_senha_fila ? parseInt(dados.nr_seq_pac_senha_fila, 10) : null;
 
-    // 1. Criação do ATENDIMENTO_PACIENTE (ie_tipo_atendimento = 3)
+    // 1. Criação do ATENDIMENTO_PACIENTE
     await conn.execute(
       `INSERT INTO atendimento_paciente (
          nr_atendimento, cd_pessoa_fisica, dt_entrada, cd_estabelecimento,
@@ -566,8 +570,8 @@ async function abrirAtendimento(dados, nmUsuario) {
          dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
          ie_clinica, ie_carater_inter_sus, nr_seq_classificacao, ie_responsavel
        ) VALUES (
-         :atend, :cd_pf, SYSDATE, 1,
-         :proc, 3, :med,
+         :atend, :cd_pf, SYSDATE, :estab,
+         :proc, :tipo_atend, :med,
          :senha, 'E',
          SYSDATE, :usuario, SYSDATE, :usuario,
          5, 1, :classif, 3
@@ -575,7 +579,9 @@ async function abrirAtendimento(dados, nmUsuario) {
       {
         atend: nrAtendimento,
         cd_pf: String(dados.cd_pessoa_fisica),
+        estab: cdEstabelecimento,
         proc: cdProcedencia,
+        tipo_atend: ieTipoAtendimento,
         med: String(cdMedico),
         classif: nrSeqClassif,
         senha: nrSeqSenha,
@@ -1197,8 +1203,10 @@ async function anexarDocumentoGED(dados, nmUsuario) {
     const seqRes = await conn.execute(`SELECT GED_ATENDIMENTO_SEQ.NEXTVAL AS id FROM dual`);
     const nrSeq = seqRes.rows[0].ID;
 
-    const cdProfissional = dados.cd_profissional || dados.cd_pessoa_fisica_usuario || '408120';
-    const tipoArquivo = dados.nr_seq_tipo_arquivo || 10; // 10 = Documento do Paciente / Recepção
+    const sysConfig = configCache.getSystemConfig() || {};
+    const cdProfissional = dados.cd_profissional || dados.cd_pessoa_fisica_usuario || sysConfig.recepcao_cd_med_resp || '408120';
+    const tipoArquivo = dados.nr_seq_tipo_arquivo || parseInt(sysConfig.recepcao_ged_tipo_arquivo, 10) || 10;
+    const cdEstabelecimento = dados.cd_estabelecimento || parseInt(sysConfig.recepcao_cd_estabelecimento, 10) || 1;
 
     await conn.execute(
       `INSERT INTO ged_atendimento (

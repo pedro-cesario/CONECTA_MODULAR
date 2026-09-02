@@ -1,14 +1,33 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const configCache = require('../../core/config/configCache');
 const recepcaoRepository = require('./recepcaoRepository');
 
-const TASY_URL = process.env.TASY_REPORTS_URL || 'http://192.168.1.25/TasyAppServer';
-const TASY_USER = process.env.TASY_REPORTS_USER || 'pedro.cesario';
-const TASY_PASSWORD = process.env.TASY_REPORTS_PASSWORD || 'Dc153351##';
-const TASY_CLIENT_ID = process.env.TASY_REPORTS_CLIENT_ID || 'WTASY';
-const TASY_SCOPE = process.env.TASY_REPORTS_SCOPE || 'WTASY';
-const TASY_TIMEZONE = process.env.TASY_REPORTS_TIMEZONE || 'America/Sao_Paulo';
+function getTasyUrl() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_url || process.env.TASY_REPORTS_URL || 'http://192.168.1.25/TasyAppServer';
+}
+function getTasyUser() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_user || process.env.TASY_REPORTS_USER || 'pedro.cesario';
+}
+function getTasyPassword() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_password || process.env.TASY_REPORTS_PASSWORD || 'Dc153351##';
+}
+function getTasyClientId() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_client_id || process.env.TASY_REPORTS_CLIENT_ID || 'WTASY';
+}
+function getTasyScope() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_scope || process.env.TASY_REPORTS_SCOPE || 'WTASY';
+}
+function getTasyTimezone() {
+  const sysConfig = configCache.getSystemConfig() || {};
+  return sysConfig.tasy_reports_timezone || process.env.TASY_REPORTS_TIMEZONE || 'America/Sao_Paulo';
+}
 
 let cachedAuth = null;
 let loginPromise = null;
@@ -58,14 +77,14 @@ async function loginTasy(forceRefresh = false) {
 
   loginPromise = (async () => {
     try {
-      const urlObj = new URL(`${TASY_URL}/resources/public/security/oauth`);
+      const urlObj = new URL(`${getTasyUrl()}/resources/public/security/oauth`);
       const body = JSON.stringify({
-        username: TASY_USER,
-        password: TASY_PASSWORD,
+        username: getTasyUser(),
+        password: getTasyPassword(),
         grant_type: 'password',
-        client_id: TASY_CLIENT_ID,
-        scope: TASY_SCOPE,
-        timezone: TASY_TIMEZONE
+        client_id: getTasyClientId(),
+        scope: getTasyScope(),
+        timezone: getTasyTimezone()
       });
 
       const options = {
@@ -123,14 +142,14 @@ async function obterNumeroContaPaciente(nrAtendimento) {
 
 async function loginTasyUser(username, password) {
   try {
-    const urlObj = new URL(`${TASY_URL}/resources/public/security/oauth`);
+    const urlObj = new URL(`${getTasyUrl()}/resources/public/security/oauth`);
     const body = JSON.stringify({
       username: username,
       password: password,
       grant_type: 'password',
-      client_id: TASY_CLIENT_ID,
-      scope: TASY_SCOPE,
-      timezone: TASY_TIMEZONE
+      client_id: getTasyClientId(),
+      scope: getTasyScope(),
+      timezone: getTasyTimezone()
     });
 
     const options = {
@@ -233,7 +252,7 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, 
       { tipo: 'String', valor: 'CONECTA_ASSISTENCIAL' }
     ];
 
-    const urlObj = new URL(`${TASY_URL}/resources/service/Report/generateReports`);
+    const urlObj = new URL(`${getTasyUrl()}/resources/service/Report/generateReports`);
     const postData = JSON.stringify(payload);
 
     const options = {
@@ -270,7 +289,7 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, 
     const pdfFileName = json.reports[0].pdfFileName;
 
     // Baixa o arquivo PDF gerado pelo TASY
-    const downloadUrlObj = new URL(`${TASY_URL}/resources/files/pdf/${pdfFileName}`);
+    const downloadUrlObj = new URL(`${getTasyUrl()}/resources/files/pdf/${pdfFileName}`);
     const downloadOptions = {
       protocol: downloadUrlObj.protocol,
       hostname: downloadUrlObj.hostname,
@@ -316,7 +335,7 @@ async function uploadArquivoTasyStorage(fileBuffer, fileName, mimeType = 'applic
   const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
   const fullBody = Buffer.concat([head, fileBuffer, tail]);
 
-  const urlObj = new URL(`${TASY_URL}/resources/files`);
+  const urlObj = new URL(`${getTasyUrl()}/resources/files`);
   const options = {
     protocol: urlObj.protocol,
     hostname: urlObj.hostname,
