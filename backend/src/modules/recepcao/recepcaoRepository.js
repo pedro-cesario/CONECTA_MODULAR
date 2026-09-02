@@ -202,8 +202,8 @@ async function buscarPessoas(termo) {
          pf.ie_sexo,
          pf.nr_cpf,
          pf.nr_identidade,
-         pf.nm_sobrenome_mae AS nm_mae,
-         pf.nm_sobrenome_pai AS nm_pai,
+         COALESCE(c_mae.nm_contato, pf.nm_sobrenome_mae) AS nm_mae,
+         COALESCE(c_pai.nm_contato, pf.nm_sobrenome_pai) AS nm_pai,
          pf.nr_cartao_nac_sus AS nr_cns,
          pf.nr_telefone_celular,
          c.ds_endereco,
@@ -214,6 +214,8 @@ async function buscarPessoas(termo) {
          c.cd_cep
        FROM pessoa_fisica pf
        LEFT JOIN compl_pessoa_fisica c ON c.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c.ie_tipo_complemento = 1
+       LEFT JOIN compl_pessoa_fisica c_mae ON c_mae.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_mae.ie_tipo_complemento = 5
+       LEFT JOIN compl_pessoa_fisica c_pai ON c_pai.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_pai.ie_tipo_complemento = 4
        WHERE ${whereClause}
        ORDER BY pf.nm_pessoa_fisica
        FETCH FIRST 20 ROWS ONLY`,
@@ -240,8 +242,8 @@ async function obterPessoaCompleta(cdPessoaFisica) {
          pf.nr_cpf,
          pf.nr_identidade,
          pf.ds_orgao_emissor_ci AS ds_orgao_emissor,
-         pf.nm_sobrenome_mae AS nm_mae,
-         pf.nm_sobrenome_pai AS nm_pai,
+         COALESCE(c_mae.nm_contato, pf.nm_sobrenome_mae) AS nm_mae,
+         COALESCE(c_pai.nm_contato, pf.nm_sobrenome_pai) AS nm_pai,
          pf.nr_cartao_nac_sus AS nr_cns,
          pf.nr_telefone_celular,
          c.ds_email,
@@ -256,6 +258,8 @@ async function obterPessoaCompleta(cdPessoaFisica) {
          c.nr_telefone AS tel_fixo
        FROM pessoa_fisica pf
        LEFT JOIN compl_pessoa_fisica c ON c.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c.ie_tipo_complemento = 1
+       LEFT JOIN compl_pessoa_fisica c_mae ON c_mae.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_mae.ie_tipo_complemento = 5
+       LEFT JOIN compl_pessoa_fisica c_pai ON c_pai.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_pai.ie_tipo_complemento = 4
        WHERE pf.cd_pessoa_fisica = :cd`,
       { cd: String(cdPessoaFisica) }
     );
@@ -353,7 +357,69 @@ async function salvarPessoaFisica(dados, nmUsuario) {
     );
 
     // ========================================================================
-    // PILAR 3: SALVA / ATUALIZA ENDEREÇO (COMPL_PESSOA_FISICA)
+    // FILIAÇÃO TASY: MÃE (COMPL_PESSOA_FISICA ie_tipo_complemento = 5)
+    // ========================================================================
+    if (dados.nm_mae !== undefined && dados.nm_mae !== null) {
+      const maeExist = await conn.execute(
+        `SELECT nr_sequencia FROM compl_pessoa_fisica WHERE cd_pessoa_fisica = :cd AND ie_tipo_complemento = 5`,
+        { cd: cdPessoaFisica }
+      );
+      if (maeExist.rows.length > 0) {
+        await conn.execute(
+          `UPDATE compl_pessoa_fisica
+           SET nm_contato = :mae,
+               dt_atualizacao = SYSDATE,
+               nm_usuario = :usuario
+           WHERE cd_pessoa_fisica = :cd AND ie_tipo_complemento = 5`,
+          { cd: cdPessoaFisica, mae: dados.nm_mae || null, usuario: nmUsuario }
+        );
+      } else if (dados.nm_mae && dados.nm_mae.trim() !== '') {
+        await conn.execute(
+          `INSERT INTO compl_pessoa_fisica (
+             cd_pessoa_fisica, nr_sequencia, ie_tipo_complemento, nm_contato,
+             dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
+           ) VALUES (
+             :cd, (SELECT NVL(MAX(nr_sequencia), 0) + 1 FROM compl_pessoa_fisica WHERE cd_pessoa_fisica = :cd), 5, :mae,
+             SYSDATE, :usuario, SYSDATE, :usuario
+           )`,
+          { cd: cdPessoaFisica, mae: dados.nm_mae, usuario: nmUsuario }
+        );
+      }
+    }
+
+    // ========================================================================
+    // FILIAÇÃO TASY: PAI (COMPL_PESSOA_FISICA ie_tipo_complemento = 4)
+    // ========================================================================
+    if (dados.nm_pai !== undefined && dados.nm_pai !== null) {
+      const paiExist = await conn.execute(
+        `SELECT nr_sequencia FROM compl_pessoa_fisica WHERE cd_pessoa_fisica = :cd AND ie_tipo_complemento = 4`,
+        { cd: cdPessoaFisica }
+      );
+      if (paiExist.rows.length > 0) {
+        await conn.execute(
+          `UPDATE compl_pessoa_fisica
+           SET nm_contato = :pai,
+               dt_atualizacao = SYSDATE,
+               nm_usuario = :usuario
+           WHERE cd_pessoa_fisica = :cd AND ie_tipo_complemento = 4`,
+          { cd: cdPessoaFisica, pai: dados.nm_pai || null, usuario: nmUsuario }
+        );
+      } else if (dados.nm_pai && dados.nm_pai.trim() !== '') {
+        await conn.execute(
+          `INSERT INTO compl_pessoa_fisica (
+             cd_pessoa_fisica, nr_sequencia, ie_tipo_complemento, nm_contato,
+             dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec
+           ) VALUES (
+             :cd, (SELECT NVL(MAX(nr_sequencia), 0) + 1 FROM compl_pessoa_fisica WHERE cd_pessoa_fisica = :cd), 4, :pai,
+             SYSDATE, :usuario, SYSDATE, :usuario
+           )`,
+          { cd: cdPessoaFisica, pai: dados.nm_pai, usuario: nmUsuario }
+        );
+      }
+    }
+
+    // ========================================================================
+    // PILAR 3: SALVA / ATUALIZA ENDEREÇO (COMPL_PESSOA_FISICA ie_tipo_complemento = 1)
     // ========================================================================
     if (dados.ds_endereco || dados.cd_cep || dados.ds_municipio) {
       const complExist = await conn.execute(
