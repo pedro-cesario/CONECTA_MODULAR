@@ -140,31 +140,48 @@ export function irParaPasso(passo) {
 // ============================================================================
 
 export async function carregarFilas() {
+  const select = document.getElementById('recepcao-select-fila');
   try {
     const res = await api.get('/api/recepcao/filas');
-    if (res.success && Array.isArray(res.data)) {
+    if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.filasDisponiveis = res.data;
-      const select = document.getElementById('recepcao-select-fila');
       if (select) {
         select.innerHTML = '<option value="">Todas as Filas Ativas</option>' +
-          res.data.map(f => `<option value="${f.NR_SEQUENCIA}">${f.DS_FILA}</option>`).join('');
+          res.data.map(f => {
+            const seq = f.NR_SEQUENCIA ?? f.nr_sequencia;
+            const nome = f.DS_FILA ?? f.ds_fila ?? `Fila ${seq}`;
+            return `<option value="${seq}">${escapeHtml(nome)}</option>`;
+          }).join('');
       }
+    } else if (select) {
+      select.innerHTML = '<option value="">Todas as Filas Ativas</option>';
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar filas:', err);
+    if (select) {
+      select.innerHTML = '<option value="">Todas as Filas Ativas</option>';
+    }
   }
 }
 
 export async function carregarSenhas() {
+  const container = document.getElementById('recepcao-queue-list');
   try {
     const fila = recepcaoState.filaSelecionada || '';
     const res = await api.get(`/api/recepcao/senhas?fila=${fila}`);
-    if (res.success && Array.isArray(res.data)) {
+    if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.senhasFila = res.data;
       renderFilaSenhas();
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar senhas:', err);
+    if (container && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
+      container.innerHTML = `
+        <div class="p-3 text-center text-muted">
+          <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+          Nenhuma senha aguardando no momento
+        </div>`;
+    }
   }
 }
 
@@ -184,20 +201,31 @@ function renderFilaSenhas() {
     return;
   }
 
-  container.innerHTML = recepcaoState.senhasFila.map(s => `
-    <div class="guiche-queue-item" data-id="${s.NR_SEQUENCIA}" onclick="window.conectaCore.selecionarSenhaFila(${s.NR_SEQUENCIA})">
-      <div>
-        <div class="guiche-queue-number">#${s.CD_SENHA_GERADA}</div>
-        <small class="text-muted">${s.DS_PRIORIDADE} • ${s.DS_FILA || 'Recepção'}</small>
+  container.innerHTML = recepcaoState.senhasFila.map(s => {
+    const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
+    const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
+    const dsPrioridade = s.DS_PRIORIDADE ?? s.ds_prioridade ?? 'Normal';
+    const dsFila = s.DS_FILA ?? s.ds_fila ?? 'Recepção';
+    const nrPrioridade = s.NR_PRIORIDADE ?? s.nr_prioridade;
+    const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
+    const hrGeracao = s.HR_GERACAO ?? s.hr_geracao ?? '';
+    const badgeClass = nrPrioridade === 1 ? 'bg-danger' : (nrPrioridade === 2 ? 'bg-warning text-dark' : 'bg-primary');
+
+    return `
+      <div class="guiche-queue-item" data-id="${nrSeq}" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})">
+        <div>
+          <div class="guiche-queue-number">#${cdSenha}</div>
+          <small class="text-muted">${escapeHtml(dsPrioridade)} • ${escapeHtml(dsFila)}</small>
+        </div>
+        <div class="text-end">
+          <span class="badge ${badgeClass}">
+            ${minEspera} min
+          </span>
+          <div class="guiche-queue-time">${escapeHtml(hrGeracao)}</div>
+        </div>
       </div>
-      <div class="text-end">
-        <span class="badge ${s.NR_PRIORIDADE === 1 ? 'bg-danger' : (s.NR_PRIORIDADE === 2 ? 'bg-warning text-dark' : 'bg-primary')}">
-          ${s.MINUTOS_ESPERA || 0} min
-        </span>
-        <div class="guiche-queue-time">${s.HR_GERACAO || ''}</div>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 export async function chamarProximaSenha() {
