@@ -145,8 +145,26 @@ async function gerarRelatorioAtendimento(req, res, next) {
   try {
     const { id } = req.params;
     const { nr_atendimento } = req.query;
-    console.log(`[TasyReports] Gerando relatório ${id} para atendimento #${nr_atendimento}`);
-    const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento);
+
+    const usuarioLogado = req.session?.usuario || {};
+    const nmUsuario = usuarioLogado.nm_usuario || 'CONECTA_USER';
+    const nmPessoaFisica = usuarioLogado.nm_pessoa_fisica || nmUsuario;
+    const cdPessoaFisica = usuarioLogado.cd_pessoa_fisica || null;
+
+    const customParams = {
+      NM_USUARIO: nmUsuario,
+      NM_USUARIO_IMPR: nmPessoaFisica,
+      NM_USUARIO_LOGADO: nmUsuario,
+      NM_PESSOA_FISICA_USUARIO: nmPessoaFisica,
+      NM_OPERADOR: nmPessoaFisica,
+      DS_USUARIO: nmUsuario
+    };
+    if (cdPessoaFisica) {
+      customParams.CD_PESSOA_FISICA_USUARIO = String(cdPessoaFisica);
+    }
+
+    console.log(`[TasyReports] Gerando relatório ${id} para atendimento #${nr_atendimento} pelo usuário ${nmUsuario} (${nmPessoaFisica})`);
+    const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento, customParams);
     res.setHeader('Content-Type', contentType || 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${fileName || `relatorio_${id}_${nr_atendimento}.pdf`}"`);
     res.setHeader('Content-Length', buffer.length);
