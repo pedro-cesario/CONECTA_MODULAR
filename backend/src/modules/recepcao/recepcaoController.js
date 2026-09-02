@@ -163,8 +163,10 @@ async function gerarRelatorioAtendimento(req, res, next) {
       customParams.CD_PESSOA_FISICA_USUARIO = String(cdPessoaFisica);
     }
 
-    console.log(`[TasyReports] Gerando relatório ${id} para atendimento #${nr_atendimento} pelo usuário ${nmUsuario} (${nmPessoaFisica})`);
-    const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento, customParams);
+    const userAuth = req.session?.tasyAuth || null;
+
+    console.log(`[TasyReports] Gerando relatório ${id} para atendimento #${nr_atendimento} pelo usuário ${nmUsuario} (${nmPessoaFisica}) | Sessão Própria: ${Boolean(userAuth)}`);
+    const { buffer, fileName, contentType } = await recepcaoService.gerarRelatorioAtendimento(id, nr_atendimento, customParams, userAuth);
     res.setHeader('Content-Type', contentType || 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${fileName || `relatorio_${id}_${nr_atendimento}.pdf`}"`);
     res.setHeader('Content-Length', buffer.length);

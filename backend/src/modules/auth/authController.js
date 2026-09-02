@@ -221,6 +221,19 @@ async function login(req, res) {
           source: 'password',
           client: req.body?.client || {}
         });
+
+        // Autentica o usuário no TasyAppServer para gerar relatórios com sua própria identidade
+        try {
+          const tasyReportsClient = require('../recepcao/tasyReportsClient');
+          const tasyAuth = await tasyReportsClient.loginTasyUser(username, senha);
+          if (tasyAuth && tasyAuth.success) {
+            req.session.tasyAuth = tasyAuth;
+            console.log(`[Auth] Sessão TasyReports vinculada com sucesso para "${username}"`);
+          }
+        } catch (tasyErr) {
+          console.log('[Auth] Aviso ao vincular sessão TasyReports:', tasyErr.message);
+        }
+
         return res.json({ success: true, data: usuario });
       } catch (ldapErr) {
         console.log('[LDAP] Erro:', ldapErr.message);

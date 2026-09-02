@@ -121,7 +121,52 @@ async function obterNumeroContaPaciente(nrAtendimento) {
   }
 }
 
-async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}) {
+async function loginTasyUser(username, password) {
+  try {
+    const urlObj = new URL(`${TASY_URL}/resources/public/security/oauth`);
+    const body = JSON.stringify({
+      username: username,
+      password: password,
+      grant_type: 'password',
+      client_id: TASY_CLIENT_ID,
+      scope: TASY_SCOPE,
+      timezone: TASY_TIMEZONE
+    });
+
+    const options = {
+      protocol: urlObj.protocol,
+      hostname: urlObj.hostname,
+      port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+
+    const res = await requestHttp(options, body);
+    if (res.statusCode === 200) {
+      const json = res.json();
+      if (json && json.access_token) {
+        const rawCookies = res.headers['set-cookie'] || [];
+        const cookies = rawCookies.map((c) => c.split(';')[0]).join('; ');
+        const xsrf = res.headers['xsrf-token'] || '';
+        return {
+          success: true,
+          token: json.access_token,
+          cookies,
+          xsrf
+        };
+      }
+    }
+    return { success: false, status: res.statusCode };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, userAuth = null) {
   const cdRel = Number(cdRelatorio);
   const atend = String(nrAtendimento);
 
@@ -144,7 +189,13 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}) 
 
   // Executa com retry automático caso a sessão expire
   for (let tentativa = 1; tentativa <= 2; tentativa++) {
-    const auth = await loginTasy(tentativa === 2);
+    // Se o usuário logado possui sessão Tasy própria, utiliza sua autenticação
+    let auth = null;
+    if (userAuth && userAuth.token && tentativa === 1) {
+      auth = userAuth;
+    } else {
+      auth = await loginTasy(tentativa === 2);
+    }
 
     const payload = [
       {
@@ -250,5 +301,6 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}) 
 
 module.exports = {
   loginTasy,
+  loginTasyUser,
   gerarRelatorioPdf
 };

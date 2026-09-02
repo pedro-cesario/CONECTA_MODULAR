@@ -107,13 +107,13 @@ async function listarRelatoriosAtendimento() {
   return recepcaoRepository.listarRelatoriosAtendimento();
 }
 
-async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento, customParams = {}) {
+async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento, customParams = {}, userAuth = null) {
   if (!nrAtendimento) {
     const err = new Error('Número do atendimento é obrigatório para emitir o relatório');
     err.status = 400;
     throw err;
   }
-  return tasyReportsClient.gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams);
+  return tasyReportsClient.gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams, userAuth);
 }
 
 async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
