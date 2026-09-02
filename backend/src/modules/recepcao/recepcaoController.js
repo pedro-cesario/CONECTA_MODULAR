@@ -217,11 +217,12 @@ async function anexarDocumentoGED(req, res, next) {
   try {
     const usuario = req.session?.usuario?.nm_usuario || 'CONECTA_USER';
     const cdPessoaFisicaUsuario = req.session?.usuario?.cd_pessoa_fisica || null;
+    const userAuth = req.session?.tasyAuth || null;
     const body = {
       ...req.body,
       cd_pessoa_fisica_usuario: cdPessoaFisicaUsuario
     };
-    const result = await recepcaoService.anexarDocumentoGED(body, usuario);
+    const result = await recepcaoService.anexarDocumentoGED(body, usuario, userAuth);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

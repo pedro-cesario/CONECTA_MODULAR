@@ -296,11 +296,55 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, 
     };
   }
 
-  throw new Error('Falha ao gerar relatório após tentativas de autenticação.');
+async function uploadArquivoTasyStorage(fileBuffer, fileName, mimeType = 'application/pdf', userAuth = null) {
+  let auth = null;
+  if (userAuth && userAuth.token) {
+    auth = userAuth;
+  } else {
+    auth = await loginTasy();
+  }
+
+  const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
+  const cleanFileName = fileName ? fileName.replace(/[^a-zA-Z0-9._-]/g, '_') : 'documento.pdf';
+
+  const head = Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${cleanFileName}"\r\nContent-Type: ${mimeType || 'application/pdf'}\r\n\r\n`
+  );
+  const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+  const fullBody = Buffer.concat([head, fileBuffer, tail]);
+
+  const urlObj = new URL(`${TASY_URL}/resources/files`);
+  const options = {
+    protocol: urlObj.protocol,
+    hostname: urlObj.hostname,
+    port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
+    path: urlObj.pathname,
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${auth.token}`,
+      'Cookie': auth.cookies,
+      'X-XSRF-TOKEN': auth.xsrf,
+      'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      'Content-Length': fullBody.length
+    }
+  };
+
+  const res = await requestHttp(options, fullBody);
+  if (res.statusCode !== 200) {
+    throw new Error(`Falha ao enviar arquivo para o Storage do TASY (HTTP ${res.statusCode}): ${res.text()}`);
+  }
+
+  const json = res.json();
+  if (Array.isArray(json) && json.length > 0 && typeof json[0] === 'string') {
+    return json[0]; // URI oficial "tasy-storage://..."
+  }
+
+  throw new Error(`Retorno inesperado do Storage TASY: ${res.text()}`);
 }
 
 module.exports = {
   loginTasy,
   loginTasyUser,
-  gerarRelatorioPdf
+  gerarRelatorioPdf,
+  uploadArquivoTasyStorage
 };

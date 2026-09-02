@@ -775,16 +775,37 @@ export function abrirUploadGED() {
     if (!file) return;
 
     try {
-      ui.showToast(`Anexando arquivo "${file.name}" ao GED...`, 'info');
-      await api.post('/api/recepcao/ged', {
-        nr_atendimento: recepcaoState.atendimentoCriado || null,
-        cd_pessoa_fisica: recepcaoState.pessoaSelecionada?.CD_PESSOA_FISICA,
-        ds_titulo: file.name,
-        ds_arquivo: file.name,
-        ds_extensao_arquivo: file.name.split('.').pop()
-      });
-      ui.showToast('Documento anexado ao GED com sucesso!', 'success');
-      await carregarDocumentosGED();
+      ui.showToast(`Enviando "${file.name}" para o Storage do TASY...`, 'info');
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const base64Data = event.target.result;
+          const atend = recepcaoState.atendimentoCriado || document.getElementById('recepcao-atendimento-numero')?.textContent?.replace(/[^0-9]/g, '') || null;
+          const pf = recepcaoState.pessoaSelecionada?.CD_PESSOA_FISICA || null;
+
+          await api.post('/api/recepcao/ged', {
+            nr_atendimento: atend,
+            cd_pessoa_fisica: pf,
+            ds_titulo: file.name,
+            ds_arquivo: file.name,
+            ds_extensao_arquivo: file.name.split('.').pop(),
+            conteudo_base64: base64Data,
+            mime_type: file.type
+          });
+
+          ui.showToast('Documento anexado e sincronizado com o GED do TASY com sucesso!', 'success');
+          await carregarDocumentosGED();
+        } catch (postErr) {
+          ui.showToast('Erro ao salvar documento no GED: ' + (postErr.message || JSON.stringify(postErr)), 'error');
+        }
+      };
+
+      reader.onerror = () => {
+        ui.showToast('Erro ao ler o arquivo local.', 'error');
+      };
+
+      reader.readAsDataURL(file);
     } catch (err) {
       ui.showToast('Erro ao anexar arquivo no GED: ' + err.message, 'error');
     }

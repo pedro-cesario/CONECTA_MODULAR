@@ -120,17 +120,39 @@ async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
   return recepcaoRepository.listarDocumentosGED(nrAtendimento, cdPessoaFisica);
 }
 
-async function anexarDocumentoGED(dados, nmUsuario) {
+async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
   if (!dados.cd_pessoa_fisica) {
     const err = new Error('Código de pessoa física é obrigatório');
     err.status = 400;
     throw err;
   }
-  if (!dados.ds_arquivo) {
+  if (!dados.ds_arquivo && !dados.conteudo_base64) {
     const err = new Error('Arquivo é obrigatório para anexar no GED');
     err.status = 400;
     throw err;
   }
+
+  // Se o conteúdo binário em base64 foi enviado, faz upload direto no Storage oficial do TASY
+  if (dados.conteudo_base64) {
+    try {
+      let base64Clean = dados.conteudo_base64;
+      if (base64Clean.includes('base64,')) {
+        base64Clean = base64Clean.split('base64,')[1];
+      }
+      const buffer = Buffer.from(base64Clean, 'base64');
+      const fileName = dados.ds_titulo || dados.ds_arquivo || 'documento.pdf';
+      const mimeType = dados.mime_type || 'application/pdf';
+
+      console.log(`[GED] Enviando arquivo "${fileName}" (${buffer.length} bytes) para o TASY Storage...`);
+      const storageUri = await tasyReportsClient.uploadArquivoTasyStorage(buffer, fileName, mimeType, userAuth);
+      console.log(`[GED] Arquivo enviado com sucesso! Storage URI: ${storageUri}`);
+      dados.ds_arquivo = storageUri;
+    } catch (errUpload) {
+      console.error('[GED] Erro ao enviar para o TASY Storage:', errUpload);
+      throw new Error(`Falha ao armazenar arquivo no Storage do TASY: ${errUpload.message}`);
+    }
+  }
+
   return recepcaoRepository.anexarDocumentoGED(dados, nmUsuario);
 }
 
