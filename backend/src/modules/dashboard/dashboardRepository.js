@@ -692,6 +692,42 @@ async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisic
 
             await conn.commit();
           }
+        } else {
+          // Paciente deu entrada sem senha vinculada: gera automaticamente na fila destino
+          const seqPwdRes = await conn.execute(`SELECT PACIENTE_SENHA_FILA_SEQ.NEXTVAL AS id FROM dual`);
+          const newSeqPwd = seqPwdRes.rows[0].ID;
+
+          const maxPwdRes = await conn.execute(
+            `SELECT NVL(MAX(cd_senha_gerada), 0) + 1 AS proxima FROM paciente_senha_fila WHERE nr_seq_fila_senha = :fila AND TRUNC(dt_geracao_senha) = TRUNC(SYSDATE)`,
+            { fila: nrFilaDestino }
+          );
+          const proximaSenha = maxPwdRes.rows[0].PROXIMA;
+
+          await conn.execute(
+            `INSERT INTO paciente_senha_fila (
+               nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
+               cd_senha_gerada, dt_geracao_senha, nr_seq_fila_senha, nr_seq_fila_senha_origem,
+               dt_chamada, dt_primeira_chamada, cd_estabelecimento, cd_pessoa_fisica, nr_prioridade
+             ) VALUES (
+               :seq, SYSDATE, :usuario, SYSDATE, :usuario,
+               :cd_senha, SYSDATE, :fila, :fila,
+               SYSDATE, SYSDATE, 1, :cd_pf, 2
+             )`,
+            {
+              seq: newSeqPwd,
+              usuario: nmUsuario,
+              cd_senha: proximaSenha,
+              fila: nrFilaDestino,
+              cd_pf: cdPessoaFisica ? String(cdPessoaFisica) : null
+            }
+          );
+
+          await conn.execute(
+            `UPDATE atendimento_paciente SET nr_seq_pac_senha_fila = :seq WHERE nr_atendimento = :nr`,
+            { seq: newSeqPwd, nr: nrAtendimento }
+          );
+
+          await conn.commit();
         }
       }
     } catch (pwErr) {

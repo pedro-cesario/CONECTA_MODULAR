@@ -172,6 +172,15 @@ export const MODULOS_CONFIG = {};
       topbarButtonId: 'nav-registros',
       activeModes: ['registros-submenu', 'registros-pessoa-busca', 'registros-demanda-form'],
       entryFnName: 'showRegistrosSubMenu'
+    },
+    recepcao: {
+      id: 'recepcao',
+      nome: 'Recepção e Acolhimento',
+      allowedProfiles: [],
+      buttonId: 'btn-abrir-recepcao',
+      topbarButtonId: 'nav-recepcao',
+      activeModes: ['recepcao'],
+      entryFnName: 'enterRecepcaoMode'
     }
   };
 
@@ -182,7 +191,8 @@ export const MODULOS_DEFAULT = {
   livro: ['enfermagem'],
   escala: ['psicologia'],
   dashboard_pa: ['enfermagem'],
-  registros: ['admin', 'servico_social']
+  registros: ['admin', 'servico_social'],
+  recepcao: ['enfermagem', 'admin', 'recepcao']
 };
 
 export const draftHydratingModules = new Set();

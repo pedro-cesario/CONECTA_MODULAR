@@ -122,6 +122,22 @@ const MODULOS_STATIC = [
     allowedProfiles: ['admin'], setorId: null,
     backend: { controller: 'auditoriaController', method: 'salvarHigieneMaos' },
     frontend: { buttonId: 'btn-abrir-auditorias', workspaceId: 'workspace-auditorias' }
+  },
+  {
+    id: 'recepcao',
+    nome: 'Recepção e Acolhimento',
+    descricao: 'Guichê de senhas, cadastro de pacientes, abertura de atendimentos e emissão de documentos',
+    icon: 'bi-person-badge',
+    allowedProfiles: ['enfermagem', 'admin', 'medico', 'recepcao'],
+    setorId: null,
+    backend: {
+      controller: 'recepcaoController',
+      method: 'listarSenhasEspera'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-recepcao',
+      workspaceId: 'workspace-recepcao'
+    }
   }
 ];
 

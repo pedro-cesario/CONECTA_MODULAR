@@ -1,0 +1,336 @@
+/* ==========================================================================
+   CONECTA HEAL — MÓDULO DE RECEPÇÃO & ACOLHIMENTO
+   Design System Compliance: 5 Pilares Clínico-Operacionais
+   ========================================================================== */
+
+.recepcao-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Stepper de Progresso dos 5 Pilares */
+.recepcao-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  overflow-x: auto;
+  gap: 1rem;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md, 8px);
+}
+
+.stepper-item:hover {
+  opacity: 0.8;
+  background: var(--slate-50);
+}
+
+.stepper-item.active {
+  opacity: 1;
+  background: var(--primary-50);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.stepper-item.completed {
+  opacity: 0.9;
+  color: var(--green-600);
+}
+
+.stepper-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--slate-200);
+  color: var(--slate-700);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.stepper-item.active .stepper-badge {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.stepper-item.completed .stepper-badge {
+  background: var(--green-500);
+  color: #ffffff;
+}
+
+.stepper-divider {
+  flex: 1;
+  height: 2px;
+  background: var(--slate-200);
+  min-width: 20px;
+}
+
+/* Painel de Conteúdo dos Passos */
+.recepcao-panel {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .recepcao-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cartão do Guichê e Chamador de Senhas */
+.guiche-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.guiche-display {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: #ffffff;
+  border-radius: var(--radius-md, 8px);
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guiche-display-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.guiche-display-number {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  font-family: monospace;
+}
+
+.guiche-display-type {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.guiche-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.guiche-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.guiche-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md, 8px);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.guiche-queue-item:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-100);
+}
+
+.guiche-queue-number {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--slate-900);
+}
+
+.guiche-queue-time {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+}
+
+/* Área Principal de Formulários e Atendimento */
+.recepcao-main-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.recepcao-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+.recepcao-section-title i {
+  color: var(--primary);
+}
+
+/* Grid de Busca de Paciente */
+.paciente-search-box {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.paciente-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.paciente-result-item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md, 8px);
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.paciente-result-item:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-100);
+}
+
+.paciente-badge-selected {
+  background: var(--primary-50);
+  border: 1px solid var(--primary-100);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Grid de Documentos e Relatórios TASY */
+.relatorios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.relatorio-card-item {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: all 0.2s;
+}
+
+.relatorio-card-item:hover {
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  border-color: var(--primary);
+}
+
+.relatorio-card-title {
+  font-weight: 600;
+  color: var(--slate-900);
+  font-size: 0.95rem;
+}
+
+/* GED Container */
+.ged-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ged-upload-dropzone {
+  border: 2px dashed var(--slate-300);
+  border-radius: var(--radius-md, 8px);
+  padding: 2rem;
+  text-align: center;
+  background: var(--slate-50);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ged-upload-dropzone:hover {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}
+
+.ged-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ged-file-item {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.85rem;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.ged-file-icon {
+  font-size: 2rem;
+  color: var(--primary);
+}

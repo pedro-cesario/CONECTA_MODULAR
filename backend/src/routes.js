@@ -17,6 +17,7 @@ const ocorrenciasRoutes = require('./modules/ocorrencias/routes');
 const escalasRoutes = require('./modules/escalas/routes');
 const registrosRoutes = require('./modules/registros/routes');
 const auditoriasRoutes = require('./modules/auditorias/routes');
+const recepcaoRoutes = require('./modules/recepcao/routes');
 const adminRoutes = require('./modules/admin/routes');
 
 // Injeção de Controllers necessários para aliases de compatibilidade
@@ -65,5 +66,6 @@ router.use('/', requireAuth, ocorrenciasRoutes); // /salvar, /passagens, /livro-
 router.use('/escala-ativa', requireAuth, escalasRoutes);
 router.use('/registros', requireAuth, registrosRoutes);
 router.use('/auditorias', requireAuth, auditoriasRoutes);
+router.use('/recepcao', requireAuth, recepcaoRoutes);
 
 module.exports = router;

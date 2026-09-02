@@ -9,7 +9,8 @@ const moduleLoaders = {
   livro: () => import('../modules/livro/livro.js'),
   escala: () => import('../modules/escala/escala.js'),
   registros: () => import('../modules/registros/registros.js'),
-  auditorias: () => import('../modules/auditorias/auditorias.js')
+  auditorias: () => import('../modules/auditorias/auditorias.js'),
+  recepcao: () => import('../modules/recepcao/recepcao.js')
 };
 
 const loadedModules = new Map();
