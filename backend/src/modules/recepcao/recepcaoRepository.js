@@ -61,7 +61,10 @@ async function listarSenhasEspera(nrSeqFila) {
        LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
        LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = psf.cd_pessoa_fisica
        WHERE ${whereClause}
-       ORDER BY psf.nr_prioridade ASC, psf.dt_geracao_senha ASC`,
+       ORDER BY 
+         CASE WHEN psf.dt_chamada IS NULL THEN 0 ELSE 1 END ASC,
+         NVL(psf.nr_prioridade, 3) ASC,
+         psf.dt_geracao_senha DESC`,
       binds
     );
     return result.rows || [];
@@ -82,7 +85,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
            AND dt_inutilizacao IS NULL
            AND dt_fim_atendimento IS NULL
            AND dt_chamada IS NULL
-         ORDER BY nr_prioridade ASC, dt_geracao_senha ASC
+         ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha DESC
        ) WHERE ROWNUM = 1`,
       { fila: parseInt(nrSeqFila, 10) }
     );
