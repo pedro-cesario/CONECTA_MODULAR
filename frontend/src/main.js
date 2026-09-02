@@ -138,6 +138,8 @@ async function initApp() {
     try {
       const result = await api.post('/api/login', { nm_usuario: usuario, senha });
       if (result.success && result.data) {
+        sessionStorage.setItem('session_active', '1');
+        document.documentElement.classList.add('has-session');
         state.usuario = result.data;
         const userNameEl = document.getElementById('user-name');
         if (userNameEl) userNameEl.textContent = state.usuario.nome || state.usuario.nm_usuario;
@@ -154,9 +156,13 @@ async function initApp() {
           mod.showPassagemSubMenu();
         }
       } else {
+        sessionStorage.removeItem('session_active');
+        document.documentElement.classList.remove('has-session');
         showLoginError(result.message || 'Login ou senha incorretos.');
       }
     } catch (err) {
+      sessionStorage.removeItem('session_active');
+      document.documentElement.classList.remove('has-session');
       showLoginError(err?.message || 'Login ou senha incorretos.');
     } finally {
       if (btnLogin) ui.setLoading(btnLogin, false);
@@ -173,6 +179,7 @@ async function initApp() {
     } catch (_) {}
     state.usuario = null;
     sessionStorage.removeItem('session_active');
+    document.documentElement.classList.remove('has-session');
     router.showScreen('login');
     if (inpSenha) inpSenha.value = '';
   });

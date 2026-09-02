@@ -12,37 +12,41 @@ let profileChangeSeq = 0;
 let activeProfileChangePromise = null;
 
 export async function checkSession() {
+  try {
+    const result = await api.get('/api/me');
 
-    try {
+    if (result.success && result.data && result.data.nm_usuario) {
+      sessionStorage.setItem('session_active', '1');
+      document.documentElement.classList.add('has-session');
+      state.usuario = result.data;
 
-      const result = await api.get('/api/me');
+      const userNameEl = document.getElementById('user-name');
+      if (userNameEl) userNameEl.textContent = state.usuario.nome || state.usuario.nm_usuario;
 
-      if (result.success && result.data && result.data.nm_usuario) {
+      showScreen('app');
 
-        sessionStorage.setItem('session_active', '1');
-        state.usuario = result.data;
+      updateProfileLabels();
+      initializeDraftSession();
 
-        document.getElementById('user-name').textContent = state.usuario.nome || state.usuario.nm_usuario;
+      await loadModulosFromBackend();
+      renderSetorDropdown();
 
-        showScreen('app');
-
-        updateProfileLabels();
-        initializeDraftSession();
-
-        await loadModulosFromBackend();
-        renderSetorDropdown();
-
-        if (router.shouldShowModeSelector()) {
-          showModeChooser();
-        } else {
-          router.moduleHandlers?.passagem?.();
-        }
-
+      if (router.shouldShowModeSelector()) {
+        showModeChooser();
+      } else {
+        router.moduleHandlers?.passagem?.();
       }
-
-    } catch (err) {}
-
+    } else {
+      sessionStorage.removeItem('session_active');
+      document.documentElement.classList.remove('has-session');
+      showScreen('login');
+    }
+  } catch (err) {
+    sessionStorage.removeItem('session_active');
+    document.documentElement.classList.remove('has-session');
+    showScreen('login');
   }
+}
 
 export async function loadModulosFromBackend() {
     try {

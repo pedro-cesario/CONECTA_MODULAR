@@ -12,3 +12,15 @@
 @import url('modules/registros.css');
 @import url('modules/skeleton.css');
 
+/* Prevenção de FOUC / Flash de Tela de Login no Reload */
+html.has-session #screen-app {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+}
+html.has-session #screen-login {
+  display: none !important;
+}
+
