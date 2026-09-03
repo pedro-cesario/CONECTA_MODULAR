@@ -127,7 +127,14 @@ async function loginTasy(forceRefresh = false) {
 
       const res = await requestHttp(options, body);
       if (res.statusCode !== 200) {
-        throw new Error(`Falha na autenticação TasyAppServer (HTTP ${res.statusCode}): ${res.text()}`);
+        let msg = res.text();
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed.code === 1100 || parsed.message) {
+            msg = `Credenciais TASY inválidas (${parsed.message || 'Usuário ou senha incorretos'}). Acesse o Conecta Admin > Sistema & Parâmetros > Parâmetros da Recepção & TASY para atualizar o usuário e senha do TasyAppServer.`;
+          }
+        } catch (e) {}
+        throw new Error(`Falha na autenticação TasyAppServer (HTTP ${res.statusCode}): ${msg}`);
       }
 
       const json = res.json();

@@ -173,33 +173,35 @@ async function gerarRelatorioAtendimento(req, res, next) {
     res.send(buffer);
   } catch (err) {
     console.error(`[TasyReports] Erro ao emitir relatório ${req.params?.id} para atend ${req.query?.nr_atendimento}:`, err);
-    if (req.headers.accept && req.headers.accept.includes('text/html')) {
-      res.status(err.status || 500).setHeader('Content-Type', 'text/html; charset=utf-8').send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Aviso - Relatório TASY</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-            .box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; max-width: 540px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-            h2 { color: #f87171; margin-top: 0; }
-            p { color: #94a3b8; line-height: 1.6; }
-            .btn { display: inline-block; margin-top: 1.5rem; padding: 0.6rem 1.2rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500; cursor: pointer; border: none; }
-          </style>
-        </head>
-        <body>
-          <div class="box">
-            <h2>⚠️ Aviso ao Emitir Relatório TASY</h2>
-            <p>${err.message || 'Ocorreu um erro ao comunicar com o servidor TasyReports.'}</p>
-            <p><small style="color: #64748b;">Relatório: ${req.params.id} | Atendimento: #${req.query.nr_atendimento || 'Não informado'}</small></p>
-            <button class="btn" onclick="window.close()">Fechar Janela</button>
+    res.status(err.status || 500).setHeader('Content-Type', 'text/html; charset=utf-8').send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Aviso - Relatório TASY</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+          .box { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 2.5rem; max-width: 580px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+          h2 { color: #f87171; margin-top: 0; font-size: 1.4rem; }
+          p { color: #cbd5e1; line-height: 1.6; font-size: 0.95rem; }
+          .alert-sub { background: #0f172a; border-radius: 8px; padding: 0.9rem; margin: 1.2rem 0; color: #94a3b8; font-size: 0.85rem; text-align: left; }
+          .btn { display: inline-block; margin-top: 1.2rem; padding: 0.65rem 1.4rem; background: #0284c7; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+        </style>
+      </head>
+      <body>
+        <div class="box">
+          <h2>⚠️ Aviso ao Emitir Relatório TASY</h2>
+          <p>${err.message || 'Ocorreu um erro ao comunicar com o servidor TasyReports.'}</p>
+          <div class="alert-sub">
+            <div><strong>Relatório TASY:</strong> Código ${req.params.id}</div>
+            <div><strong>Atendimento:</strong> #${req.query.nr_atendimento || 'Não informado'}</div>
+            <div style="margin-top: 6px; color: #38bdf8;"><strong>Status:</strong> O atendimento está salvo com sucesso no banco TASY. Apenas a emissão do PDF pelo TasyAppServer requer credencial válida configurada no Conecta Admin.</div>
           </div>
-        </body>
-        </html>
-      `);
-    } else {
-      next(err);
-    }
+          <button class="btn" onclick="window.close()">Fechar Janela</button>
+        </div>
+      </body>
+      </html>
+    `);
   }
 }
 

@@ -52,6 +52,7 @@ router.get('/infra/oracle', requireAuth, requireAdmin, adminController.obterConf
 router.post('/infra/oracle', requireAuth, requireAdmin, adminController.salvarConfigOracle);
 router.get('/infra/ldap', requireAuth, requireAdmin, adminController.obterConfigLdap);
 router.post('/infra/ldap', requireAuth, requireAdmin, adminController.salvarConfigLdap);
+router.post('/infra/testar-tasy-reports', requireAuth, requireAdmin, adminController.testarTasyReports);
 
 // Gestão de Painéis de TV e Mapeamento de Guichês
 router.get('/paineis', requireAuth, requireAdmin, adminController.listarPaineisTv);

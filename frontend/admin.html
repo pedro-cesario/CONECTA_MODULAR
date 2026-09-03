@@ -1616,22 +1616,32 @@
                       </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
-                      <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-4">
                         <label for="config-tasy-reports-url" class="form-label small fw-bold">URL Servidor TasyAppServer</label>
                         <input type="text" id="config-tasy-reports-url" class="form-control" placeholder="http://192.168.1.25/TasyAppServer">
                         <small class="text-muted" style="font-size: 11px;">Endpoint do motor TasyReports</small>
                       </div>
-                      <div class="col-md-6">
-                        <label for="config-tasy-reports-user" class="form-label small fw-bold">Usuário Técnico TASY (Serviço)</label>
+                      <div class="col-md-4">
+                        <label for="config-tasy-reports-user" class="form-label small fw-bold">Usuário TASY (TasyAppServer)</label>
                         <input type="text" id="config-tasy-reports-user" class="form-control" placeholder="pedro.cesario">
-                        <small class="text-muted" style="font-size: 11px;">Conta de fallback para emissão</small>
+                        <small class="text-muted" style="font-size: 11px;">Usuário habilitado no TASY</small>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="config-tasy-reports-password" class="form-label small fw-bold">Senha TASY (TasyAppServer)</label>
+                        <input type="password" id="config-tasy-reports-password" class="form-control" placeholder="Senha do TasyAppServer">
+                        <small class="text-muted" style="font-size: 11px;">Credencial de emissão de relatórios</small>
                       </div>
                     </div>
 
-                    <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-recepcao">
-                      <i class="bi bi-check2-circle"></i> Salvar Parâmetros da Recepção & TASY
-                    </button>
+                    <div class="d-flex gap-2 mb-4">
+                      <button class="btn btn-outline-info w-50 fw-bold" id="btn-test-tasy-reports" type="button">
+                        <i class="bi bi-plug-fill"></i> Testar Conexão TasyAppServer
+                      </button>
+                      <button class="btn btn-primary w-50 fw-bold" id="btn-save-config-recepcao" type="button">
+                        <i class="bi bi-check2-circle"></i> Salvar Parâmetros da Recepção & TASY
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3201,12 +3211,48 @@
             document.getElementById('config-recepcao-ged-tipo').value = result.data.recepcao_ged_tipo_arquivo || '10';
             document.getElementById('config-tasy-reports-url').value = result.data.tasy_reports_url || 'http://192.168.1.25/TasyAppServer';
             document.getElementById('config-tasy-reports-user').value = result.data.tasy_reports_user || 'pedro.cesario';
+            if (result.data.tasy_reports_password) {
+              document.getElementById('config-tasy-reports-password').value = result.data.tasy_reports_password;
+            }
           }
         }
       } catch (err) {
         console.error('Erro ao carregar config sistema', err);
       }
     }
+
+    document.getElementById('btn-test-tasy-reports')?.addEventListener('click', async () => {
+      const url = document.getElementById('config-tasy-reports-url').value;
+      const username = document.getElementById('config-tasy-reports-user').value;
+      const password = document.getElementById('config-tasy-reports-password').value;
+
+      if (!username || !password) {
+        return showToast('Informe o usuário e a senha do TasyAppServer para testar.', 'warning');
+      }
+
+      const btn = document.getElementById('btn-test-tasy-reports');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Testando...';
+
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/infra/testar-tasy-reports`, {
+          url,
+          username,
+          password
+        });
+        if (result.success) {
+          showToast(result.message || 'Conexão e Autenticação com TasyAppServer BEM-SUCEDIDAS!', 'success');
+        } else {
+          showToast(result.message || 'Falha na autenticação com TasyAppServer', 'error');
+        }
+      } catch (err) {
+        showToast(err.message || 'Erro ao comunicar com o servidor TasyAppServer', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
 
     document.getElementById('btn-save-config-sistema')?.addEventListener('click', async () => {
       const app_version = document.getElementById('config-app-version').value;
@@ -3265,6 +3311,7 @@
       const recepcao_ged_tipo_arquivo = document.getElementById('config-recepcao-ged-tipo').value;
       const tasy_reports_url = document.getElementById('config-tasy-reports-url').value;
       const tasy_reports_user = document.getElementById('config-tasy-reports-user').value;
+      const tasy_reports_password = document.getElementById('config-tasy-reports-password').value;
 
       try {
         const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
@@ -3277,7 +3324,8 @@
           recepcao_nr_fila_destino,
           recepcao_ged_tipo_arquivo,
           tasy_reports_url,
-          tasy_reports_user
+          tasy_reports_user,
+          tasy_reports_password
         });
         if (result.success) {
           showToast('Parâmetros da Recepção & TASY salvos com sucesso!', 'success');

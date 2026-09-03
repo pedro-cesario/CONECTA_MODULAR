@@ -249,6 +249,91 @@ async function salvarConfigSistema(req, res) {
   }
 }
 
+async function testarTasyReports(req, res) {
+  const http = require('http');
+  const https = require('https');
+  const { URL } = require('url');
+
+  try {
+    const { url, username, password } = req.body;
+    const tasyUrl = url || configCache.getSystemConfig()?.tasy_reports_url || process.env.TASY_REPORTS_URL || 'http://192.168.1.25/TasyAppServer';
+    const tasyUser = username || configCache.getSystemConfig()?.tasy_reports_user || process.env.TASY_REPORTS_USER;
+    const tasyPass = password || configCache.getSystemConfig()?.tasy_reports_password || process.env.TASY_REPORTS_PASSWORD;
+
+    if (!tasyUser || !tasyPass) {
+      return res.status(400).json({
+        success: false,
+        message: 'Usuário e senha são obrigatórios para testar a autenticação com o TasyAppServer.'
+      });
+    }
+
+    const urlObj = new URL(`${tasyUrl}/resources/public/security/oauth`);
+    const body = JSON.stringify({
+      username: tasyUser,
+      password: tasyPass,
+      grant_type: 'password',
+      client_id: 'WTASY',
+      scope: 'WTASY',
+      timezone: 'America/Sao_Paulo'
+    });
+
+    const isHttps = urlObj.protocol === 'https:';
+    const client = isHttps ? https : http;
+
+    const start = Date.now();
+    const reqTasy = client.request({
+      protocol: urlObj.protocol,
+      hostname: urlObj.hostname,
+      port: urlObj.port || (isHttps ? 443 : 80),
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      },
+      timeout: 10000
+    }, (resTasy) => {
+      let data = '';
+      resTasy.on('data', chunk => data += chunk);
+      resTasy.on('end', () => {
+        const duration = Date.now() - start;
+        if (resTasy.statusCode === 200) {
+          return res.json({
+            success: true,
+            status: 200,
+            durationMs: duration,
+            message: `Autenticação TasyAppServer BEM-SUCEDIDA em ${duration}ms! Token gerado com sucesso.`
+          });
+        }
+        let parsed = {};
+        try { parsed = JSON.parse(data); } catch (e) {}
+        return res.status(400).json({
+          success: false,
+          status: resTasy.statusCode,
+          durationMs: duration,
+          message: parsed.message || data || `Falha na autenticação (HTTP ${resTasy.statusCode})`
+        });
+      });
+    });
+
+    reqTasy.on('timeout', () => {
+      reqTasy.destroy(new Error('Timeout de 10s excedido ao tentar conectar ao TasyAppServer'));
+    });
+
+    reqTasy.on('error', (err) => {
+      res.status(500).json({
+        success: false,
+        message: `Não foi possível alcançar o TasyAppServer: ${err.message}`
+      });
+    });
+
+    reqTasy.write(body);
+    reqTasy.end();
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 
 async function listarAgendasEct(req, res) {
   try {
@@ -823,6 +908,7 @@ module.exports = {
   salvarConfigOracle,
   obterConfigLdap,
   salvarConfigLdap,
+  testarTasyReports,
   listarPaineisTv,
   salvarPainelTv,
   deletarPainelTv,
