@@ -714,6 +714,77 @@ async function salvarConfigLdap(req, res) {
   }
 }
 
+async function listarPaineisTv(req, res) {
+  try {
+    const items = await configCache.getPaineisTv();
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar painéis de TV:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarPainelTv(req, res) {
+  try {
+    const { id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo } = req.body;
+    if (!id || !nome) {
+      return res.status(400).json({ success: false, message: 'ID e Nome do painel são obrigatórios' });
+    }
+    const item = await configCache.savePainelTv({ id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar painel de TV:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function deletarPainelTv(req, res) {
+  try {
+    const { id } = req.params;
+    await configCache.deletePainelTv(id);
+    res.json({ success: true, data: { id } });
+  } catch (err) {
+    console.error('[Admin] Erro ao deletar painel de TV:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function listarMaquinasGuiches(req, res) {
+  try {
+    const items = await configCache.getMaquinasGuiches();
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar máquinas e guichês:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarMaquinaGuiche(req, res) {
+  try {
+    const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo } = req.body;
+    const key = id || nm_maquina;
+    if (!key || !ds_guiche) {
+      return res.status(400).json({ success: false, message: 'Nome da máquina e descrição do guichê são obrigatórios' });
+    }
+    const item = await configCache.saveMaquinaGuiche({ id: key, nm_maquina: nm_maquina || key, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar máquina / guichê:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function deletarMaquinaGuiche(req, res) {
+  try {
+    const { id } = req.params;
+    await configCache.deleteMaquinaGuiche(id);
+    res.json({ success: true, data: { id } });
+  } catch (err) {
+    console.error('[Admin] Erro ao deletar máquina / guichê:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 module.exports = {
   listarPerfis,
   salvarPerfil,
@@ -751,6 +822,12 @@ module.exports = {
   obterConfigOracle,
   salvarConfigOracle,
   obterConfigLdap,
-  salvarConfigLdap
+  salvarConfigLdap,
+  listarPaineisTv,
+  salvarPainelTv,
+  deletarPainelTv,
+  listarMaquinasGuiches,
+  salvarMaquinaGuiche,
+  deletarMaquinaGuiche
 };
 

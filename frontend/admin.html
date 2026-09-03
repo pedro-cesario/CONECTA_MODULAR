@@ -836,6 +836,9 @@
         <button class="admin-tab-btn" id="pillar-infra-tab" data-tab="pillar-infra" role="tab" aria-controls="pillar-infra" aria-selected="false">
           <i class="bi bi-hdd-network-fill"></i> 4. Infraestrutura
         </button>
+        <button class="admin-tab-btn" id="pillar-paineis-tab" data-tab="pillar-paineis" role="tab" aria-controls="pillar-paineis" aria-selected="false">
+          <i class="bi bi-tv-fill"></i> 5. Painéis & Guichês
+        </button>
       </div>
       <div class="topbar-right">
         <span class="user-badge" id="user-display">
@@ -1635,8 +1638,175 @@
           </div>
         </div>
 
+        <!-- PILAR 5: PAINÉIS & GUICHÊS -->
+        <div class="tab-pane" id="pillar-paineis" role="tabpanel" aria-labelledby="pillar-paineis-tab">
+          <div class="admin-header-card">
+            <div class="mode-eyebrow">Pilar 5 — Gestão de Painéis de TV & Guichês</div>
+            <h3>Painéis de Chamada (Conecta TV) & Mapeamento de Guichês</h3>
+            <p>Gerencie as TVs de atendimento, filas vinculadas a cada painel e associe computadores aos seus respectivos guichês.</p>
+          </div>
+
+          <div class="admin-sub-nav">
+            <button class="admin-sub-pill active" data-subpane="subpane-paineis-tv">
+              <i class="bi bi-tv"></i> Painéis Conecta TV
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-maquinas-guiches">
+              <i class="bi bi-display"></i> Mapeamento de Guichês por Computador
+            </button>
+          </div>
+
+          <!-- SUB-ABA 1: PAINÉIS CONECTA TV -->
+          <div class="admin-sub-pane active" id="subpane-paineis-tv">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-tv text-primary"></i> Painéis de TV Cadastrados
+                </div>
+                <button class="btn btn-primary btn-sm fw-bold" id="btn-novo-painel-tv">
+                  <i class="bi bi-plus-lg"></i> Novo Painel de TV
+                </button>
+              </div>
+              <div class="admin-card-body">
+                <div class="row g-3" id="paineis-tv-grid">
+                  <!-- Renderizado via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 2: MAPEAMENTO DE GUICHÊS POR MÁQUINA -->
+          <div class="admin-sub-pane" id="subpane-maquinas-guiches">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-display text-primary"></i> Computadores e Postos de Atendimento Mapeados
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-primary btn-sm fw-bold" id="btn-identificar-meu-pc">
+                    <i class="bi bi-crosshair"></i> Identificar Este Computador
+                  </button>
+                  <button class="btn btn-primary btn-sm fw-bold" id="btn-nova-maquina-guiche">
+                    <i class="bi bi-plus-lg"></i> Mapear Máquina
+                  </button>
+                </div>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle m-0" id="tabela-maquinas-guiches">
+                    <thead>
+                      <tr>
+                        <th>Nome da Máquina / Hostname / IP</th>
+                        <th>Guichê / Posto Atribuído</th>
+                        <th>Painel TV Vinculado</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="maquinas-guiches-tbody">
+                      <!-- Renderizado via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+  <!-- Modal Novo / Editar Painel TV -->
+  <div class="modal" id="modal-painel-tv">
+    <div class="modal-content" style="max-width: 600px; background: #ffffff; border-radius: 1rem; padding: 1.5rem;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="modal-title m-0" id="modal-painel-tv-title" style="font-weight: 800; color: var(--primary);">Configurar Painel Conecta TV</h4>
+        <button type="button" class="close-modal" id="modal-painel-tv-close" style="border: 0; background: transparent; font-size: 1.5rem;">&times;</button>
       </div>
-    </main>
+      <form id="form-painel-tv">
+        <div class="modal-body p-0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Identificador / Slug Único *</label>
+              <input type="text" id="painel-tv-id" class="form-control" placeholder="ex: recepcao_principal" required>
+              <small class="text-muted">Usado na URL: <code>/painel.html?painel=...</code></small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Nome de Exibição *</label>
+              <input type="text" id="painel-tv-nome" class="form-control" placeholder="ex: Painel Recepção Principal" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Descrição / Localização</label>
+              <input type="text" id="painel-tv-desc" class="form-control" placeholder="ex: TV da Sala de Espera do Pronto Atendimento">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Filas Monitoradas (IDs separados por vírgula)</label>
+              <input type="text" id="painel-tv-filas" class="form-control" placeholder="ex: 9, 10, 11, 12">
+              <small class="text-muted">Exemplo: 9 = Recepção P.A., 12 = Triagem. Deixe vazio para todas.</small>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="painel-tv-som" checked>
+                <label class="form-check-label fw-bold small" for="painel-tv-som">Sinal Sonoro</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="painel-tv-voz" checked>
+                <label class="form-check-label fw-bold small" for="painel-tv-voz">Voz Sintetizada</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Velocidade</label>
+              <select id="painel-tv-velocidade" class="form-select form-select-sm">
+                <option value="0.9">0.9x</option>
+                <option value="1.0" selected>1.0x</option>
+                <option value="1.1">1.1x</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" id="modal-painel-tv-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold" id="btn-salvar-painel-tv">
+            <i class="bi bi-check-lg"></i> Salvar Painel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Novo / Editar Máquina Guichê -->
+  <div class="modal" id="modal-maquina-guiche">
+    <div class="modal-content" style="max-width: 520px; background: #ffffff; border-radius: 1rem; padding: 1.5rem;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="modal-title m-0" id="modal-maquina-title" style="font-weight: 800; color: var(--primary);">Mapear Máquina para Guichê</h4>
+        <button type="button" class="close-modal" id="modal-maquina-close" style="border: 0; background: transparent; font-size: 1.5rem;">&times;</button>
+      </div>
+      <form id="form-maquina-guiche">
+        <div class="modal-body p-0">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-bold">Nome do Computador / Hostname / IP *</label>
+              <input type="text" id="guiche-maquina-nome" class="form-control" placeholder="ex: NOTE-CESARIO ou 192.168.12.158" required>
+              <small class="text-muted">Hostname da máquina que o atendente utiliza.</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Descrição do Guichê / Posto *</label>
+              <input type="text" id="guiche-ds-guiche" class="form-control" placeholder="ex: Guichê 01" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Painel TV de Destino</label>
+              <select id="guiche-painel-id" class="form-select" required>
+                <option value="recepcao_principal">Recepção Principal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" id="modal-maquina-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold" id="btn-salvar-maquina-guiche">
+            <i class="bi bi-check-lg"></i> Salvar Mapeamento
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="modal" id="studio-new-modal">
@@ -4249,6 +4419,304 @@
       }
     });
 
+    // ========================================================================
+    // PILAR 5: PAINÉIS & GUICHÊS
+    // ========================================================================
+    let paineisTvList = [];
+    let maquinasGuichesList = [];
+
+    async function loadPaineisTv() {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/admin/paineis`);
+        if (res && res.success) {
+          paineisTvList = res.data || [];
+          renderPaineisTv(paineisTvList);
+          atualizarSelectPaineis(paineisTvList);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar painéis de TV:', err);
+      }
+    }
+
+    function atualizarSelectPaineis(items) {
+      const select = document.getElementById('guiche-painel-id');
+      if (!select) return;
+      select.innerHTML = items.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.nome)}</option>`).join('');
+    }
+
+    function renderPaineisTv(items) {
+      const grid = document.getElementById('paineis-tv-grid');
+      if (!grid) return;
+
+      if (items.length === 0) {
+        grid.innerHTML = `<div class="col-12 text-center text-muted py-4">Nenhum painel de TV cadastrado.</div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(p => {
+        let filasArr = [];
+        try { filasArr = typeof p.filas_json === 'string' ? JSON.parse(p.filas_json) : (p.filas_json || []); } catch(e){}
+        const filasStr = filasArr.length > 0 ? filasArr.join(', ') : 'Todas as Filas';
+
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border shadow-sm rounded-3">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                    <i class="bi bi-tv-fill fs-5"></i>
+                  </div>
+                  <div>
+                    <h6 class="m-0 fw-bold text-dark">${escapeHtml(p.nome)}</h6>
+                    <small class="text-muted">Slug: <code>${escapeHtml(p.id)}</code></small>
+                  </div>
+                </div>
+                <span class="badge ${p.ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${p.ativo ? 'Ativo' : 'Inativo'}</span>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-2">${escapeHtml(p.descricao || 'Sem descrição')}</p>
+                <div class="small mb-1"><strong>Filas:</strong> <span class="badge bg-light text-dark border">${escapeHtml(filasStr)}</span></div>
+                <div class="small mb-1"><strong>Sons:</strong> ${p.som_ativo ? '🔔 Ding-Dong' : '❌ Mudo'} | ${p.voz_ativa ? '🗣️ Voz Ativa' : '❌ Sem Voz'}</div>
+              </div>
+              <div class="card-footer bg-light d-flex justify-content-between align-items-center py-2">
+                <a href="/painel.html?painel=${encodeURIComponent(p.id)}" target="_blank" class="btn btn-outline-primary btn-sm fw-bold">
+                  <i class="bi bi-box-arrow-up-right me-1"></i> Abrir TV
+                </a>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary btn-editar-painel" data-id="${escapeHtml(p.id)}" title="Editar"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline-danger btn-deletar-painel" data-id="${escapeHtml(p.id)}" title="Excluir"><i class="bi bi-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      grid.querySelectorAll('.btn-editar-painel').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const p = paineisTvList.find(x => x.id === id);
+          if (p) abrirModalPainelTv(p);
+        });
+      });
+
+      grid.querySelectorAll('.btn-deletar-painel').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm(`Deseja realmente excluir o painel "${id}"?`)) {
+            try {
+              await api.delete(`${apiConfig.baseUrl}/admin/paineis/${id}`);
+              showToast('Painel excluído com sucesso', 'success');
+              await loadPaineisTv();
+            } catch (err) {
+              showToast('Erro ao excluir painel: ' + err.message, 'error');
+            }
+          }
+        });
+      });
+    }
+
+    function abrirModalPainelTv(item = null) {
+      const modal = document.getElementById('modal-painel-tv');
+      const title = document.getElementById('modal-painel-tv-title');
+      const idEl = document.getElementById('painel-tv-id');
+      const nomeEl = document.getElementById('painel-tv-nome');
+      const descEl = document.getElementById('painel-tv-desc');
+      const filasEl = document.getElementById('painel-tv-filas');
+      const somEl = document.getElementById('painel-tv-som');
+      const vozEl = document.getElementById('painel-tv-voz');
+      const velEl = document.getElementById('painel-tv-velocidade');
+
+      if (item) {
+        title.textContent = 'Editar Painel Conecta TV';
+        idEl.value = item.id;
+        idEl.disabled = true;
+        nomeEl.value = item.nome || '';
+        descEl.value = item.descricao || '';
+        let filas = [];
+        try { filas = typeof item.filas_json === 'string' ? JSON.parse(item.filas_json) : (item.filas_json || []); } catch(e){}
+        filasEl.value = Array.isArray(filas) ? filas.join(', ') : '';
+        somEl.checked = Boolean(item.som_ativo);
+        vozEl.checked = Boolean(item.voz_ativa);
+        velEl.value = String(item.voz_velocidade || 1.0);
+      } else {
+        title.textContent = 'Novo Painel Conecta TV';
+        idEl.value = '';
+        idEl.disabled = false;
+        nomeEl.value = '';
+        descEl.value = '';
+        filasEl.value = '9, 10, 11, 12';
+        somEl.checked = true;
+        vozEl.checked = true;
+        velEl.value = '1.0';
+      }
+
+      modal.classList.add('show');
+    }
+
+    document.getElementById('btn-novo-painel-tv')?.addEventListener('click', () => abrirModalPainelTv());
+    document.getElementById('modal-painel-tv-close')?.addEventListener('click', () => document.getElementById('modal-painel-tv').classList.remove('show'));
+    document.getElementById('modal-painel-tv-cancel')?.addEventListener('click', () => document.getElementById('modal-painel-tv').classList.remove('show'));
+
+    document.getElementById('form-painel-tv')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('painel-tv-id').value.trim();
+      const nome = document.getElementById('painel-tv-nome').value.trim();
+      const descricao = document.getElementById('painel-tv-desc').value.trim();
+      const filasRaw = document.getElementById('painel-tv-filas').value.trim();
+      const som_ativo = document.getElementById('painel-tv-som').checked ? 1 : 0;
+      const voz_ativa = document.getElementById('painel-tv-voz').checked ? 1 : 0;
+      const voz_velocidade = parseFloat(document.getElementById('painel-tv-velocidade').value) || 1.0;
+
+      const filas_json = filasRaw ? filasRaw.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) : [];
+
+      try {
+        await api.post(`${apiConfig.baseUrl}/admin/paineis`, {
+          id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo: 1
+        });
+        showToast('Painel salvo com sucesso!', 'success');
+        document.getElementById('modal-painel-tv').classList.remove('show');
+        await loadPaineisTv();
+      } catch (err) {
+        showToast('Erro ao salvar painel: ' + err.message, 'error');
+      }
+    });
+
+    // Mapeamento de Máquinas para Guichês
+    async function loadMaquinasGuiches() {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/admin/guiches`);
+        if (res && res.success) {
+          maquinasGuichesList = res.data || [];
+          renderMaquinasGuiches(maquinasGuichesList);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar mapeamentos de guichês:', err);
+      }
+    }
+
+    function renderMaquinasGuiches(items) {
+      const tbody = document.getElementById('maquinas-guiches-tbody');
+      if (!tbody) return;
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma máquina mapeada para guichê.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(m => `
+        <tr>
+          <td>
+            <div class="fw-bold text-dark font-monospace"><i class="bi bi-laptop me-1 text-primary"></i> ${escapeHtml(m.nm_maquina)}</div>
+            <small class="text-muted">ID: ${escapeHtml(m.id)}</small>
+          </td>
+          <td>
+            <span class="badge bg-primary fs-6 px-3 py-2">${escapeHtml(m.ds_guiche)}</span>
+          </td>
+          <td>
+            <span class="badge bg-info-subtle text-info border">${escapeHtml(m.painel_id || 'recepcao_principal')}</span>
+          </td>
+          <td>
+            <span class="badge ${m.ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${m.ativo ? 'Ativo' : 'Inativo'}</span>
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary btn-editar-guiche" data-id="${escapeHtml(m.id)}" title="Editar"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-deletar-guiche" data-id="${escapeHtml(m.id)}" title="Excluir"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.btn-editar-guiche').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const m = maquinasGuichesList.find(x => x.id === id);
+          if (m) abrirModalMaquinaGuiche(m);
+        });
+      });
+
+      tbody.querySelectorAll('.btn-deletar-guiche').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm(`Deseja realmente excluir o mapeamento da máquina "${id}"?`)) {
+            try {
+              await api.delete(`${apiConfig.baseUrl}/admin/guiches/${id}`);
+              showToast('Mapeamento excluído com sucesso', 'success');
+              await loadMaquinasGuiches();
+            } catch (err) {
+              showToast('Erro ao excluir: ' + err.message, 'error');
+            }
+          }
+        });
+      });
+    }
+
+    function abrirModalMaquinaGuiche(item = null) {
+      const modal = document.getElementById('modal-maquina-guiche');
+      const title = document.getElementById('modal-maquina-title');
+      const nomeEl = document.getElementById('guiche-maquina-nome');
+      const dsGuicheEl = document.getElementById('guiche-ds-guiche');
+      const painelEl = document.getElementById('guiche-painel-id');
+
+      if (item) {
+        title.textContent = 'Editar Mapeamento de Guichê';
+        nomeEl.value = item.nm_maquina || item.id;
+        dsGuicheEl.value = item.ds_guiche || '';
+        painelEl.value = item.painel_id || 'recepcao_principal';
+      } else {
+        title.textContent = 'Mapear Máquina para Guichê';
+        nomeEl.value = '';
+        dsGuicheEl.value = 'Guichê 01';
+        painelEl.value = 'recepcao_principal';
+      }
+
+      modal.classList.add('show');
+    }
+
+    document.getElementById('btn-nova-maquina-guiche')?.addEventListener('click', () => abrirModalMaquinaGuiche());
+    document.getElementById('modal-maquina-close')?.addEventListener('click', () => document.getElementById('modal-maquina-guiche').classList.remove('show'));
+    document.getElementById('modal-maquina-cancel')?.addEventListener('click', () => document.getElementById('modal-maquina-guiche').classList.remove('show'));
+
+    document.getElementById('btn-identificar-meu-pc')?.addEventListener('click', async () => {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/painel/detectar-maquina`);
+        if (res && res.success && res.data) {
+          abrirModalMaquinaGuiche({
+            id: res.data.nm_maquina,
+            nm_maquina: res.data.nm_maquina,
+            ds_guiche: res.data.ds_guiche,
+            painel_id: res.data.painel_id
+          });
+          showToast(`Computador identificado como "${res.data.nm_maquina}"`, 'info');
+        }
+      } catch (err) {
+        showToast('Erro ao identificar computador: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('form-maquina-guiche')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nm_maquina = document.getElementById('guiche-maquina-nome').value.trim();
+      const ds_guiche = document.getElementById('guiche-ds-guiche').value.trim();
+      const painel_id = document.getElementById('guiche-painel-id').value;
+
+      try {
+        await api.post(`${apiConfig.baseUrl}/admin/guiches`, {
+          id: nm_maquina,
+          nm_maquina,
+          ds_guiche,
+          painel_id,
+          ativo: 1
+        });
+        showToast('Mapeamento salvo com sucesso!', 'success');
+        document.getElementById('modal-maquina-guiche').classList.remove('show');
+        await loadMaquinasGuiches();
+      } catch (err) {
+        showToast('Erro ao salvar mapeamento: ' + err.message, 'error');
+      }
+    });
+
     async function loadAdminData() {
 
       try {
@@ -4277,6 +4745,8 @@
         await loadStudioPages();
         await loadOracleConfig();
         await loadLdapConfig();
+        await loadPaineisTv();
+        await loadMaquinasGuiches();
       } catch (err) {
         console.error('[Admin] Erro ao verificar sessão:', err);
         window.location.href = '/';

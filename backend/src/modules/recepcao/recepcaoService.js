@@ -1,5 +1,7 @@
 const recepcaoRepository = require('./recepcaoRepository');
 const tasyReportsClient = require('./tasyReportsClient');
+const configCache = require('../../core/config/configCache');
+const painelEventsService = require('../painel/painelEventsService');
 const logger = require('../../core/utils/logger');
 
 /**
@@ -15,11 +17,33 @@ async function listarSenhasEspera(nrSeqFila) {
 }
 
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
-  const result = await recepcaoRepository.chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario);
+  const mapping = configCache.getMaquinaGuiche(dsMaquina);
+  const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
+  const painelId = mapping?.painel_id || 'recepcao_principal';
+
+  const result = await recepcaoRepository.chamarProximaSenha(nrSeqFila, guicheFinal, nmUsuario);
   if (!result) {
     return { proxima: false, message: 'Nenhuma senha aguardando nesta fila.' };
   }
-  return { proxima: true, data: result };
+
+  let prefixo = 'N';
+  if (result.nr_prioridade === 1) prefixo = 'E';
+  else if (result.nr_prioridade === 2) prefixo = 'P';
+
+  const itemFormatado = {
+    nr_sequencia: result.nr_sequencia,
+    cd_senha_gerada: result.cd_senha_gerada,
+    cd_senha_completa: `${prefixo}${result.cd_senha_gerada}`,
+    ds_guiche: guicheFinal,
+    ds_prioridade: result.ds_prioridade || 'Normal',
+    nr_prioridade: result.nr_prioridade || 3,
+    hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    tipo_acao: 'CHAMADA'
+  };
+
+  painelEventsService.broadcastChamada(painelId, itemFormatado);
+
+  return { proxima: true, data: { ...result, ds_guiche: guicheFinal, painel_id: painelId } };
 }
 
 async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
@@ -28,7 +52,30 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     err.status = 400;
     throw err;
   }
-  return recepcaoRepository.rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario);
+  const mapping = configCache.getMaquinaGuiche(dsMaquina);
+  const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
+  const painelId = mapping?.painel_id || 'recepcao_principal';
+
+  const result = await recepcaoRepository.rechamarSenha(nrSeqSenha, guicheFinal, nmUsuario);
+
+  let prefixo = 'N';
+  if (result.nr_prioridade === 1) prefixo = 'E';
+  else if (result.nr_prioridade === 2) prefixo = 'P';
+
+  const itemFormatado = {
+    nr_sequencia: nrSeqSenha,
+    cd_senha_gerada: result.cd_senha_gerada,
+    cd_senha_completa: `${prefixo}${result.cd_senha_gerada}`,
+    ds_guiche: guicheFinal,
+    ds_prioridade: result.ds_prioridade || 'Normal',
+    nr_prioridade: result.nr_prioridade || 3,
+    hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    tipo_acao: 'RECHAMADA'
+  };
+
+  painelEventsService.broadcastChamada(painelId, itemFormatado);
+
+  return { success: true, data: { ...result, ds_guiche: guicheFinal, painel_id: painelId } };
 }
 
 async function buscarPessoas(termo) {

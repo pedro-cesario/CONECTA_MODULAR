@@ -1,0 +1,84 @@
+/**
+ * Conecta HEAL 2.0 - SSE Realtime Hub para Painéis de TV
+ * Transmissão instantânea de chamadas e rechamadas de senhas para as TVs.
+ */
+
+const clients = new Map(); // Map<painelId, Set<res>>
+
+function addClient(painelId, res) {
+  const pId = painelId || 'recepcao_principal';
+  if (!clients.has(pId)) {
+    clients.set(pId, new Set());
+  }
+  clients.get(pId).add(res);
+
+  // Heartbeat inicial
+  res.write(`event: conectado\ndata: ${JSON.stringify({ painelId: pId, timestamp: new Date().toISOString() })}\n\n`);
+
+  res.on('close', () => {
+    removeClient(pId, res);
+  });
+}
+
+function removeClient(painelId, res) {
+  const pId = painelId || 'recepcao_principal';
+  if (clients.has(pId)) {
+    clients.get(pId).delete(res);
+    if (clients.get(pId).size === 0) {
+      clients.delete(pId);
+    }
+  }
+}
+
+function broadcastChamada(painelId, dadosChamada) {
+  const pId = painelId || 'recepcao_principal';
+  const payload = JSON.stringify({
+    tipo: 'CHAMADA_SENHA',
+    painelId: pId,
+    dados: dadosChamada,
+    timestamp: new Date().toISOString()
+  });
+
+  const message = `event: chamada\ndata: ${payload}\n\n`;
+
+  // Envia para o painel específico
+  if (clients.has(pId)) {
+    clients.get(pId).forEach(client => {
+      try {
+        client.write(message);
+      } catch (err) {
+        removeClient(pId, client);
+      }
+    });
+  }
+
+  // Envia também para painéis que monitoram 'all'
+  if (pId !== 'all' && clients.has('all')) {
+    clients.get('all').forEach(client => {
+      try {
+        client.write(message);
+      } catch (err) {
+        removeClient('all', client);
+      }
+    });
+  }
+}
+
+// Keep-alive a cada 20 segundos para manter conexões SSE vivas em proxies/firewalls
+setInterval(() => {
+  clients.forEach((clientSet, pId) => {
+    clientSet.forEach(client => {
+      try {
+        client.write(`: ping\n\n`);
+      } catch (err) {
+        removeClient(pId, client);
+      }
+    });
+  });
+}, 20000).unref();
+
+module.exports = {
+  addClient,
+  removeClient,
+  broadcastChamada
+};

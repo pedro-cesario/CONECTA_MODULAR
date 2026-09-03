@@ -369,6 +369,51 @@ async function ensureAccessSchema() {
     }
     await run("INSERT OR IGNORE INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes_real_v2')");
   }
+
+  // Schema: Painéis de TV Conecta e Mapeamento de Guichês por Computador
+  await run(`CREATE TABLE IF NOT EXISTS paineis_tv (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    descricao TEXT,
+    filas_json TEXT DEFAULT '[]',
+    som_ativo INTEGER DEFAULT 1,
+    voz_ativa INTEGER DEFAULT 1,
+    voz_velocidade REAL DEFAULT 1.0,
+    ativo INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  await run(`CREATE TABLE IF NOT EXISTS maquinas_guiches (
+    id TEXT PRIMARY KEY,
+    nm_maquina TEXT NOT NULL,
+    ds_guiche TEXT NOT NULL,
+    painel_id TEXT,
+    cd_setor INTEGER,
+    nm_usuario_padrao TEXT,
+    ativo INTEGER DEFAULT 1,
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  const migrationPaineis = await all("SELECT id FROM config_migrations WHERE id = '2026_09_paineis_e_guiches'");
+  if (migrationPaineis.length === 0) {
+    await run(`INSERT OR IGNORE INTO paineis_tv (id, nome, descricao, filas_json, som_ativo, voz_ativa, ativo) 
+      VALUES ('recepcao_principal', 'Recepção Principal', 'Painel de TV da Sala de Espera da Recepção / P.A.', '[9, 10, 11, 12]', 1, 1, 1)`);
+    
+    await run(`INSERT OR IGNORE INTO paineis_tv (id, nome, descricao, filas_json, som_ativo, voz_ativa, ativo) 
+      VALUES ('triagem_pa', 'Triagem P.A.', 'Painel da Sala de Triagem e Classificação de Risco', '[9, 12]', 1, 1, 1)`);
+
+    await run(`INSERT OR IGNORE INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, ativo)
+      VALUES ('NOTE-CESARIO', 'NOTE-CESARIO', 'Guichê 01', 'recepcao_principal', 1)`);
+
+    await run(`INSERT OR IGNORE INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, ativo)
+      VALUES ('GUICHE-01', 'GUICHE-01', 'Guichê 01', 'recepcao_principal', 1)`);
+
+    await run(`INSERT OR IGNORE INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, ativo)
+      VALUES ('GUICHE-02', 'GUICHE-02', 'Guichê 02', 'recepcao_principal', 1)`);
+
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_09_paineis_e_guiches')");
+  }
 }
 
 async function load() {
@@ -388,12 +433,102 @@ async function load() {
       systemConfig[row.chave] = row.valor;
     }
 
-    cache = { perfis, modulos, perfilModulos, perfilPermissoes, perfilModuloSetores, dashboardPA, systemConfig };
+    const paineis = await all('SELECT * FROM paineis_tv ORDER BY nome');
+    const maquinasGuiches = await all('SELECT * FROM maquinas_guiches ORDER BY ds_guiche');
+
+    cache = {
+      perfis,
+      modulos,
+      perfilModulos,
+      perfilPermissoes,
+      perfilModuloSetores,
+      dashboardPA,
+      systemConfig,
+      paineis: paineis || [],
+      maquinasGuiches: maquinasGuiches || []
+    };
     return true;
   } catch (err) {
     console.error('[ConfigCache] Erro ao carregar cache:', err.message);
     return false;
   }
+}
+
+function getPaineisTv() {
+  return cache.paineis || [];
+}
+
+function getPainelTvById(id) {
+  if (!id) return null;
+  return (cache.paineis || []).find(p => p.id === id) || null;
+}
+
+async function savePainelTv(painel) {
+  const { id, nome, descricao, filas_json, som_ativo = 1, voz_ativa = 1, voz_velocidade = 1.0, ativo = 1 } = painel;
+  if (!id || !nome) throw new Error('ID e Nome do painel são obrigatórios');
+  
+  const existing = await all('SELECT id FROM paineis_tv WHERE id = ?', [id]);
+  if (existing.length > 0) {
+    await run(`UPDATE paineis_tv 
+      SET nome = ?, descricao = ?, filas_json = ?, som_ativo = ?, voz_ativa = ?, voz_velocidade = ?, ativo = ?, updated_at = datetime('now')
+      WHERE id = ?`,
+      [nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, ativo ? 1 : 0, id]
+    );
+  } else {
+    await run(`INSERT INTO paineis_tv (id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, ativo ? 1 : 0]
+    );
+  }
+  await load();
+  return getPainelTvById(id);
+}
+
+async function deletePainelTv(id) {
+  await run('DELETE FROM paineis_tv WHERE id = ?', [id]);
+  await load();
+  return true;
+}
+
+function getMaquinasGuiches() {
+  return cache.maquinasGuiches || [];
+}
+
+function getMaquinaGuiche(nmMaquina) {
+  if (!nmMaquina) return null;
+  const term = String(nmMaquina).trim().toUpperCase();
+  return (cache.maquinasGuiches || []).find(m => 
+    String(m.nm_maquina).trim().toUpperCase() === term || 
+    String(m.id).trim().toUpperCase() === term
+  ) || null;
+}
+
+async function saveMaquinaGuiche(guiche) {
+  const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo = 1 } = guiche;
+  const key = id || nm_maquina;
+  if (!key || !ds_guiche) throw new Error('Identificador da máquina e descrição do guichê são obrigatórios');
+
+  const existing = await all('SELECT id FROM maquinas_guiches WHERE id = ?', [key]);
+  if (existing.length > 0) {
+    await run(`UPDATE maquinas_guiches
+      SET nm_maquina = ?, ds_guiche = ?, painel_id = ?, cd_setor = ?, nm_usuario_padrao = ?, ativo = ?, updated_at = datetime('now')
+      WHERE id = ?`,
+      [nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, ativo ? 1 : 0, key]
+    );
+  } else {
+    await run(`INSERT INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [key, nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, ativo ? 1 : 0]
+    );
+  }
+  await load();
+  return getMaquinaGuiche(key);
+}
+
+async function deleteMaquinaGuiche(id) {
+  await run('DELETE FROM maquinas_guiches WHERE id = ?', [id]);
+  await load();
+  return true;
 }
 
 function getCachedPerfis() {
@@ -908,5 +1043,13 @@ module.exports = {
   getActivePassagemCheckboxes,
   savePassagemCheckbox,
   deletePassagemCheckbox,
-  togglePassagemCheckbox
+  togglePassagemCheckbox,
+  getPaineisTv,
+  getPainelTvById,
+  savePainelTv,
+  deletePainelTv,
+  getMaquinasGuiches,
+  getMaquinaGuiche,
+  saveMaquinaGuiche,
+  deleteMaquinaGuiche
 };

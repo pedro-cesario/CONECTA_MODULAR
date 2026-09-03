@@ -53,4 +53,15 @@ router.post('/infra/oracle', requireAuth, requireAdmin, adminController.salvarCo
 router.get('/infra/ldap', requireAuth, requireAdmin, adminController.obterConfigLdap);
 router.post('/infra/ldap', requireAuth, requireAdmin, adminController.salvarConfigLdap);
 
+// Gestão de Painéis de TV e Mapeamento de Guichês
+router.get('/paineis', requireAuth, requireAdmin, adminController.listarPaineisTv);
+router.post('/paineis', requireAuth, requireAdmin, adminController.salvarPainelTv);
+router.put('/paineis/:id', requireAuth, requireAdmin, adminController.salvarPainelTv);
+router.delete('/paineis/:id', requireAuth, requireAdmin, adminController.deletarPainelTv);
+
+router.get('/guiches', requireAuth, requireAdmin, adminController.listarMaquinasGuiches);
+router.post('/guiches', requireAuth, requireAdmin, adminController.salvarMaquinaGuiche);
+router.put('/guiches/:id', requireAuth, requireAdmin, adminController.salvarMaquinaGuiche);
+router.delete('/guiches/:id', requireAuth, requireAdmin, adminController.deletarMaquinaGuiche);
+
 module.exports = router;

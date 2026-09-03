@@ -108,12 +108,13 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     let cdSenha = null;
     let cdPf = null;
     let nrFila = null;
+    let nrPrioridade = 3;
 
     // Lock atômico direto na PK sem subquery para evitar ORA-02014
     for (const cand of proxima.rows) {
       try {
         const lockRes = await conn.execute(
-          `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
+          `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica, nr_prioridade
            FROM paciente_senha_fila
            WHERE nr_sequencia = :seq
              AND dt_chamada IS NULL
@@ -126,6 +127,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
           cdSenha = lockRes.rows[0].CD_SENHA_GERADA;
           cdPf = lockRes.rows[0].CD_PESSOA_FISICA;
           nrFila = lockRes.rows[0].NR_SEQ_FILA_SENHA;
+          nrPrioridade = lockRes.rows[0].NR_PRIORIDADE || 3;
           break;
         }
       } catch (lockErr) {
@@ -140,6 +142,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
 
     const maquinaFinal = dsMaquina || 'GUICHE-WEB';
     const usuarioFinal = nmUsuario || 'TASY';
+    const dsPrioridade = nrPrioridade === 1 ? 'Emergência' : (nrPrioridade === 2 ? 'Prioritária' : 'Normal');
 
     const updateRes = await conn.execute(
       `UPDATE paciente_senha_fila
@@ -195,7 +198,9 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       nr_sequencia: nrSeqSenha,
       cd_senha_gerada: cdSenha,
       cd_pessoa_fisica: cdPf,
-      nr_seq_fila_senha: nrFila
+      nr_seq_fila_senha: nrFila,
+      nr_prioridade: nrPrioridade,
+      ds_prioridade: dsPrioridade
     };
   } catch (err) {
     await conn.rollback();
@@ -211,6 +216,17 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     const maquinaFinal = dsMaquina || 'GUICHE-WEB';
     const usuarioFinal = nmUsuario || 'TASY';
     const seqNum = parseInt(nrSeqSenha, 10);
+
+    const checkRes = await conn.execute(
+      `SELECT cd_senha_gerada, nr_prioridade, nr_seq_fila_senha
+       FROM paciente_senha_fila
+       WHERE nr_sequencia = :seq`,
+      { seq: seqNum }
+    );
+
+    const cdSenha = checkRes.rows?.[0]?.CD_SENHA_GERADA || seqNum;
+    const nrPrioridade = checkRes.rows?.[0]?.NR_PRIORIDADE || 3;
+    const dsPrioridade = nrPrioridade === 1 ? 'Emergência' : (nrPrioridade === 2 ? 'Prioritária' : 'Normal');
 
     await conn.execute(
       `UPDATE paciente_senha_fila
@@ -256,7 +272,13 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     }
 
     await conn.commit();
-    return { success: true };
+    return {
+      success: true,
+      nr_sequencia: seqNum,
+      cd_senha_gerada: cdSenha,
+      nr_prioridade: nrPrioridade,
+      ds_prioridade: dsPrioridade
+    };
   } catch (err) {
     await conn.rollback();
     throw err;

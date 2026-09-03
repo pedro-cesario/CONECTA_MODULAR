@@ -1,0 +1,464 @@
+/**
+ * Conecta HEAL 2.0 - Conecta TV Painel de Senhas CSS
+ * Design System Conecta - Tema Hospitalar Noturno / TV Fullscreen
+ */
+
+:root {
+  --tv-bg: #060d17;
+  --tv-card-bg: rgba(14, 25, 44, 0.85);
+  --tv-card-border: rgba(56, 189, 248, 0.15);
+  --tv-header-bg: #0a172a;
+  --tv-accent-blue: #0284c7;
+  --tv-accent-cyan: #38bdf8;
+  --tv-prio-emergencia: #ef4444;
+  --tv-prio-emergencia-bg: rgba(239, 68, 68, 0.18);
+  --tv-prio-preferencial: #f59e0b;
+  --tv-prio-preferencial-bg: rgba(245, 158, 11, 0.18);
+  --tv-prio-normal: #38bdf8;
+  --tv-prio-normal-bg: rgba(56, 189, 248, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.painel-tv-body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 20%, #0d1e38 0%, #060d17 80%);
+  color: #f8fafc;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ============================================================================
+   1. TOPBAR HEADER
+   ============================================================================ */
+.painel-tv-header {
+  height: 80px;
+  background: rgba(10, 23, 42, 0.95);
+  border-bottom: 2px solid rgba(56, 189, 248, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.painel-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.painel-brand-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+}
+
+.painel-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.painel-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.painel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.painel-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: pulse-green 1.8s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.painel-clock-widget {
+  text-align: right;
+}
+
+.painel-time {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: 'Consolas', 'Courier New', monospace;
+  line-height: 1.1;
+}
+
+.painel-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+
+.painel-fullscreen-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.painel-fullscreen-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* ============================================================================
+   2. MAIN LAYOUT
+   ============================================================================ */
+.painel-tv-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 1.75rem;
+  padding: 1.75rem 2rem;
+  height: calc(100vh - 130px);
+}
+
+/* ============================================================================
+   3. BIG CALLING CARD
+   ============================================================================ */
+.painel-calling-card {
+  background: var(--tv-card-bg);
+  border: 2px solid var(--tv-card-border);
+  border-radius: 24px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.painel-calling-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #f59e0b);
+}
+
+.calling-card-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calling-eyebrow {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+.calling-priority-badge {
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 0.5rem 1.4rem;
+  border-radius: 30px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.priority-normal {
+  background: var(--tv-prio-normal-bg);
+  color: var(--tv-prio-normal);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+}
+
+.priority-preferencial {
+  background: var(--tv-prio-preferencial-bg);
+  color: var(--tv-prio-preferencial);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.priority-emergencia {
+  background: var(--tv-prio-emergencia-bg);
+  color: var(--tv-prio-emergencia);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+  animation: pulse-red-badge 1s infinite alternate;
+}
+
+@keyframes pulse-red-badge {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+.calling-ticket-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.calling-ticket-number {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 2px;
+  line-height: 1;
+  text-shadow: 0 0 35px rgba(56, 189, 248, 0.4);
+}
+
+.calling-destination-box {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(15, 23, 42, 0.6));
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-radius: 18px;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.destination-label {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.destination-target {
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 1px;
+}
+
+.calling-meta-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 0.95rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1rem;
+}
+
+.calling-meta-footer strong {
+  color: #cbd5e1;
+}
+
+/* Animação de Chamada Nova */
+.calling-animating {
+  animation: call-flash 1.2s ease-in-out 3;
+}
+
+@keyframes call-flash {
+  0% { transform: scale(1); border-color: var(--tv-accent-cyan); box-shadow: 0 0 50px rgba(56, 189, 248, 0.7); }
+  50% { transform: scale(1.02); border-color: #ffffff; box-shadow: 0 0 80px rgba(255, 255, 255, 0.9); }
+  100% { transform: scale(1); border-color: var(--tv-card-border); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+}
+
+/* ============================================================================
+   4. SIDEBAR HISTÓRICO
+   ============================================================================ */
+.painel-history-sidebar {
+  background: var(--tv-card-bg);
+  border: 2px solid var(--tv-card-border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.history-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+}
+
+.history-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  letter-spacing: 1px;
+}
+
+.history-list-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow-y: auto;
+}
+
+.history-item-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid var(--tv-accent-blue);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.history-item-card.prio-emergencia { border-left-color: var(--tv-prio-emergencia); }
+.history-item-card.prio-preferencial { border-left-color: var(--tv-prio-preferencial); }
+.history-item-card.prio-normal { border-left-color: var(--tv-prio-normal); }
+
+.history-item-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.history-item-target {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.history-item-time {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: right;
+}
+
+.history-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #475569;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.history-empty-state i {
+  font-size: 2rem;
+}
+
+/* ============================================================================
+   5. FOOTER TICKER
+   ============================================================================ */
+.painel-tv-footer {
+  height: 50px;
+  background: #091322;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 1rem;
+}
+
+.ticker-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.ticker-content {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================================
+   6. AUDIO PROMPT BANNER
+   ============================================================================ */
+.audio-prompt-banner {
+  position: fixed;
+  bottom: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  animation: slide-up 0.4s ease-out;
+}
+
+.audio-prompt-banner.d-none {
+  display: none !important;
+}
+
+@keyframes slide-up {
+  from { transform: translate(-50%, 40px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.prompt-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

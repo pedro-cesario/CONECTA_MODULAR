@@ -56,6 +56,8 @@ router.get('/setores-livro', requireAuth, setorController.listarSetoresLivro);
 router.get('/pacientes-setor/:cd_setor', requireAuth, pacienteController.listarPacientesSetor);
 router.post('/dashboard/pacientes-setor/:cd_setor', requireAuth, pacienteController.listarPacientesDashboard);
 
+const painelRoutes = require('./modules/painel/routes');
+
 // Roteamento Modular por Domínio
 router.use('/admin', requireAuth, adminRoutes);
 router.use('/setores', requireAuth, setoresRoutes);
@@ -67,5 +69,6 @@ router.use('/escala-ativa', requireAuth, escalasRoutes);
 router.use('/registros', requireAuth, registrosRoutes);
 router.use('/auditorias', requireAuth, auditoriasRoutes);
 router.use('/recepcao', recepcaoRoutes);
+router.use('/painel', painelRoutes);
 
 module.exports = router;

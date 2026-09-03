@@ -70,6 +70,7 @@ export async function initRecepcao() {
   window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
 
   bindRecepcaoEvents();
+  await detectarEConfigurarGuiche();
   await carregarFilas();
   await carregarSenhas();
   await carregarAtendimentosHoje();
@@ -79,7 +80,47 @@ export async function initRecepcao() {
   startQueuePolling();
 }
 
+async function detectarEConfigurarGuiche() {
+  const selectGuiche = document.getElementById('recepcao-select-meu-guiche');
+  const btnTv = document.getElementById('btn-recepcao-abrir-tv');
+
+  try {
+    const maquinaSalva = localStorage.getItem('conecta_ds_maquina');
+    const res = await api.get(`/api/painel/detectar-maquina${maquinaSalva ? `?maquina=${encodeURIComponent(maquinaSalva)}` : ''}`);
+    if (res && res.success && res.data) {
+      const data = res.data;
+      recepcaoState.maquinaInfo = data;
+
+      if (selectGuiche) {
+        const existe = Array.from(selectGuiche.options).some(o => o.value === data.ds_guiche);
+        if (!existe && data.ds_guiche) {
+          const opt = document.createElement('option');
+          opt.value = data.ds_guiche;
+          opt.textContent = data.ds_guiche;
+          selectGuiche.appendChild(opt);
+        }
+        selectGuiche.value = data.ds_guiche || 'Guichê 01';
+      }
+
+      if (btnTv && data.painel_id) {
+        btnTv.href = `/painel.html?painel=${encodeURIComponent(data.painel_id)}`;
+      }
+    }
+  } catch (err) {
+    console.warn('[Recepção] Erro ao detectar posto de atendimento:', err);
+  }
+}
+
 function bindRecepcaoEvents() {
+  const selectGuiche = document.getElementById('recepcao-select-meu-guiche');
+  if (selectGuiche && !selectGuiche.dataset.bound) {
+    selectGuiche.dataset.bound = '1';
+    selectGuiche.addEventListener('change', (e) => {
+      localStorage.setItem('conecta_ds_guiche', e.target.value);
+      ui.showToast(`Posto de atendimento definido como: ${e.target.value}`, 'info');
+    });
+  }
+
   const selectFila = document.getElementById('recepcao-select-fila');
   if (selectFila && !selectFila.dataset.bound) {
     selectFila.dataset.bound = '1';
@@ -472,6 +513,10 @@ export async function abrirDocumentosAtendimento(nrAtendimento, cdPessoaFisica, 
 // ============================================================================
 
 function obterNomeMaquina() {
+  const selectGuiche = document.getElementById('recepcao-select-meu-guiche');
+  if (selectGuiche && selectGuiche.value) return selectGuiche.value;
+  const customPosto = localStorage.getItem('conecta_ds_guiche');
+  if (customPosto && customPosto.trim()) return customPosto.trim();
   const custom = localStorage.getItem('conecta_ds_maquina');
   if (custom && custom.trim()) return custom.trim();
   if (state.usuario?.nm_computador) return state.usuario.nm_computador;
