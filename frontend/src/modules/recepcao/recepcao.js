@@ -62,6 +62,7 @@ export async function initRecepcao() {
   window.conectaCore = window.conectaCore || {};
   window.conectaCore.irParaPasso = irParaPasso;
   window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
+  window.conectaCore.chamarSenhaEspecifica = chamarSenhaEspecifica;
   window.conectaCore.selecionarPaciente = selecionarPaciente;
   window.conectaCore.novoPaciente = novoPaciente;
   window.conectaCore.imprimirRelatorio = imprimirRelatorio;
@@ -321,7 +322,7 @@ function renderizarBoardSenhas(listaFiltrada = null) {
     }
 
     return `
-      <div class="senha-ticket-card ${prioridadeClasse}" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})">
+      <div class="senha-ticket-card ${prioridadeClasse}">
         <div class="senha-ticket-header">
           <div class="senha-ticket-number">#${escapeHtml(cdSenha)}</div>
           <span class="senha-ticket-badge ${badgeClass}">${escapeHtml(dsPrioridade)}</span>
@@ -336,9 +337,14 @@ function renderizarBoardSenhas(listaFiltrada = null) {
           <span class="senha-ticket-wait-time">
             <i class="bi bi-hourglass-split"></i> Espera: <strong>${minEspera} min</strong>
           </span>
-          <button class="btn btn-sm btn-primary fw-bold px-3" type="button">
-            Atender <i class="bi bi-arrow-right"></i>
-          </button>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-primary fw-bold px-2 py-1" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar esta senha na TV e no guichê">
+              <i class="bi bi-megaphone-fill me-1"></i> Chamar
+            </button>
+            <button class="btn btn-sm btn-outline-secondary fw-bold px-2 py-1" type="button" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})" title="Abrir ficha de atendimento">
+              Atender <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -565,6 +571,40 @@ export async function rechamarSenha() {
     ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada no painel!`, 'info');
   } catch (err) {
     ui.showToast('Erro ao rechamar senha: ' + err.message, 'error');
+  }
+}
+
+export async function chamarSenhaEspecifica(nrSequencia, event) {
+  if (event) {
+    event.stopPropagation();
+  }
+  const senha = recepcaoState.senhasFila.find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
+  if (!senha) return;
+
+  const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
+  const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
+  const maquina = obterNomeMaquina();
+
+  try {
+    await api.post('/api/recepcao/senhas/rechamar', {
+      nr_sequencia: seq,
+      ds_maquina: maquina
+    });
+
+    recepcaoState.senhaAtiva = {
+      nr_sequencia: seq,
+      cd_senha_gerada: cd,
+      ds_prioridade: senha.DS_PRIORIDADE ?? senha.ds_prioridade ?? 'Normal',
+      nr_prioridade: senha.NR_PRIORIDADE ?? senha.nr_prioridade ?? 3,
+      ds_guiche: maquina
+    };
+
+    atualizarDisplaySenha(cd, 'Chamado');
+    ui.showToast(`Senha #${cd} chamada no guichê e na TV!`, 'success');
+    await carregarSenhas();
+    abrirModalAtendimento(recepcaoState.senhaAtiva);
+  } catch (err) {
+    ui.showToast('Erro ao chamar senha: ' + err.message, 'error');
   }
 }
 

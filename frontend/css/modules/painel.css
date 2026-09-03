@@ -1,21 +1,32 @@
 /**
- * Conecta HEAL 2.0 - Conecta TV Painel de Senhas CSS
- * Design System Conecta - Tema Hospitalar Noturno / TV Fullscreen
+ * Conecta HEAL 2.0 - Conecta TV Painel de Senhas (Tema Clean / Claro)
+ * Design System Conecta - Visual Hospitalar Moderno, Limpo e de Alta Visibilidade
  */
 
 :root {
-  --tv-bg: #060d17;
-  --tv-card-bg: rgba(14, 25, 44, 0.85);
-  --tv-card-border: rgba(56, 189, 248, 0.15);
-  --tv-header-bg: #0a172a;
-  --tv-accent-blue: #0284c7;
-  --tv-accent-cyan: #38bdf8;
-  --tv-prio-emergencia: #ef4444;
-  --tv-prio-emergencia-bg: rgba(239, 68, 68, 0.18);
-  --tv-prio-preferencial: #f59e0b;
-  --tv-prio-preferencial-bg: rgba(245, 158, 11, 0.18);
-  --tv-prio-normal: #38bdf8;
-  --tv-prio-normal-bg: rgba(56, 189, 248, 0.15);
+  --tv-bg: #f4f7fb;
+  --tv-card-bg: #ffffff;
+  --tv-card-border: #e2e8f0;
+  --tv-card-shadow: 0 15px 40px rgba(0, 43, 102, 0.07);
+  --tv-header-bg: #ffffff;
+  --tv-text-main: #0f172a;
+  --tv-text-muted: #64748b;
+  --tv-primary-navy: #002b66;
+  --tv-primary-blue: #0284c7;
+  --tv-accent-cyan: #0ea5e9;
+
+  /* Prioridades */
+  --tv-prio-emergencia-text: #b91c1c;
+  --tv-prio-emergencia-bg: #fee2e2;
+  --tv-prio-emergencia-border: #fca5a5;
+
+  --tv-prio-preferencial-text: #b45309;
+  --tv-prio-preferencial-bg: #fef3c7;
+  --tv-prio-preferencial-border: #fcd34d;
+
+  --tv-prio-normal-text: #0369a1;
+  --tv-prio-normal-bg: #e0f2fe;
+  --tv-prio-normal-border: #bae6fd;
 }
 
 * {
@@ -28,8 +39,8 @@ body.painel-tv-body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 20%, #0d1e38 0%, #060d17 80%);
-  color: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  color: var(--tv-text-main);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
@@ -37,76 +48,77 @@ body.painel-tv-body {
 }
 
 /* ============================================================================
-   1. TOPBAR HEADER
+   1. TOPBAR HEADER (CLEAN & WHITE)
    ============================================================================ */
 .painel-tv-header {
-  height: 80px;
-  background: rgba(10, 23, 42, 0.95);
-  border-bottom: 2px solid rgba(56, 189, 248, 0.2);
+  height: 85px;
+  background: var(--tv-header-bg);
+  border-bottom: 2px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  backdrop-filter: blur(10px);
+  padding: 0 2.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
   z-index: 10;
 }
 
 .painel-brand {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .painel-brand-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #0284c7, #38bdf8);
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #002b66, #0284c7);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
 }
 
 .painel-title {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--tv-primary-navy);
   margin: 0;
   letter-spacing: -0.5px;
 }
 
 .painel-subtitle {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--tv-text-muted);
+  font-weight: 600;
 }
 
 .painel-header-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .painel-status-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #10b981;
-  padding: 0.35rem 0.85rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  padding: 0.4rem 0.95rem;
   border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .pulse-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   background-color: #10b981;
   border-radius: 50%;
   animation: pulse-green 1.8s infinite;
@@ -123,36 +135,38 @@ body.painel-tv-body {
 }
 
 .painel-time {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--tv-primary-navy);
   font-family: 'Consolas', 'Courier New', monospace;
   line-height: 1.1;
 }
 
 .painel-date {
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-size: 0.8rem;
+  color: var(--tv-text-muted);
+  font-weight: 600;
   text-transform: capitalize;
 }
 
 .painel-fullscreen-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 1.1rem;
 }
 
 .painel-fullscreen-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  background: #e2e8f0;
+  color: var(--tv-primary-navy);
 }
 
 /* ============================================================================
@@ -161,28 +175,28 @@ body.painel-tv-body {
 .painel-tv-main {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: 1.75rem;
-  padding: 1.75rem 2rem;
-  height: calc(100vh - 130px);
+  grid-template-columns: 1fr 440px;
+  gap: 2rem;
+  padding: 2rem 2.5rem;
+  height: calc(100vh - 140px);
 }
 
 /* ============================================================================
-   3. BIG CALLING CARD
+   3. BIG CALLING CARD (CLEAN & LUMINOUS)
    ============================================================================ */
 .painel-calling-card {
   background: var(--tv-card-bg);
   border: 2px solid var(--tv-card-border);
-  border-radius: 24px;
-  padding: 2.5rem;
+  border-radius: 28px;
+  padding: 2.5rem 3rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--tv-card-shadow);
   position: relative;
   overflow: hidden;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
 }
 
 .painel-calling-card::before {
@@ -192,7 +206,7 @@ body.painel-tv-body {
   left: 0;
   right: 0;
   height: 6px;
-  background: linear-gradient(90deg, #0284c7, #38bdf8, #f59e0b);
+  background: linear-gradient(90deg, #002b66, #0284c7, #38bdf8);
 }
 
 .calling-card-header {
@@ -203,16 +217,16 @@ body.painel-tv-body {
 }
 
 .calling-eyebrow {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #94a3b8;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--tv-text-muted);
   letter-spacing: 1px;
 }
 
 .calling-priority-badge {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  padding: 0.5rem 1.4rem;
+  padding: 0.5rem 1.6rem;
   border-radius: 30px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -220,22 +234,20 @@ body.painel-tv-body {
 
 .priority-normal {
   background: var(--tv-prio-normal-bg);
-  color: var(--tv-prio-normal);
-  border: 2px solid rgba(56, 189, 248, 0.4);
+  color: var(--tv-prio-normal-text);
+  border: 2px solid var(--tv-prio-normal-border);
 }
 
 .priority-preferencial {
   background: var(--tv-prio-preferencial-bg);
-  color: var(--tv-prio-preferencial);
-  border: 2px solid rgba(245, 158, 11, 0.5);
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  color: var(--tv-prio-preferencial-text);
+  border: 2px solid var(--tv-prio-preferencial-border);
 }
 
 .priority-emergencia {
   background: var(--tv-prio-emergencia-bg);
-  color: var(--tv-prio-emergencia);
-  border: 2px solid rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+  color: var(--tv-prio-emergencia-text);
+  border: 2px solid var(--tv-prio-emergencia-border);
   animation: pulse-red-badge 1s infinite alternate;
 }
 
@@ -248,78 +260,79 @@ body.painel-tv-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1.5rem 0;
+  margin: 1rem 0;
 }
 
 .calling-ticket-number {
-  font-size: 8rem;
+  font-size: 8.5rem;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--tv-primary-navy);
   letter-spacing: 2px;
   line-height: 1;
-  text-shadow: 0 0 35px rgba(56, 189, 248, 0.4);
 }
 
 .calling-destination-box {
   width: 100%;
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(15, 23, 42, 0.6));
-  border: 2px solid rgba(56, 189, 248, 0.3);
-  border-radius: 18px;
-  padding: 1.25rem;
+  background: linear-gradient(135deg, #002b66, #0284c7);
+  border-radius: 20px;
+  padding: 1.5rem;
   text-align: center;
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(2, 132, 199, 0.25);
 }
 
 .destination-label {
-  font-size: 0.95rem;
-  color: #94a3b8;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 0.25rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin-bottom: 0.35rem;
 }
 
 .destination-target {
-  font-size: 3.2rem;
+  font-size: 3.5rem;
   font-weight: 900;
-  color: #38bdf8;
-  letter-spacing: 1px;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
 .calling-meta-footer {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  color: #64748b;
-  font-size: 0.95rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 1rem;
+  color: var(--tv-text-muted);
+  font-size: 1rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1.25rem;
 }
 
 .calling-meta-footer strong {
-  color: #cbd5e1;
+  color: var(--tv-text-main);
 }
 
 /* Animação de Chamada Nova */
 .calling-animating {
-  animation: call-flash 1.2s ease-in-out 3;
+  animation: call-flash-clean 1.2s ease-in-out 3;
 }
 
-@keyframes call-flash {
-  0% { transform: scale(1); border-color: var(--tv-accent-cyan); box-shadow: 0 0 50px rgba(56, 189, 248, 0.7); }
-  50% { transform: scale(1.02); border-color: #ffffff; box-shadow: 0 0 80px rgba(255, 255, 255, 0.9); }
-  100% { transform: scale(1); border-color: var(--tv-card-border); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+@keyframes call-flash-clean {
+  0% { transform: scale(1); border-color: var(--tv-primary-blue); box-shadow: 0 0 50px rgba(2, 132, 199, 0.4); }
+  50% { transform: scale(1.02); border-color: var(--tv-primary-navy); box-shadow: 0 0 70px rgba(0, 43, 102, 0.3); }
+  100% { transform: scale(1); border-color: var(--tv-card-border); box-shadow: var(--tv-card-shadow); }
 }
 
 /* ============================================================================
-   4. SIDEBAR HISTÓRICO
+   4. SIDEBAR HISTÓRICO (CLEAN & ORGANIZED)
    ============================================================================ */
 .painel-history-sidebar {
   background: var(--tv-card-bg);
   border: 2px solid var(--tv-card-border);
-  border-radius: 24px;
-  padding: 1.5rem;
+  border-radius: 28px;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--tv-card-shadow);
 }
 
 .history-sidebar-header {
@@ -327,56 +340,67 @@ body.painel-tv-body {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 1.25rem;
 }
 
 .history-title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #cbd5e1;
-  letter-spacing: 1px;
+  color: var(--tv-primary-navy);
+  letter-spacing: 0.5px;
 }
 
 .history-list-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.9rem;
   overflow-y: auto;
 }
 
 .history-item-card {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 4px solid var(--tv-accent-blue);
-  border-radius: 14px;
-  padding: 0.9rem 1.1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid var(--tv-primary-blue);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s;
 }
 
-.history-item-card.prio-emergencia { border-left-color: var(--tv-prio-emergencia); }
-.history-item-card.prio-preferencial { border-left-color: var(--tv-prio-preferencial); }
-.history-item-card.prio-normal { border-left-color: var(--tv-prio-normal); }
+.history-item-card.prio-emergencia {
+  border-left-color: #ef4444;
+  background: #fff5f5;
+}
+
+.history-item-card.prio-preferencial {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.history-item-card.prio-normal {
+  border-left-color: #0284c7;
+  background: #f0f9ff;
+}
 
 .history-item-number {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--tv-primary-navy);
 }
 
 .history-item-target {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--tv-primary-blue);
 }
 
 .history-item-time {
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.85rem;
+  color: var(--tv-text-muted);
   text-align: right;
 }
 
@@ -386,65 +410,65 @@ body.painel-tv-body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #475569;
-  gap: 0.5rem;
-  font-size: 0.95rem;
+  color: #94a3b8;
+  gap: 0.6rem;
+  font-size: 1rem;
 }
 
 .history-empty-state i {
-  font-size: 2rem;
+  font-size: 2.2rem;
 }
 
 /* ============================================================================
-   5. FOOTER TICKER
+   5. FOOTER TICKER (CLEAN)
    ============================================================================ */
 .painel-tv-footer {
-  height: 50px;
-  background: #091322;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  height: 55px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  padding: 0 2rem;
-  gap: 1rem;
+  padding: 0 2.5rem;
+  gap: 1.25rem;
 }
 
 .ticker-badge {
-  background: #0284c7;
+  background: var(--tv-primary-navy);
   color: #ffffff;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
   letter-spacing: 0.5px;
 }
 
 .ticker-content {
   flex: 1;
-  font-size: 0.85rem;
-  color: #94a3b8;
+  font-size: 0.9rem;
+  color: var(--tv-text-muted);
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* ============================================================================
-   6. AUDIO PROMPT BANNER
+   6. AUDIO PROMPT BANNER (CLEAN & FLOATING)
    ============================================================================ */
 .audio-prompt-banner {
   position: fixed;
-  bottom: 65px;
+  bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.95);
+  background: #ffffff;
   border: 2px solid #f59e0b;
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  padding: 1.1rem 1.75rem;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  gap: 1.75rem;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
   z-index: 100;
-  backdrop-filter: blur(10px);
   animation: slide-up 0.4s ease-out;
 }
 
@@ -461,4 +485,8 @@ body.painel-tv-body {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.prompt-content strong {
+  color: var(--tv-primary-navy);
 }
