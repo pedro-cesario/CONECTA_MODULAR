@@ -157,6 +157,19 @@ async function ensureAccessSchema() {
     await run("INSERT INTO config_migrations (id) VALUES ('2026_08_registros_modulo')");
   }
 
+  // Migration: Permissões para Módulo Recepção & Acolhimento
+  const migrationRecepcao = await all("SELECT id FROM config_migrations WHERE id = '2026_09_recepcao_permissoes'");
+  if (migrationRecepcao.length === 0) {
+    await run(`INSERT OR IGNORE INTO modulos (id, nome, descricao, icon, setorId) VALUES ('recepcao', 'Recepção e Acolhimento', 'Guichê de senhas, cadastro de pacientes, abertura de atendimentos e emissão de documentos', 'bi-person-badge', NULL)`);
+    for (const perfil of ['admin', 'recepcao', 'enfermagem']) {
+      await run(`INSERT OR IGNORE INTO perfil_modulos (perfil_id, modulo_id) VALUES (?, 'recepcao')`, [perfil]);
+      for (const permissao of ['chamar_senha', 'cadastrar_pessoa_fisica', 'abrir_atendimento', 'anexar_documento_ged', 'emitir_relatorio']) {
+        await run(`INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES (?, 'recepcao', ?)`, [perfil, permissao]);
+      }
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_09_recepcao_permissoes')");
+  }
+
   await run(`CREATE TABLE IF NOT EXISTS studio_pages (
     id TEXT PRIMARY KEY,
     nome TEXT NOT NULL,

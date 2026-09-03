@@ -51,7 +51,10 @@ function validarModuloPermissao(usuario, moduloId, permissao) {
   const perfilAtivo = getPerfilAtivo(usuario);
   if (!perfilAtivo) return false;
   if (!configCache.perfilTemAcessoModulo(perfilAtivo, moduloId)) return false;
-  if (permissao && !configCache.perfilTemPermissao(perfilAtivo, moduloId, permissao)) return false;
+  if (permissao) {
+    if (perfilAtivo === 'admin' || usuario.is_admin) return true;
+    return configCache.perfilTemPermissao(perfilAtivo, moduloId, permissao);
+  }
   return true;
 }
 

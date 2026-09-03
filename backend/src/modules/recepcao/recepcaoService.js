@@ -15,11 +15,6 @@ async function listarSenhasEspera(nrSeqFila) {
 }
 
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
-  if (!nrSeqFila) {
-    const err = new Error('Identificação da fila é obrigatória');
-    err.status = 400;
-    throw err;
-  }
   const result = await recepcaoRepository.chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario);
   if (!result) {
     return { proxima: false, message: 'Nenhuma senha aguardando nesta fila.' };

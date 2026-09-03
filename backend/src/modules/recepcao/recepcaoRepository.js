@@ -77,42 +77,57 @@ async function listarSenhasEspera(nrSeqFila) {
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
   const conn = await getConnection();
   try {
+    const filaInt = nrSeqFila ? parseInt(nrSeqFila, 10) : null;
+    let whereFila = '';
+    const binds = {};
+
+    if (filaInt && !isNaN(filaInt)) {
+      whereFila = 'AND nr_seq_fila_senha = :fila';
+      binds.fila = filaInt;
+    }
+
     const proxima = await conn.execute(
-      `SELECT nr_sequencia, cd_senha_gerada
+      `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
        FROM (
-         SELECT nr_sequencia, cd_senha_gerada
+         SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
          FROM paciente_senha_fila
-         WHERE nr_seq_fila_senha = :fila
-           AND dt_inutilizacao IS NULL
+         WHERE dt_inutilizacao IS NULL
+           AND dt_utilizacao IS NULL
            AND dt_fim_atendimento IS NULL
            AND dt_chamada IS NULL
-         ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha DESC
+           ${whereFila}
+         ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha ASC
        )
        WHERE ROWNUM = 1
        FOR UPDATE SKIP LOCKED`,
-      { fila: parseInt(nrSeqFila, 10) }
+      binds
     );
 
-    if (proxima.rows.length === 0) {
+    if (!proxima.rows || proxima.rows.length === 0) {
       return null;
     }
 
     const nrSeqSenha = proxima.rows[0].NR_SEQUENCIA;
     const cdSenha = proxima.rows[0].CD_SENHA_GERADA;
+    const cdPf = proxima.rows[0].CD_PESSOA_FISICA;
+    const nrFila = proxima.rows[0].NR_SEQ_FILA_SENHA;
+    const maquinaFinal = dsMaquina || 'GUICHE-WEB';
+    const usuarioFinal = nmUsuario || 'TASY';
 
     const updateRes = await conn.execute(
       `UPDATE paciente_senha_fila
        SET dt_chamada = SYSDATE,
            dt_primeira_chamada = NVL(dt_primeira_chamada, SYSDATE),
            ds_maquina_chamada = :maquina,
+           ds_maquina_chamada_pesquisa = UPPER(:maquina),
            nm_usuario_chamada = :usuario,
            qt_chamadas = NVL(qt_chamadas, 0) + 1,
            dt_inicio_atendimento = NVL(dt_inicio_atendimento, SYSDATE),
+           ie_rechamada = 'N',
            dt_atualizacao = SYSDATE,
            nm_usuario = :usuario
-       WHERE nr_sequencia = :seq
-         AND dt_chamada IS NULL`,
-      { seq: nrSeqSenha, maquina: dsMaquina || 'GUICHE-WEB', usuario: nmUsuario }
+       WHERE nr_sequencia = :seq`,
+      { seq: nrSeqSenha, maquina: maquinaFinal, usuario: usuarioFinal }
     );
 
     if (updateRes.rowsAffected === 0) {
@@ -120,19 +135,28 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       return null;
     }
 
-    await conn.execute(
-      `INSERT INTO paciente_senha_fila_hist (
-         nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
-         nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
-       ) VALUES (
-         PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
-         :seq, SYSDATE, :maquina, 'C'
-       )`,
-      { seq: nrSeqSenha, maquina: dsMaquina || 'GUICHE-WEB', usuario: nmUsuario }
-    );
+    try {
+      await conn.execute(
+        `INSERT INTO paciente_senha_fila_hist (
+           nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
+           nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
+         ) VALUES (
+           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
+           :seq, SYSDATE, :maquina, 'C'
+         )`,
+        { seq: nrSeqSenha, maquina: maquinaFinal, usuario: usuarioFinal }
+      );
+    } catch (histErr) {
+      console.warn('[Recepção] Aviso ao registrar histórico da senha:', histErr.message);
+    }
 
     await conn.commit();
-    return { nr_sequencia: nrSeqSenha, cd_senha_gerada: cdSenha };
+    return {
+      nr_sequencia: nrSeqSenha,
+      cd_senha_gerada: cdSenha,
+      cd_pessoa_fisica: cdPf,
+      nr_seq_fila_senha: nrFila
+    };
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -144,28 +168,37 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
 async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
   const conn = await getConnection();
   try {
+    const maquinaFinal = dsMaquina || 'GUICHE-WEB';
+    const usuarioFinal = nmUsuario || 'TASY';
     await conn.execute(
       `UPDATE paciente_senha_fila
        SET dt_chamada = SYSDATE,
+           dt_nova_chamada = SYSDATE,
            ds_maquina_chamada = :maquina,
+           ds_maquina_chamada_pesquisa = UPPER(:maquina),
            nm_usuario_chamada = :usuario,
            qt_chamadas = NVL(qt_chamadas, 0) + 1,
+           ie_rechamada = 'S',
            dt_atualizacao = SYSDATE,
            nm_usuario = :usuario
        WHERE nr_sequencia = :seq`,
-      { seq: parseInt(nrSeqSenha, 10), maquina: dsMaquina || 'GUICHE-WEB', usuario: nmUsuario }
+      { seq: parseInt(nrSeqSenha, 10), maquina: maquinaFinal, usuario: usuarioFinal }
     );
 
-    await conn.execute(
-      `INSERT INTO paciente_senha_fila_hist (
-         nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
-         nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
-       ) VALUES (
-         PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
-         :seq, SYSDATE, :maquina, 'R'
-       )`,
-      { seq: parseInt(nrSeqSenha, 10), maquina: dsMaquina || 'GUICHE-WEB', usuario: nmUsuario }
-    );
+    try {
+      await conn.execute(
+        `INSERT INTO paciente_senha_fila_hist (
+           nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
+           nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
+         ) VALUES (
+           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
+           :seq, SYSDATE, :maquina, 'R'
+         )`,
+        { seq: parseInt(nrSeqSenha, 10), maquina: maquinaFinal, usuario: usuarioFinal }
+      );
+    } catch (histErr) {
+      console.warn('[Recepção] Aviso ao registrar histórico da rechamada:', histErr.message);
+    }
 
     await conn.commit();
     return { success: true };

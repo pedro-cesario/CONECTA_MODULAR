@@ -515,14 +515,17 @@ export async function rechamarSenha() {
 }
 
 export function selecionarSenhaFila(nrSequencia) {
-  const senha = recepcaoState.senhasFila.find(s => s.NR_SEQUENCIA === nrSequencia);
+  const senha = recepcaoState.senhasFila.find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
   if (senha) {
+    const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
+    const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
+    const prio = senha.DS_PRIORIDADE ?? senha.ds_prioridade ?? 'Normal';
     recepcaoState.senhaAtiva = {
-      nr_sequencia: senha.NR_SEQUENCIA,
-      cd_senha_gerada: senha.CD_SENHA_GERADA,
-      ds_prioridade: senha.DS_PRIORIDADE
+      nr_sequencia: seq,
+      cd_senha_gerada: cd,
+      ds_prioridade: prio
     };
-    atualizarDisplaySenha(senha.CD_SENHA_GERADA, senha.DS_PRIORIDADE);
+    atualizarDisplaySenha(cd, prio);
     abrirModalAtendimento(recepcaoState.senhaAtiva);
   }
 }
