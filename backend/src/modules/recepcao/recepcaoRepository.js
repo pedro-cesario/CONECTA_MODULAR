@@ -86,20 +86,17 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       binds.fila = filaInt;
     }
 
+    // Busca candidatos ordenados por prioridade e tempo de chegada
     const proxima = await conn.execute(
       `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
-       FROM (
-         SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
-         FROM paciente_senha_fila
-         WHERE dt_inutilizacao IS NULL
-           AND dt_utilizacao IS NULL
-           AND dt_fim_atendimento IS NULL
-           AND dt_chamada IS NULL
-           ${whereFila}
-         ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha ASC
-       )
-       WHERE ROWNUM = 1
-       FOR UPDATE SKIP LOCKED`,
+       FROM paciente_senha_fila
+       WHERE dt_inutilizacao IS NULL
+         AND dt_utilizacao IS NULL
+         AND dt_fim_atendimento IS NULL
+         AND dt_chamada IS NULL
+         AND dt_geracao_senha >= TRUNC(SYSDATE)
+         ${whereFila}
+       ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha ASC`,
       binds
     );
 
@@ -107,10 +104,40 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       return null;
     }
 
-    const nrSeqSenha = proxima.rows[0].NR_SEQUENCIA;
-    const cdSenha = proxima.rows[0].CD_SENHA_GERADA;
-    const cdPf = proxima.rows[0].CD_PESSOA_FISICA;
-    const nrFila = proxima.rows[0].NR_SEQ_FILA_SENHA;
+    let nrSeqSenha = null;
+    let cdSenha = null;
+    let cdPf = null;
+    let nrFila = null;
+
+    // Lock atômico direto na PK sem subquery para evitar ORA-02014
+    for (const cand of proxima.rows) {
+      try {
+        const lockRes = await conn.execute(
+          `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
+           FROM paciente_senha_fila
+           WHERE nr_sequencia = :seq
+             AND dt_chamada IS NULL
+           FOR UPDATE SKIP LOCKED`,
+          { seq: cand.NR_SEQUENCIA }
+        );
+
+        if (lockRes.rows && lockRes.rows.length > 0) {
+          nrSeqSenha = lockRes.rows[0].NR_SEQUENCIA;
+          cdSenha = lockRes.rows[0].CD_SENHA_GERADA;
+          cdPf = lockRes.rows[0].CD_PESSOA_FISICA;
+          nrFila = lockRes.rows[0].NR_SEQ_FILA_SENHA;
+          break;
+        }
+      } catch (lockErr) {
+        // Continua para o próximo candidato se já estiver bloqueado
+      }
+    }
+
+    if (!nrSeqSenha) {
+      await conn.rollback();
+      return null;
+    }
+
     const maquinaFinal = dsMaquina || 'GUICHE-WEB';
     const usuarioFinal = nmUsuario || 'TASY';
 
@@ -123,6 +150,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
            nm_usuario_chamada = :usuario,
            qt_chamadas = NVL(qt_chamadas, 0) + 1,
            dt_inicio_atendimento = NVL(dt_inicio_atendimento, SYSDATE),
+           ie_forma_chamada = 'P',
            ie_rechamada = 'N',
            dt_atualizacao = SYSDATE,
            nm_usuario = :usuario
@@ -138,16 +166,28 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     try {
       await conn.execute(
         `INSERT INTO paciente_senha_fila_hist (
-           nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
-           nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
+           nr_sequencia, nr_seq_senha, dt_atualizacao, nm_usuario,
+           dt_atualizacao_nrec, nm_usuario_nrec, ds_maquina_chamada, ie_forma_chamada
          ) VALUES (
-           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
-           :seq, SYSDATE, :maquina, 'C'
+           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, :seq, SYSDATE, :usuario,
+           SYSDATE, :usuario, :maquina, 'P'
          )`,
         { seq: nrSeqSenha, maquina: maquinaFinal, usuario: usuarioFinal }
       );
     } catch (histErr) {
       console.warn('[Recepção] Aviso ao registrar histórico da senha:', histErr.message);
+    }
+
+    try {
+      await conn.execute(`BEGIN ATUALIZAR_SENHA_MONITOR(:seq, 'L'); END;`, { seq: nrSeqSenha });
+    } catch (monErr) {
+      console.warn('[Recepção] Aviso ao atualizar monitor de senhas:', monErr.message);
+    }
+
+    try {
+      await conn.execute(`BEGIN bifrost_integracao_senhas(nr_seq_senha_p => :seq); END;`, { seq: nrSeqSenha });
+    } catch (bifErr) {
+      console.warn('[Recepção] Aviso ao acionar bifrost integração de senhas:', bifErr.message);
     }
 
     await conn.commit();
@@ -170,6 +210,8 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
   try {
     const maquinaFinal = dsMaquina || 'GUICHE-WEB';
     const usuarioFinal = nmUsuario || 'TASY';
+    const seqNum = parseInt(nrSeqSenha, 10);
+
     await conn.execute(
       `UPDATE paciente_senha_fila
        SET dt_chamada = SYSDATE,
@@ -178,26 +220,39 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
            ds_maquina_chamada_pesquisa = UPPER(:maquina),
            nm_usuario_chamada = :usuario,
            qt_chamadas = NVL(qt_chamadas, 0) + 1,
+           ie_forma_chamada = 'N',
            ie_rechamada = 'S',
            dt_atualizacao = SYSDATE,
            nm_usuario = :usuario
        WHERE nr_sequencia = :seq`,
-      { seq: parseInt(nrSeqSenha, 10), maquina: maquinaFinal, usuario: usuarioFinal }
+      { seq: seqNum, maquina: maquinaFinal, usuario: usuarioFinal }
     );
 
     try {
       await conn.execute(
         `INSERT INTO paciente_senha_fila_hist (
-           nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
-           nr_seq_senha, dt_historico, ds_maquina_chamada, ie_tipo_historico
+           nr_sequencia, nr_seq_senha, dt_atualizacao, nm_usuario,
+           dt_atualizacao_nrec, nm_usuario_nrec, ds_maquina_chamada, ie_forma_chamada
          ) VALUES (
-           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, SYSDATE, :usuario, SYSDATE, :usuario,
-           :seq, SYSDATE, :maquina, 'R'
+           PACIENTE_SENHA_FILA_HIST_SEQ.NEXTVAL, :seq, SYSDATE, :usuario,
+           SYSDATE, :usuario, :maquina, 'N'
          )`,
-        { seq: parseInt(nrSeqSenha, 10), maquina: maquinaFinal, usuario: usuarioFinal }
+        { seq: seqNum, maquina: maquinaFinal, usuario: usuarioFinal }
       );
     } catch (histErr) {
       console.warn('[Recepção] Aviso ao registrar histórico da rechamada:', histErr.message);
+    }
+
+    try {
+      await conn.execute(`BEGIN ATUALIZAR_SENHA_MONITOR(:seq, 'L'); END;`, { seq: seqNum });
+    } catch (monErr) {
+      console.warn('[Recepção] Aviso ao atualizar monitor de senhas (rechamada):', monErr.message);
+    }
+
+    try {
+      await conn.execute(`BEGIN bifrost_integracao_senhas(nr_seq_senha_p => :seq); END;`, { seq: seqNum });
+    } catch (bifErr) {
+      console.warn('[Recepção] Aviso ao acionar bifrost integração de senhas (rechamada):', bifErr.message);
     }
 
     await conn.commit();

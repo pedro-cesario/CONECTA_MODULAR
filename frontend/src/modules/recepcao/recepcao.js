@@ -471,15 +471,23 @@ export async function abrirDocumentosAtendimento(nrAtendimento, cdPessoaFisica, 
 // 4. CHAMADA DE GUICHÊ & ABERTURA DO MODAL
 // ============================================================================
 
+function obterNomeMaquina() {
+  const custom = localStorage.getItem('conecta_ds_maquina');
+  if (custom && custom.trim()) return custom.trim();
+  if (state.usuario?.nm_computador) return state.usuario.nm_computador;
+  return 'NOTE-CESARIO';
+}
+
 export async function chamarProximaSenha() {
   const btn = document.getElementById('btn-recepcao-chamar-proximo');
   if (btn) ui.setLoading(btn, true);
 
   try {
-    const fila = recepcaoState.filaSelecionada || (recepcaoState.filasDisponiveis[0]?.NR_SEQUENCIA);
+    const fila = recepcaoState.filaSelecionada || (recepcaoState.filasDisponiveis?.[0]?.NR_SEQUENCIA);
+    const maquina = obterNomeMaquina();
     const res = await api.post('/api/recepcao/senhas/chamar', {
-      nr_seq_fila_senha: fila,
-      ds_maquina: 'GUICHE-' + (state.usuario?.nm_usuario || '1')
+      nr_seq_fila_senha: fila || undefined,
+      ds_maquina: maquina
     });
 
     if (res.success && res.proxima && res.data) {
@@ -504,9 +512,10 @@ export async function rechamarSenha() {
     return;
   }
   try {
+    const maquina = obterNomeMaquina();
     await api.post('/api/recepcao/senhas/rechamar', {
       nr_sequencia: recepcaoState.senhaAtiva.nr_sequencia,
-      ds_maquina: 'GUICHE-' + (state.usuario?.nm_usuario || '1')
+      ds_maquina: maquina
     });
     ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada no painel!`, 'info');
   } catch (err) {
