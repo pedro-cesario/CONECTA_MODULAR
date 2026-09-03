@@ -1550,6 +1550,7 @@
                         <label for="config-ect-procedimento" class="form-label small fw-bold">Procedimento TASY</label>
                         <select id="config-ect-procedimento" class="form-select">
                           <option value="">Carregando procedimentos...</option>
+                        </select>
                       </div>
                     </div>
                     <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-ect">
@@ -1645,6 +1646,7 @@
                   </div>
                 </div>
               </div>
+            </div>
           </div>
         </div>
 
@@ -1721,6 +1723,8 @@
             </div>
           </div>
         </div>
+      </div>
+    </main>
 
   <!-- Modal Novo / Editar Painel TV -->
   <div class="modal" id="modal-painel-tv">
@@ -3398,6 +3402,10 @@
           loadPerfis();
           loadModulos();
         }
+        if (targetId === 'pillar-paineis') {
+          loadPaineisTv();
+          loadMaquinasGuiches();
+        }
       });
     });
 
@@ -3438,6 +3446,12 @@
           loadConfigPA();
           loadAgendasEct();
           loadProcedimentosEct();
+        }
+        if (targetSubpaneId === 'subpane-paineis-tv') {
+          loadPaineisTv();
+        }
+        if (targetSubpaneId === 'subpane-maquinas-guiches') {
+          loadMaquinasGuiches();
         }
       });
     });
