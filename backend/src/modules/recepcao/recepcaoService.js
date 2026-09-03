@@ -120,6 +120,26 @@ async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
   return recepcaoRepository.listarDocumentosGED(nrAtendimento, cdPessoaFisica);
 }
 
+function validateMagicBytes(buffer, ext) {
+  if (!buffer || buffer.length < 4) return false;
+  if (ext === 'pdf') {
+    return buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  if (ext === 'jpg' || ext === 'jpeg') {
+    return buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  }
+  if (ext === 'png') {
+    return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  }
+  if (ext === 'docx') {
+    return buffer[0] === 0x50 && buffer[1] === 0x4B && (buffer[2] === 0x03 || buffer[2] === 0x05);
+  }
+  if (ext === 'doc') {
+    return buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0;
+  }
+  return true;
+}
+
 async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
   if (!dados.cd_pessoa_fisica && !dados.nr_atendimento) {
     const err = new Error('Código de pessoa física ou número do atendimento é obrigatório para anexar no GED');
@@ -159,6 +179,12 @@ async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
         throw err;
       }
 
+      if (!validateMagicBytes(buffer, ext)) {
+        const err = new Error(`O conteúdo binário do arquivo não corresponde à assinatura do formato declarado (.${ext}). Envio cancelado por segurança.`);
+        err.status = 400;
+        throw err;
+      }
+
       const mimeType = dados.mime_type || (ext === 'pdf' ? 'application/pdf' : `image/${ext}`);
 
       console.log(`[GED] Enviando arquivo "${fileName}" (${buffer.length} bytes) para o TASY Storage...`);
@@ -167,6 +193,7 @@ async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
       dados.ds_arquivo = storageUri;
       dados.ds_extensao_arquivo = ext;
     } catch (errUpload) {
+      if (errUpload.status === 400) throw errUpload;
       console.error('[GED] Erro ao enviar para o TASY Storage:', errUpload);
       throw new Error(`Falha ao armazenar arquivo no Storage do TASY: ${errUpload.message}`);
     }

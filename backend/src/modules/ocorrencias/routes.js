@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const ocorrenciaController = require('./ocorrenciaController');
+const { requireAuth } = require('../../core/middlewares/authMiddleware');
 
-router.post('/lote/draft', ocorrenciaController.salvarLoteDraft);
-router.get('/lote/draft', ocorrenciaController.obterLoteDraft);
-router.delete('/lote/draft', ocorrenciaController.limparLoteDraft);
-router.post('/salvar', ocorrenciaController.salvar);
-router.get('/passagens/anteriores', ocorrenciaController.listarPassagensAnteriores);
-router.get('/passagens/setores-historico', ocorrenciaController.listarSetoresHistorico);
+router.post('/lote/draft', requireAuth, ocorrenciaController.salvarLoteDraft);
+router.get('/lote/draft', requireAuth, ocorrenciaController.obterLoteDraft);
+router.delete('/lote/draft', requireAuth, ocorrenciaController.limparLoteDraft);
+router.post('/salvar', requireAuth, ocorrenciaController.salvar);
+router.get('/passagens/anteriores', requireAuth, ocorrenciaController.listarPassagensAnteriores);
+router.get('/passagens/setores-historico', requireAuth, ocorrenciaController.listarSetoresHistorico);
 
-router.post('/livro-administrativo', ocorrenciaController.salvarLivroAdministrativo);
-router.get('/livro-administrativo', ocorrenciaController.obterLivroAdministrativo);
+router.post('/livro-administrativo', requireAuth, ocorrenciaController.salvarLivroAdministrativo);
+router.get('/livro-administrativo', requireAuth, ocorrenciaController.obterLivroAdministrativo);
 
-router.post('/escala-psicologia/publicar', ocorrenciaController.salvarEscalaPsicologia);
-router.get('/escala-psicologia/liberadas', ocorrenciaController.listarEscalasPsicologiaLiberadas);
+router.post('/escala-psicologia/publicar', requireAuth, ocorrenciaController.salvarEscalaPsicologia);
+router.get('/escala-psicologia/liberadas', requireAuth, ocorrenciaController.listarEscalasPsicologiaLiberadas);
 
-router.post('/escala-tecnica', ocorrenciaController.salvarEscalaTecnica);
-router.get('/escala-tecnica/todas', ocorrenciaController.listarTodasEscalasLiberadas);
-router.get('/escala-tecnica', ocorrenciaController.obterEscalaTecnica);
+router.post('/escala-tecnica', requireAuth, ocorrenciaController.salvarEscalaTecnica);
+router.get('/escala-tecnica/todas', requireAuth, ocorrenciaController.listarTodasEscalasLiberadas);
+router.get('/escala-tecnica', requireAuth, ocorrenciaController.obterEscalaTecnica);
 
 module.exports = router;

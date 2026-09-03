@@ -65,7 +65,8 @@ async function saveEscalaAtiva(req, res) {
     return res.json({ success: true, data: result });
   } catch (err) {
     console.error('[EscalaAtiva] save:', err.message);
-    return res.status(500).json({ success: false, message: 'Erro ao salvar escala ativa' });
+    const status = err.status || 500;
+    return res.status(status).json({ success: false, message: err.message || 'Erro ao salvar escala ativa' });
   }
 }
 

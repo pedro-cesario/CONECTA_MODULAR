@@ -106,9 +106,18 @@ async function reconnectPool(newParams) {
   };
 }
 
+const callTimeoutMs = parseInt(process.env.DB_CALL_TIMEOUT || '30', 10) * 1000;
+if (callTimeoutMs > 0) {
+  oracledb.callTimeout = callTimeoutMs;
+}
+
 async function getConnection() {
   if (!pool) await initPool();
-  return pool.getConnection();
+  const conn = await pool.getConnection();
+  if (callTimeoutMs > 0 && conn) {
+    conn.callTimeout = callTimeoutMs;
+  }
+  return conn;
 }
 
 async function closePool() {
@@ -123,11 +132,16 @@ async function closePool() {
 }
 
 async function initEscalaAtivaTables() {
+  const autoMigrate = process.env.DB_AUTO_MIGRATE === 'true' || process.env.NODE_ENV !== 'production';
+  if (!autoMigrate) {
+    console.log('[DB] DB_AUTO_MIGRATE=false: Pulando DDL em tempo de execução.');
+    return;
+  }
   try {
     const { initTables } = require('../../modules/escalas/escalaAtivaRepository');
     await initTables();
   } catch (err) {
-    console.warn('[DB] Não foi possível verificar/criar tabelas da escala ativa:', err.message);
+    console.warn('[DB] Verificação/criação de schema de escala ativa:', err.message);
   }
 }
 

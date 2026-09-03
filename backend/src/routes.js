@@ -59,13 +59,13 @@ router.post('/dashboard/pacientes-setor/:cd_setor', requireAuth, pacienteControl
 // Roteamento Modular por Domínio
 router.use('/admin', requireAuth, adminRoutes);
 router.use('/setores', requireAuth, setoresRoutes);
-router.use('/', requireAuth, usuariosRoutes); // /tecnicos, /enfermeiros, /profissionais-psicologia
+router.use('/', usuariosRoutes); // /tecnicos, /enfermeiros, /profissionais-psicologia
 router.use('/pacientes', requireAuth, pacientesRoutes);
 router.use('/dashboard', requireAuth, dashboardRoutes);
-router.use('/', requireAuth, ocorrenciasRoutes); // /salvar, /passagens, /livro-administrativo, /escala-*
+router.use('/', ocorrenciasRoutes); // /salvar, /passagens, /livro-administrativo, /escala-*
 router.use('/escala-ativa', requireAuth, escalasRoutes);
 router.use('/registros', requireAuth, registrosRoutes);
 router.use('/auditorias', requireAuth, auditoriasRoutes);
-router.use('/recepcao', requireAuth, recepcaoRoutes);
+router.use('/recepcao', recepcaoRoutes);
 
 module.exports = router;

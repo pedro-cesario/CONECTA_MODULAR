@@ -109,16 +109,26 @@ async function loadAtivasPorPeriodo(cdSetor, dataInicio, dataFim) {
 async function saveAtiva(payload, nmUsuario) {
   const conn = await getConnection();
   try {
-    const { cd_setor_atendimento, dt_plantao, turno, items } = payload;
+    const { cd_setor_atendimento, dt_plantao, turno, items, expected_version } = payload;
 
     const checkResult = await conn.execute(
       `SELECT COUNT(*) AS cnt, MAX(NR_VERSAO) AS max_ver
        FROM CONECTA_ESCALA_ATIVA
        WHERE CD_SETOR_ATENDIMENTO = :cd_setor
          AND TRUNC(DT_PLANTAO) = TO_DATE(:dt_plantao, 'YYYY-MM-DD')
-         AND IE_TURNO = :ie_turno`,
+         AND IE_TURNO = :ie_turno
+       FOR UPDATE`,
       { cd_setor: cd_setor_atendimento, dt_plantao: dt_plantao, ie_turno: turno }
     );
+
+    const maxVerAtual = checkResult.rows[0]?.MAX_VER || 0;
+    if (expected_version !== undefined && expected_version !== null) {
+      if (maxVerAtual > 0 && maxVerAtual !== Number(expected_version)) {
+        const err = new Error(`Conflito de concorrência: a escala foi alterada por outro usuário (versão no banco: ${maxVerAtual}, sua versão: ${expected_version}). Recarregue antes de salvar.`);
+        err.status = 409;
+        throw err;
+      }
+    }
 
     if (checkResult.rows[0].CNT > 0) {
       const versaoAnterior = checkResult.rows[0].MAX_VER;
