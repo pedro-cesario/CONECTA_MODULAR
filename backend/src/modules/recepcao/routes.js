@@ -28,6 +28,7 @@ router.post('/senhas/rechamar', requireRecepcaoPermission('chamar_senha'), recep
 
 // PILAR 2 & 3: Pessoas e Endereço
 router.get('/pessoas/buscar', requireRecepcaoPermission(), recepcaoController.buscarPessoas);
+router.get('/pessoas/verificar-duplicidade', requireRecepcaoPermission(), recepcaoController.verificarDuplicidadePaciente);
 router.get('/pessoas/:id', requireRecepcaoPermission(), recepcaoController.obterPessoaCompleta);
 router.get('/pessoas/:id/ultimo-convenio', requireRecepcaoPermission(), recepcaoController.obterUltimoConvenioPaciente);
 router.post('/pessoas', requireRecepcaoPermission('cadastrar_pessoa_fisica'), recepcaoController.salvarPessoa);

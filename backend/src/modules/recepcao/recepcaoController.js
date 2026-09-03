@@ -75,6 +75,20 @@ async function salvarPessoa(req, res, next) {
   }
 }
 
+async function verificarDuplicidadePaciente(req, res, next) {
+  try {
+    const { cpf, dt_nascimento, cd_pessoa_fisica } = req.query;
+    const data = await recepcaoService.verificarDuplicidadePaciente({
+      cpf,
+      dtNascimento: dt_nascimento,
+      cdPessoaFisica: cd_pessoa_fisica
+    });
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listarConvenios(req, res, next) {
   try {
     const data = await recepcaoService.listarConvenios();
@@ -248,6 +262,7 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoa,
+  verificarDuplicidadePaciente,
   listarConvenios,
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,

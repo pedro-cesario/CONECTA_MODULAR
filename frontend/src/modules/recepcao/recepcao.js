@@ -69,6 +69,7 @@ export async function initRecepcao() {
   window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
   window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
   window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
+  window.conectaCore.verificarDuplicidadeCpf = verificarDuplicidadeCpf;
 
   bindRecepcaoEvents();
   await detectarEConfigurarGuiche();
@@ -88,23 +89,15 @@ async function detectarEConfigurarGuiche() {
   try {
     const maquinaSalva = localStorage.getItem('conecta_ds_maquina');
     const res = await api.get(`/api/painel/detectar-maquina${maquinaSalva ? `?maquina=${encodeURIComponent(maquinaSalva)}` : ''}`);
-    if (res && res.success && res.data) {
-      const data = res.data;
-      recepcaoState.maquinaInfo = data;
-
-      if (selectGuiche) {
-        const existe = Array.from(selectGuiche.options).some(o => o.value === data.ds_guiche);
-        if (!existe && data.ds_guiche) {
-          const opt = document.createElement('option');
-          opt.value = data.ds_guiche;
-          opt.textContent = data.ds_guiche;
-          selectGuiche.appendChild(opt);
-        }
-        selectGuiche.value = data.ds_guiche || 'Guichê 01';
+    if (res.success && res.data) {
+      if (selectGuiche && res.data.ds_guiche_sugerido) {
+        selectGuiche.value = res.data.ds_guiche_sugerido;
       }
-
-      if (btnTv && data.painel_id) {
-        btnTv.href = `/painel.html?painel=${encodeURIComponent(data.painel_id)}`;
+      if (res.data.cd_maquina) {
+        localStorage.setItem('conecta_ds_maquina', res.data.cd_maquina);
+      }
+      if (btnTv && res.data.painel_sugerido) {
+        btnTv.href = `/painel.html?painel=${encodeURIComponent(res.data.painel_sugerido)}`;
       }
     }
   } catch (err) {
@@ -168,14 +161,27 @@ function bindRecepcaoEvents() {
   document.getElementById('modal-btn-voltar-passo')?.addEventListener('click', voltarPassoModal);
   document.getElementById('modal-btn-avancar-passo')?.addEventListener('click', avancarPassoModal);
 
-  // Busca de Paciente no Modal
+  // Busca Inteligente de Paciente no Modal
   const inputBusca = document.getElementById('recepcao-busca-paciente');
   let searchTimeout = null;
   inputBusca?.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       buscarPacientes(e.target.value);
-    }, 300);
+    }, 250);
+  });
+
+  // Validação em Tempo Real de Duplicidade (CPF e Nascimento)
+  const inputCpf = document.getElementById('recepcao-cpf');
+  let cpfTimeout = null;
+  inputCpf?.addEventListener('input', (e) => {
+    clearTimeout(cpfTimeout);
+    cpfTimeout = setTimeout(() => {
+      verificarDuplicidadeCpf(e.target.value);
+    }, 350);
+  });
+  inputCpf?.addEventListener('blur', (e) => {
+    verificarDuplicidadeCpf(e.target.value);
   });
 
   document.getElementById('btn-recepcao-novo-paciente')?.addEventListener('click', novoPaciente);
@@ -752,38 +758,115 @@ export async function buscarPacientes(termo) {
     return;
   }
 
-  container.innerHTML = '<div class="p-2 text-center text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Buscando no TASY...</div>';
+  container.innerHTML = '<div class="p-3 text-center text-muted"><span class="spinner-border spinner-border-sm me-2 text-primary"></span>Buscando paciente no TASY...</div>';
 
   try {
     const res = await api.get(`/api/recepcao/pessoas/buscar?q=${encodeURIComponent(termo)}`);
     if (res.success && Array.isArray(res.data)) {
       if (res.data.length === 0) {
         container.innerHTML = `
-          <div class="p-3 text-center text-muted border rounded">
-            Nenhum paciente localizado com "${escapeHtml(termo)}".
-            <button class="btn btn-sm btn-outline-primary ms-2" type="button" onclick="window.conectaCore.novoPaciente()">
+          <div class="p-4 text-center text-muted border rounded bg-light">
+            <i class="bi bi-person-x fs-2 d-block mb-1 text-secondary"></i>
+            <strong>Nenhum paciente localizado com "${escapeHtml(termo)}".</strong>
+            <p class="small text-muted mb-2">Verifique o nome digitado ou cadastre como um novo paciente.</p>
+            <button class="btn btn-sm btn-primary fw-bold" type="button" onclick="window.conectaCore.novoPaciente()">
               <i class="bi bi-person-plus"></i> Preencher Novo Cadastro
             </button>
           </div>`;
         return;
       }
 
-      container.innerHTML = res.data.map(p => `
-        <div class="paciente-result-item" onclick="window.conectaCore.selecionarPaciente('${p.CD_PESSOA_FISICA}')">
-          <div>
-            <strong>${escapeHtml(p.NM_PESSOA_FISICA)}</strong> ${p.NM_SOCIAL ? `<small class="text-muted">(${escapeHtml(p.NM_SOCIAL)})</small>` : ''}
-            <div class="text-muted small">
-              CPF: ${escapeHtml(p.NR_CPF || 'Não informado')} • Nasc: ${escapeHtml(p.DT_NASC_FMT || '-')} • Mãe: ${escapeHtml(p.NM_MAE || '-')}
+      container.innerHTML = res.data.map(p => {
+        const cdPf = p.CD_PESSOA_FISICA || '';
+        const nome = p.NM_PESSOA_FISICA || 'Sem Nome';
+        const social = p.NM_SOCIAL ? ` (${p.NM_SOCIAL})` : '';
+        const cpf = p.NR_CPF || 'Não informado';
+        const nasc = p.DT_NASC_FMT || '-';
+        const idade = p.IDADE !== undefined && p.IDADE !== null ? ` (${p.IDADE} anos)` : '';
+        const mae = p.NM_MAE || 'Não informada';
+        const cns = p.NR_CNS || '';
+
+        return `
+          <div class="paciente-result-item d-flex justify-content-between align-items-center p-3 mb-2 bg-white border rounded shadow-sm hover-shadow" style="cursor: pointer;" onclick="window.conectaCore.selecionarPaciente('${cdPf}')">
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 44px; height: 44px; font-size: 1.1rem; flex-shrink: 0;">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <strong class="fs-6 text-primary">${escapeHtml(nome)}${escapeHtml(social)}</strong>
+                  <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;">Cód TASY: ${cdPf}</span>
+                </div>
+                <div class="text-muted small mt-1">
+                  <span><i class="bi bi-card-heading me-1"></i><strong>CPF:</strong> ${escapeHtml(cpf)}</span>
+                  <span class="mx-2">•</span>
+                  <span><i class="bi bi-cake2 me-1"></i><strong>Nasc:</strong> ${escapeHtml(nasc)}${escapeHtml(idade)}</span>
+                  <span class="mx-2">•</span>
+                  <span><i class="bi bi-person-heart me-1"></i><strong>Mãe:</strong> ${escapeHtml(mae)}</span>
+                  ${cns ? `<span class="mx-2">•</span><span><i class="bi bi-credit-card-2-front me-1"></i><strong>CNS:</strong> ${escapeHtml(cns)}</span>` : ''}
+                </div>
+              </div>
             </div>
+            <button class="btn btn-sm btn-outline-primary fw-bold text-nowrap ms-3" type="button">
+              Selecionar <i class="bi bi-arrow-right"></i>
+            </button>
           </div>
-          <button class="btn btn-sm btn-primary" type="button">
-            Selecionar <i class="bi bi-arrow-right"></i>
-          </button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
   } catch (err) {
-    container.innerHTML = '<div class="p-2 text-danger small">Erro ao buscar pacientes: ' + err.message + '</div>';
+    container.innerHTML = '<div class="p-3 text-danger small">Erro ao buscar pacientes: ' + err.message + '</div>';
+  }
+}
+
+export async function verificarDuplicidadeCpf(cpfRaw) {
+  const cpf = String(cpfRaw || '').replace(/\D/g, '');
+  const alertaEl = document.getElementById('recepcao-alerta-duplicidade');
+  if (!alertaEl) return;
+
+  if (cpf.length !== 11) {
+    alertaEl.classList.add('d-none');
+    alertaEl.innerHTML = '';
+    return;
+  }
+
+  const cdPfAtual = document.getElementById('recepcao-cd-pessoa')?.value || '';
+
+  try {
+    const res = await api.get(`/api/recepcao/pessoas/verificar-duplicidade?cpf=${encodeURIComponent(cpf)}${cdPfAtual ? `&cd_pessoa_fisica=${encodeURIComponent(cdPfAtual)}` : ''}`);
+    if (res.success && res.data && res.data.duplicado) {
+      const dup = res.data;
+      alertaEl.innerHTML = `
+        <div class="alert alert-warning border-warning shadow-sm mb-3">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <h6 class="fw-bold text-warning-emphasis mb-1">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Paciente já cadastrado no TASY!
+              </h6>
+              <div class="small text-dark mb-1">
+                Já existe o cadastro de <strong>${escapeHtml(dup.pessoa.nm_pessoa_fisica)}</strong> (Cód TASY: <strong>${dup.pessoa.cd_pessoa_fisica}</strong> • Nasc: ${escapeHtml(dup.pessoa.dt_nasc_fmt || '-')} • Mãe: ${escapeHtml(dup.pessoa.nm_mae || '-')}).
+              </div>
+              ${dup.ultimoAtendimento ? `
+                <div class="small fw-bold text-primary mt-1">
+                  <i class="bi bi-journal-medical me-1"></i> Último Atendimento no TASY: #${dup.ultimoAtendimento.nr_atendimento} (${dup.ultimoAtendimento.dt_entrada_fmt}) ${dup.ultimoAtendimento.isHoje ? '<span class="badge bg-success ms-1">ABERTO HOJE</span>' : ''}
+                </div>
+              ` : ''}
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button class="btn btn-sm btn-primary fw-bold text-nowrap" type="button" onclick="window.conectaCore.selecionarPaciente('${dup.pessoa.cd_pessoa_fisica}')">
+                <i class="bi bi-person-check-fill me-1"></i> Usar Este Cadastro
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      alertaEl.classList.remove('d-none');
+    } else {
+      alertaEl.classList.add('d-none');
+      alertaEl.innerHTML = '';
+    }
+  } catch (e) {
+    console.warn('[Recepção] Erro ao verificar duplicidade de CPF:', e);
   }
 }
 
@@ -795,6 +878,13 @@ export async function selecionarPaciente(cdPessoaFisica) {
       preencherFormularioPaciente(res.data);
       exibirCardPacienteSelecionado(res.data);
       document.getElementById('recepcao-search-results').innerHTML = '';
+      
+      const alertaEl = document.getElementById('recepcao-alerta-duplicidade');
+      if (alertaEl) {
+        alertaEl.classList.add('d-none');
+        alertaEl.innerHTML = '';
+      }
+
       await carregarUltimoConvenioPaciente(cdPessoaFisica);
       ui.showToast('Cadastro carregado do TASY!', 'success');
     }
@@ -808,6 +898,11 @@ export function novoPaciente() {
   limparFormularioPaciente();
   document.getElementById('recepcao-search-results').innerHTML = '';
   document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
+  const alertaEl = document.getElementById('recepcao-alerta-duplicidade');
+  if (alertaEl) {
+    alertaEl.classList.add('d-none');
+    alertaEl.innerHTML = '';
+  }
   document.getElementById('recepcao-nome-completo')?.focus();
 }
 
@@ -815,6 +910,11 @@ export function limparPaciente() {
   recepcaoState.pessoaSelecionada = null;
   limparFormularioPaciente();
   document.getElementById('card-paciente-selecionado')?.classList.add('d-none');
+  const alertaEl = document.getElementById('recepcao-alerta-duplicidade');
+  if (alertaEl) {
+    alertaEl.classList.add('d-none');
+    alertaEl.innerHTML = '';
+  }
 }
 
 function preencherFormularioPaciente(p) {

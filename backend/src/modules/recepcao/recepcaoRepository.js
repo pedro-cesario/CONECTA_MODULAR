@@ -291,23 +291,50 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
 // PILAR 2: CADASTRO E BUSCA DE PESSOA FÍSICA
 // ============================================================================
 
+function normalizarBusca(txt) {
+  if (!txt) return '';
+  return String(txt).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+}
+
 async function buscarPessoas(termo) {
   const conn = await getConnection();
   try {
-    const limpo = String(termo || '').trim();
-    const apenasDigitos = limpo.replace(/\D/g, '');
+    const raw = String(termo || '').trim();
+    const apenasDigitos = raw.replace(/\D/g, '');
     const binds = {};
     let whereClause = '';
 
     if (apenasDigitos.length === 11) {
+      // CPF exato
       whereClause = `pf.nr_cpf = :cpf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') = :cpf`;
       binds.cpf = apenasDigitos;
     } else if (apenasDigitos.length >= 15) {
+      // CNS (Cartão Nacional de Saúde / SUS)
       whereClause = `pf.nr_cartao_nac_sus = :cns`;
       binds.cns = apenasDigitos;
+    } else if (apenasDigitos.length > 0 && apenasDigitos.length <= 10 && !/[a-zA-Z]/.test(raw)) {
+      // Código de paciente TASY ou prefixo de CPF
+      whereClause = `pf.cd_pessoa_fisica = :cdPf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') LIKE :cpfPref`;
+      binds.cdPf = apenasDigitos;
+      binds.cpfPref = `${apenasDigitos}%`;
     } else {
-      whereClause = `UPPER(pf.nm_pessoa_fisica) LIKE :nome OR UPPER(pf.nm_social) LIKE :nome`;
-      binds.nome = `%${limpo.toUpperCase()}%`;
+      // Busca Inteligente Multi-Token e Acentuação Flexível (Ex: "Pedro Cesario", "Otavio Rosa", etc.)
+      const clean = normalizarBusca(raw);
+      const words = clean.split(/\s+/).filter(w => w.length > 0);
+
+      if (words.length === 0) {
+        return [];
+      }
+
+      const conditions = words.map((w, idx) => {
+        binds[`w${idx}`] = `%${w}%`;
+        return `(
+          TRANSLATE(UPPER(pf.nm_pessoa_fisica), 'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ', 'AAAAAEEEEIIIIOOOOOUUUUC') LIKE :w${idx}
+          OR TRANSLATE(UPPER(NVL(pf.nm_social, ' ')), 'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ', 'AAAAAEEEEIIIIOOOOOUUUUC') LIKE :w${idx}
+        )`;
+      });
+
+      whereClause = conditions.join(' AND ');
     }
 
     const result = await conn.execute(
@@ -316,6 +343,7 @@ async function buscarPessoas(termo) {
          pf.nm_pessoa_fisica,
          pf.nm_social,
          pf.dt_nascimento,
+         TO_CHAR(pf.dt_nascimento, 'YYYY-MM-DD') AS dt_nasc_iso,
          TO_CHAR(pf.dt_nascimento, 'DD/MM/YYYY') AS dt_nasc_fmt,
          pf.ie_sexo,
          pf.nr_cpf,
@@ -329,14 +357,15 @@ async function buscarPessoas(termo) {
          c.ds_bairro,
          c.ds_municipio,
          c.sg_estado,
-         c.cd_cep
+         c.cd_cep,
+         ROUND((SYSDATE - pf.dt_nascimento) / 365.25) AS idade
        FROM pessoa_fisica pf
        LEFT JOIN compl_pessoa_fisica c ON c.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c.ie_tipo_complemento = 1
        LEFT JOIN compl_pessoa_fisica c_mae ON c_mae.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_mae.ie_tipo_complemento = 5
        LEFT JOIN compl_pessoa_fisica c_pai ON c_pai.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_pai.ie_tipo_complemento = 4
        WHERE ${whereClause}
        ORDER BY pf.nm_pessoa_fisica
-       FETCH FIRST 20 ROWS ONLY`,
+       FETCH FIRST 25 ROWS ONLY`,
       binds
     );
     return result.rows || [];
@@ -1518,6 +1547,102 @@ async function listarAtendimentosHoje() {
   }
 }
 
+async function verificarDuplicidadePaciente({ cpf, dtNascimento, cdPessoaFisica }) {
+  const conn = await getConnection();
+  try {
+    const cpfLimpo = String(cpf || '').replace(/\D/g, '');
+    const binds = {};
+    const conds = [];
+
+    const dummyCpfs = ['00000000000', '11111111111', '22222222222', '33333333333', '44444444444', '55555555555', '66666666666', '77777777777', '88888888888', '99999999999'];
+    if (cpfLimpo && cpfLimpo.length === 11 && !dummyCpfs.includes(cpfLimpo)) {
+      conds.push(`(pf.nr_cpf = :cpf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') = :cpf)`);
+      binds.cpf = cpfLimpo;
+    }
+
+    if (dtNascimento) {
+      conds.push(`TRUNC(pf.dt_nascimento) = TO_DATE(:dtNasc, 'YYYY-MM-DD')`);
+      binds.dtNasc = dtNascimento.substring(0, 10);
+    }
+
+    if (conds.length === 0) {
+      return { duplicado: false };
+    }
+
+    let excludeClause = '';
+    if (cdPessoaFisica) {
+      excludeClause = `AND pf.cd_pessoa_fisica <> :cdExcluir`;
+      binds.cdExcluir = String(cdPessoaFisica);
+    }
+
+    const pfRes = await conn.execute(
+      `SELECT
+         pf.cd_pessoa_fisica,
+         pf.nm_pessoa_fisica,
+         pf.nm_social,
+         pf.dt_nascimento,
+         TO_CHAR(pf.dt_nascimento, 'DD/MM/YYYY') AS dt_nasc_fmt,
+         TO_CHAR(pf.dt_nascimento, 'YYYY-MM-DD') AS dt_nasc_iso,
+         pf.nr_cpf,
+         pf.nr_cartao_nac_sus AS nr_cns,
+         COALESCE(c_mae.nm_contato, pf.nm_sobrenome_mae) AS nm_mae
+       FROM pessoa_fisica pf
+       LEFT JOIN compl_pessoa_fisica c_mae ON c_mae.cd_pessoa_fisica = pf.cd_pessoa_fisica AND c_mae.ie_tipo_complemento = 5
+       WHERE (${conds.join(' AND ')}) ${excludeClause}
+       FETCH FIRST 1 ROWS ONLY`,
+      binds
+    );
+
+    if (!pfRes.rows || pfRes.rows.length === 0) {
+      return { duplicado: false };
+    }
+
+    const pessoa = pfRes.rows[0];
+
+    // Busca último atendimento do paciente no TASY
+    const atendRes = await conn.execute(
+      `SELECT
+         a.nr_atendimento,
+         a.dt_entrada,
+         TO_CHAR(a.dt_entrada, 'DD/MM/YYYY HH24:MI') AS dt_entrada_fmt,
+         TO_CHAR(a.dt_alta, 'DD/MM/YYYY HH24:MI') AS dt_alta_fmt,
+         a.dt_alta,
+         a.nm_usuario,
+         CASE WHEN a.dt_entrada >= TRUNC(SYSDATE) THEN 1 ELSE 0 END AS is_hoje
+       FROM atendimento_paciente a
+       WHERE a.cd_pessoa_fisica = :cdPf
+       ORDER BY a.dt_entrada DESC
+       FETCH FIRST 1 ROWS ONLY`,
+      { cdPf: pessoa.CD_PESSOA_FISICA }
+    );
+
+    const ultimoAtend = atendRes.rows?.[0] || null;
+
+    return {
+      duplicado: true,
+      pessoa: {
+        cd_pessoa_fisica: pessoa.CD_PESSOA_FISICA,
+        nm_pessoa_fisica: pessoa.NM_PESSOA_FISICA,
+        nm_social: pessoa.NM_SOCIAL,
+        dt_nasc_fmt: pessoa.DT_NASC_FMT,
+        dt_nasc_iso: pessoa.DT_NASC_ISO,
+        nr_cpf: pessoa.NR_CPF,
+        nr_cns: pessoa.NR_CNS,
+        nm_mae: pessoa.NM_MAE
+      },
+      ultimoAtendimento: ultimoAtend ? {
+        nr_atendimento: ultimoAtend.NR_ATENDIMENTO,
+        dt_entrada_fmt: ultimoAtend.DT_ENTRADA_FMT,
+        dt_alta_fmt: ultimoAtend.DT_ALTA_FMT,
+        aberto: !ultimoAtend.DT_ALTA,
+        isHoje: ultimoAtend.IS_HOJE === 1
+      } : null
+    };
+  } finally {
+    await conn.close();
+  }
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
@@ -1526,6 +1651,7 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoaFisica,
+  verificarDuplicidadePaciente,
   listarConvenios,
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,

@@ -238,6 +238,10 @@ async function listarAtendimentosHoje() {
   return recepcaoRepository.listarAtendimentosHoje();
 }
 
+async function verificarDuplicidadePaciente(params) {
+  return recepcaoRepository.verificarDuplicidadePaciente(params);
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
@@ -246,6 +250,7 @@ module.exports = {
   buscarPessoas,
   obterPessoaCompleta,
   salvarPessoa,
+  verificarDuplicidadePaciente,
   listarConvenios,
   listarCategoriasConvenio,
   obterUltimoConvenioPaciente,
