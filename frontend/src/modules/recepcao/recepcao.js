@@ -305,27 +305,19 @@ function renderizarBoardSenhas(listaFiltrada = null) {
   container.innerHTML = lista.map(s => {
     const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
     const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
-    const dsPrioridade = s.DS_PRIORIDADE ?? s.ds_prioridade ?? 'Normal';
+    const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
+    const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
     const dsFila = s.DS_FILA ?? s.ds_fila ?? 'Recepção';
-    const nrPrioridade = s.NR_PRIORIDADE ?? s.nr_prioridade;
     const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
     const hrGeracao = s.HR_GERACAO ?? s.hr_geracao ?? '';
 
-    let prioridadeClasse = 'normal';
-    let badgeClass = 'bg-primary-subtle text-primary border border-primary-subtle';
-    if (nrPrioridade === 1) {
-      prioridadeClasse = 'urgente';
-      badgeClass = 'bg-danger-subtle text-danger border border-danger-subtle';
-    } else if (nrPrioridade === 2) {
-      prioridadeClasse = 'preferencial';
-      badgeClass = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-    }
-
     return `
-      <div class="senha-ticket-card ${prioridadeClasse}">
+      <div class="senha-ticket-card normal">
         <div class="senha-ticket-header">
-          <div class="senha-ticket-number">#${escapeHtml(cdSenha)}</div>
-          <span class="senha-ticket-badge ${badgeClass}">${escapeHtml(dsPrioridade)}</span>
+          <div class="senha-ticket-number">${escapeHtml(cdFormatado)}</div>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+            <i class="bi bi-ticket-perforated me-1"></i> Em Espera
+          </span>
         </div>
 
         <div class="senha-ticket-meta">
@@ -338,7 +330,7 @@ function renderizarBoardSenhas(listaFiltrada = null) {
             <i class="bi bi-hourglass-split"></i> Espera: <strong>${minEspera} min</strong>
           </span>
           <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-primary fw-bold px-2 py-1" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar esta senha na TV e no guichê">
+            <button class="btn btn-sm btn-primary fw-bold px-3 py-1" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar esta senha na TV e no guichê">
               <i class="bi bi-megaphone-fill me-1"></i> Chamar
             </button>
             <button class="btn btn-sm btn-outline-secondary fw-bold px-2 py-1" type="button" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})" title="Abrir ficha de atendimento">

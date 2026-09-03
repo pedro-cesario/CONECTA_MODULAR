@@ -26,17 +26,12 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     return { proxima: false, message: 'Nenhuma senha aguardando nesta fila.' };
   }
 
-  let prefixo = 'N';
-  if (result.nr_prioridade === 1) prefixo = 'E';
-  else if (result.nr_prioridade === 2) prefixo = 'P';
-
   const itemFormatado = {
     nr_sequencia: result.nr_sequencia,
     cd_senha_gerada: result.cd_senha_gerada,
-    cd_senha_completa: `${prefixo}${result.cd_senha_gerada}`,
+    cd_senha_completa: `P ${result.cd_senha_gerada}`,
+    cd_senha_pura: `P${result.cd_senha_gerada}`,
     ds_guiche: guicheFinal,
-    ds_prioridade: result.ds_prioridade || 'Normal',
-    nr_prioridade: result.nr_prioridade || 3,
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     tipo_acao: 'CHAMADA'
   };
@@ -58,17 +53,12 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
 
   const result = await recepcaoRepository.rechamarSenha(nrSeqSenha, guicheFinal, nmUsuario);
 
-  let prefixo = 'N';
-  if (result.nr_prioridade === 1) prefixo = 'E';
-  else if (result.nr_prioridade === 2) prefixo = 'P';
-
   const itemFormatado = {
     nr_sequencia: nrSeqSenha,
     cd_senha_gerada: result.cd_senha_gerada,
-    cd_senha_completa: `${prefixo}${result.cd_senha_gerada}`,
+    cd_senha_completa: `P ${result.cd_senha_gerada}`,
+    cd_senha_pura: `P${result.cd_senha_gerada}`,
     ds_guiche: guicheFinal,
-    ds_prioridade: result.ds_prioridade || 'Normal',
-    nr_prioridade: result.nr_prioridade || 3,
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     tipo_acao: 'RECHAMADA'
   };

@@ -150,10 +150,12 @@ function conectarSSE() {
 // ============================================================================
 
 function processarNovaChamada(dados) {
-  // Move a chamada anterior para o histórico se for uma nova senha
+  // Move a chamada anterior para o histórico (mantém exatamente as últimas 07)
   if (painelState.ultimaChamada && painelState.ultimaChamada.nr_sequencia !== dados.nr_sequencia) {
     painelState.historico.unshift(painelState.ultimaChamada);
-    if (painelState.historico.length > 8) painelState.historico.pop();
+    if (painelState.historico.length > 7) {
+      painelState.historico = painelState.historico.slice(0, 7);
+    }
     renderizarHistorico();
   }
 
@@ -168,16 +170,15 @@ function exibirChamada(dados, animar = true) {
   painelState.ultimaChamada = dados;
 
   const numEl = document.getElementById('calling-ticket-number');
-  const prioBadge = document.getElementById('calling-priority-badge');
   const targetEl = document.getElementById('calling-destination-target');
   const timeEl = document.getElementById('calling-time');
   const filaEl = document.getElementById('calling-fila-nome');
   const cardEl = document.getElementById('painel-calling-card');
 
-  const cdCompleto = dados.cd_senha_completa || dados.cd_senha_gerada || '---';
+  // No Hospital Espírita André Luiz, a senha é sempre P + número
+  const numLimpo = String(dados.cd_senha_gerada || dados.cd_senha_completa || '---').replace(/^[^\d]*/i, '').trim();
+  const cdCompleto = numLimpo ? `P ${numLimpo}` : '---';
   const guiche = dados.ds_guiche || 'Guichê 01';
-  const prio = dados.ds_prioridade || 'Normal';
-  const nrPrio = dados.nr_prioridade || 3;
   const hr = dados.hr_chamada || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const fila = dados.ds_fila || 'Recepção';
 
@@ -185,17 +186,6 @@ function exibirChamada(dados, animar = true) {
   if (targetEl) targetEl.textContent = guiche.toUpperCase();
   if (timeEl) timeEl.textContent = hr;
   if (filaEl) filaEl.textContent = fila;
-
-  if (prioBadge) {
-    prioBadge.textContent = prio.toUpperCase();
-    if (nrPrio === 1) {
-      prioBadge.className = 'calling-priority-badge priority-emergencia';
-    } else if (nrPrio === 2) {
-      prioBadge.className = 'calling-priority-badge priority-preferencial';
-    } else {
-      prioBadge.className = 'calling-priority-badge priority-normal';
-    }
-  }
 
   if (animar && cardEl) {
     cardEl.classList.remove('calling-animating');
@@ -209,7 +199,8 @@ function renderizarHistorico() {
   const badge = document.getElementById('history-count-badge');
   if (!container) return;
 
-  const lista = painelState.historico;
+  // Mostra exatamente as últimas 07 senhas chamadas
+  const lista = painelState.historico.slice(0, 7);
   if (badge) badge.textContent = lista.length;
 
   if (lista.length === 0) {
@@ -222,19 +213,17 @@ function renderizarHistorico() {
   }
 
   container.innerHTML = lista.map(item => {
-    let prioClass = 'prio-normal';
-    if (item.nr_prioridade === 1) prioClass = 'prio-emergencia';
-    else if (item.nr_prioridade === 2) prioClass = 'prio-preferencial';
+    const numLimpo = String(item.cd_senha_gerada || item.cd_senha_completa || '').replace(/^[^\d]*/i, '').trim();
+    const cdExibido = numLimpo ? `P ${numLimpo}` : (item.cd_senha_completa || item.cd_senha_gerada);
 
     return `
-      <div class="history-item-card ${prioClass}">
+      <div class="history-item-card">
         <div>
-          <div class="history-item-number">${item.cd_senha_completa || item.cd_senha_gerada}</div>
+          <div class="history-item-number">${cdExibido}</div>
           <div class="history-item-target">${escapeHtml(item.ds_guiche || 'Guichê')}</div>
         </div>
         <div class="history-item-time">
-          <div><i class="bi bi-clock me-1"></i> ${item.hr_chamada || '--:--'}</div>
-          <small class="text-secondary">${escapeHtml(item.ds_prioridade || 'Normal')}</small>
+          <div><i class="bi bi-clock me-1 text-primary"></i> ${item.hr_chamada || '--:--'}</div>
         </div>
       </div>
     `;
@@ -303,16 +292,11 @@ function falarSenha(dados) {
   // Aguarda 900ms para o Ding-Dong tocar primeiro
   setTimeout(() => {
     try {
-      const cdCompleto = dados.cd_senha_completa || String(dados.cd_senha_gerada);
+      const numLimpo = String(dados.cd_senha_gerada || dados.cd_senha_completa || '').replace(/^[^\d]*/i, '').trim();
       const guiche = dados.ds_guiche || 'Guichê 01';
-      const prio = dados.ds_prioridade || 'Normal';
 
-      let textoPrio = '';
-      if (dados.nr_prioridade === 1) textoPrio = 'Emergência';
-      else if (dados.nr_prioridade === 2) textoPrio = 'Preferencial';
-
-      // Separa letras e números para pronúncia limpa (Ex: "Senha Preferencial P 224, Guichê 01")
-      const frase = `Senha ${textoPrio} ${cdCompleto}, ${guiche}`.trim();
+      // No Hospital Espírita André Luiz a pronúncia é: "Senha P [número], [Guichê]"
+      const frase = `Senha P ${numLimpo}, ${guiche}`.trim();
 
       const utterance = new SpeechSynthesisUtterance(frase);
       utterance.lang = 'pt-BR';

@@ -72,7 +72,7 @@ async function obterEstadoPainel(req, res, next) {
 
       const chamadas = result.rows || [];
       const ultimaChamada = chamadas.length > 0 ? formatarItemPainel(chamadas[0]) : null;
-      const historico = chamadas.slice(1).map(formatarItemPainel);
+      const historico = chamadas.slice(1, 8).map(formatarItemPainel); // Exatamente as últimas 07 senhas chamadas
 
       res.json({
         success: true,
@@ -151,23 +151,16 @@ function formatarItemPainel(row) {
   const cdSenha = row.CD_SENHA_GERADA ?? row.cd_senha_gerada;
   const nrSeq = row.NR_SEQUENCIA ?? row.nr_sequencia;
   const dsGuiche = row.DS_MAQUINA_CHAMADA ?? row.ds_maquina_chamada ?? 'Guichê 01';
-  const dsPrioridade = row.DS_PRIORIDADE ?? row.ds_prioridade ?? 'Normal';
-  const nrPrioridade = row.NR_PRIORIDADE ?? row.nr_prioridade ?? 3;
   const hrChamada = row.HR_CHAMADA ?? row.hr_chamada ?? '--:--';
   const dsFila = row.DS_FILA ?? row.ds_fila ?? 'Recepção';
 
-  // Identifica letra ou prefixo
-  let prefixo = 'N';
-  if (nrPrioridade === 1) prefixo = 'E';
-  else if (nrPrioridade === 2) prefixo = 'P';
-
+  // No Hospital Espírita André Luiz, todas as senhas seguem o padrão P + número
   return {
     nr_sequencia: nrSeq,
     cd_senha_gerada: cdSenha,
-    cd_senha_completa: `${prefixo}${cdSenha}`,
+    cd_senha_completa: `P ${cdSenha}`,
+    cd_senha_pura: `P${cdSenha}`,
     ds_guiche: dsGuiche,
-    ds_prioridade: dsPrioridade,
-    nr_prioridade: nrPrioridade,
     ds_fila: dsFila,
     hr_chamada: hrChamada
   };

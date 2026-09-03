@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/modules/painel.css?v=335">
+  <link rel="stylesheet" href="css/modules/painel.css?v=340">
 </head>
 <body class="painel-tv-body">
   <!-- Topbar Header -->
@@ -17,7 +17,7 @@
         <i class="bi bi-heart-pulse-fill"></i>
       </div>
       <div>
-        <h1 class="painel-title">Hospital André Luiz</h1>
+        <h1 class="painel-title">Hospital Espírita André Luiz</h1>
         <div class="painel-subtitle" id="painel-tv-nome">Painel de Recepção & Acolhimento</div>
       </div>
     </div>
@@ -42,10 +42,7 @@
     <section class="painel-calling-card" id="painel-calling-card">
       <div class="calling-card-header">
         <span class="calling-eyebrow">
-          <i class="bi bi-broadcast me-2"></i> SENHA CHAMADA NO GUICHÊ
-        </span>
-        <span class="calling-priority-badge priority-normal" id="calling-priority-badge">
-          CONVENCIONAL
+          <i class="bi bi-broadcast me-2 text-primary"></i> SENHA CHAMADA NO GUICHÊ
         </span>
       </div>
 
@@ -60,10 +57,10 @@
 
       <div class="calling-meta-footer">
         <div class="meta-item">
-          <i class="bi bi-clock-history me-1"></i> Chamada às <strong id="calling-time">--:--</strong>
+          <i class="bi bi-clock-history me-1 text-primary"></i> Chamada às <strong id="calling-time">--:--</strong>
         </div>
         <div class="meta-item">
-          <i class="bi bi-diagram-3 me-1"></i> Fila: <strong id="calling-fila-nome">Recepção</strong>
+          <i class="bi bi-diagram-3 me-1 text-primary"></i> Fila: <strong id="calling-fila-nome">Recepção</strong>
         </div>
       </div>
     </section>
@@ -72,9 +69,9 @@
     <aside class="painel-history-sidebar">
       <div class="history-sidebar-header">
         <div class="history-title">
-          <i class="bi bi-clock-fill text-info me-2"></i> ÚLTIMAS CHAMADAS
+          <i class="bi bi-clock-fill text-primary me-2"></i> ÚLTIMAS 07 CHAMADAS
         </div>
-        <span class="badge bg-secondary-subtle text-secondary" id="history-count-badge">0</span>
+        <span class="badge bg-primary-subtle text-primary fw-bold" id="history-count-badge">0</span>
       </div>
 
       <div class="history-list-container" id="painel-history-list">
@@ -108,6 +105,6 @@
     </button>
   </div>
 
-  <script src="src/modules/painel/painel.js?v=335"></script>
+  <script src="src/modules/painel/painel.js?v=340"></script>
 </body>
 </html>
