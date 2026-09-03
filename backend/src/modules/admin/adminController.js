@@ -279,10 +279,21 @@ async function listarSessoes(req, res) {
     if (!redisClient.isReady) {
       return res.json({ success: true, data: [] });
     }
-    const keys = await redisClient.keys('sess:*');
+
+    const keys = [];
+    let cursor = '0';
+    do {
+      const scanRes = await redisClient.scan(cursor, { MATCH: 'sess:*', COUNT: 100 });
+      cursor = typeof scanRes === 'string' ? scanRes : (scanRes.cursor || '0');
+      const foundKeys = Array.isArray(scanRes) ? scanRes : (scanRes.keys || []);
+      keys.push(...foundKeys);
+      if (keys.length >= 500) break;
+    } while (cursor !== '0' && cursor !== 0);
+
     if (!keys || keys.length === 0) {
       return res.json({ success: true, data: [] });
     }
+
     const sessionDatas = await redisClient.mGet(keys);
     const sessions = [];
     for (let i = 0; i < keys.length; i++) {

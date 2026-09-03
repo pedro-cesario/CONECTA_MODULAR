@@ -121,13 +121,23 @@ async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
 }
 
 async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
-  if (!dados.cd_pessoa_fisica) {
-    const err = new Error('Código de pessoa física é obrigatório');
+  if (!dados.cd_pessoa_fisica && !dados.nr_atendimento) {
+    const err = new Error('Código de pessoa física ou número do atendimento é obrigatório para anexar no GED');
     err.status = 400;
     throw err;
   }
   if (!dados.ds_arquivo && !dados.conteudo_base64) {
-    const err = new Error('Arquivo é obrigatório para anexar no GED');
+    const err = new Error('Arquivo ou conteúdo é obrigatório para anexar no GED');
+    err.status = 400;
+    throw err;
+  }
+
+  const fileName = dados.ds_titulo || dados.ds_arquivo || 'documento.pdf';
+  const ext = (fileName.split('.').pop() || 'pdf').toLowerCase();
+  const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
+
+  if (!ALLOWED_EXTS.includes(ext)) {
+    const err = new Error(`Formato de arquivo ".${ext}" não permitido. Extensões aceitas: ${ALLOWED_EXTS.join(', ')}`);
     err.status = 400;
     throw err;
   }
@@ -139,14 +149,23 @@ async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
       if (base64Clean.includes('base64,')) {
         base64Clean = base64Clean.split('base64,')[1];
       }
+      
       const buffer = Buffer.from(base64Clean, 'base64');
-      const fileName = dados.ds_titulo || dados.ds_arquivo || 'documento.pdf';
-      const mimeType = dados.mime_type || 'application/pdf';
+      const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
+
+      if (buffer.length > MAX_SIZE_BYTES) {
+        const err = new Error(`O arquivo excede o tamanho máximo permitido de 15MB (Tamanho enviado: ${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
+        err.status = 400;
+        throw err;
+      }
+
+      const mimeType = dados.mime_type || (ext === 'pdf' ? 'application/pdf' : `image/${ext}`);
 
       console.log(`[GED] Enviando arquivo "${fileName}" (${buffer.length} bytes) para o TASY Storage...`);
       const storageUri = await tasyReportsClient.uploadArquivoTasyStorage(buffer, fileName, mimeType, userAuth);
       console.log(`[GED] Arquivo enviado com sucesso! Storage URI: ${storageUri}`);
       dados.ds_arquivo = storageUri;
+      dados.ds_extensao_arquivo = ext;
     } catch (errUpload) {
       console.error('[GED] Erro ao enviar para o TASY Storage:', errUpload);
       throw new Error(`Falha ao armazenar arquivo no Storage do TASY: ${errUpload.message}`);

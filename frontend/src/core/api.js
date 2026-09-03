@@ -24,12 +24,18 @@ export const api = {
       options.body = JSON.stringify(options.body);
     }
 
+    const timeoutMs = options.timeout || 25000;
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       const res = await fetch(url, {
         ...options,
         headers,
+        signal: controller.signal,
         credentials: 'include'
       });
+      clearTimeout(timeoutTimer);
 
       const responseRequestId = res.headers.get('x-request-id') || requestId;
       const json = await res.json().catch(() => null);
@@ -51,6 +57,15 @@ export const api = {
 
       return json;
     } catch (err) {
+      clearTimeout(timeoutTimer);
+      if (err.name === 'AbortError') {
+        throw {
+          message: `Tempo limite de resposta (${timeoutMs / 1000}s) excedido. Verifique sua conexão.`,
+          status: 408,
+          requestId,
+          isTimeout: true
+        };
+      }
       if (err && typeof err === 'object' && !err.requestId) {
         err.requestId = requestId;
       }

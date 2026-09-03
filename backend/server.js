@@ -166,7 +166,13 @@ app.use(express.static(path.join(__dirname, '../frontend'), {
 
 const { getPoolStats, getConnection } = require('./src/core/database');
 
-app.get('/health', async (req, res) => {
+// Liveness probe (verifica se o processo Node está ativo)
+app.get('/health/liveness', (req, res) => {
+  res.json({ status: 'UP', timestamp: new Date().toISOString() });
+});
+
+// Readiness probe (verifica dependências críticas: Oracle e Redis)
+app.get(['/health', '/health/readiness'], async (req, res) => {
   const health = {
     status: 'UP',
     timestamp: new Date().toISOString(),
@@ -203,9 +209,15 @@ app.get('/health', async (req, res) => {
   res.json(health);
 });
 
+// Endpoint de Métricas Operacionais (Protegido por METRICS_TOKEN se configurado)
 app.get('/metrics', (req, res) => {
-  const adminIp = req.ip;
-  // Simples proteção, em produção pode ser melhorada
+  const metricsToken = process.env.METRICS_TOKEN;
+  if (metricsToken) {
+    const reqToken = req.headers['x-metrics-token'] || req.query.token;
+    if (reqToken !== metricsToken) {
+      return res.status(403).json({ error: 'Acesso não autorizado às métricas' });
+    }
+  }
   
   const poolStats = getPoolStats();
   const memUsage = process.memoryUsage();

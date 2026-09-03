@@ -20,7 +20,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3020/metrics"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3020/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,7 +35,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "sh -c '[ \"$$(redis-cli -a \"$$REDIS_PASSWORD\" ping 2>/dev/null)\" = \"PONG\" ]'"]
       interval: 10s
       timeout: 5s
       retries: 3

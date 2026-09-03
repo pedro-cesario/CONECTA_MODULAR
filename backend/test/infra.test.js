@@ -1,8 +1,14 @@
-const { describe, it } = require('node:test');
+const { describe, it, after } = require('node:test');
 const assert = require('node:assert/strict');
 const adminController = require('../src/modules/admin/adminController');
+const { closePool } = require('../src/core/database');
 
 describe('Infrastructure & Integrations — Integration Tests', () => {
+  after(async () => {
+    try {
+      await closePool();
+    } catch (e) {}
+  });
   it('should test Oracle connection and return latency and pool status', async () => {
     let responseData = null;
 

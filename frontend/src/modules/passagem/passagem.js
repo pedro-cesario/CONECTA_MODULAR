@@ -689,7 +689,8 @@ export async function loadPassagensAnteriores() {
       const item = passagens[index];
       if (!item) return;
       list.querySelectorAll('.passagem-history-item').forEach((button, buttonIndex) => button.classList.toggle('active', buttonIndex === index));
-      detail.innerHTML = `<header><h3>${utils.escapeHtml(item.ds_setor || `Setor ${item.cd_setor_atendimento || '-'}`)}</h3><div class="passagem-history-meta"><span><i class="bi bi-clock"></i> ${utils.escapeHtml(utils.formatPrintReleaseDate(item.dt_lancamento))}</span><span><i class="bi bi-person-check"></i> ${utils.escapeHtml(item.nm_usuario || '-')}</span><span>Ocorrência #${utils.escapeHtml(item.nr_ocorrencia)}</span></div></header><div class="passagem-history-text">${item.ds_ocorrencia || ''}</div>`;
+      const safeText = utils.escapeHtml(item.ds_ocorrencia || '').replace(/\n/g, '<br>');
+      detail.innerHTML = `<header><h3>${utils.escapeHtml(item.ds_setor || `Setor ${item.cd_setor_atendimento || '-'}`)}</h3><div class="passagem-history-meta"><span><i class="bi bi-clock"></i> ${utils.escapeHtml(utils.formatPrintReleaseDate(item.dt_lancamento))}</span><span><i class="bi bi-person-check"></i> ${utils.escapeHtml(item.nm_usuario || '-')}</span><span>Ocorrência #${utils.escapeHtml(item.nr_ocorrencia)}</span></div></header><div class="passagem-history-text">${safeText}</div>`;
     };
     list.querySelectorAll('.passagem-history-item').forEach(button => button.addEventListener('click', () => renderDetail(Number(button.dataset.index))));
     renderDetail(0);

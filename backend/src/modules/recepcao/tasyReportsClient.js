@@ -6,15 +6,21 @@ const recepcaoRepository = require('./recepcaoRepository');
 
 function getTasyUrl() {
   const sysConfig = configCache.getSystemConfig() || {};
-  return sysConfig.tasy_reports_url || process.env.TASY_REPORTS_URL || 'http://192.168.1.25/TasyAppServer';
+  const url = sysConfig.tasy_reports_url || process.env.TASY_REPORTS_URL;
+  if (!url) throw new Error('Configuração tasy_reports_url ou TASY_REPORTS_URL ausente');
+  return url;
 }
 function getTasyUser() {
   const sysConfig = configCache.getSystemConfig() || {};
-  return sysConfig.tasy_reports_user || process.env.TASY_REPORTS_USER || 'pedro.cesario';
+  const user = sysConfig.tasy_reports_user || process.env.TASY_REPORTS_USER;
+  if (!user) throw new Error('Configuração tasy_reports_user ou TASY_REPORTS_USER ausente');
+  return user;
 }
 function getTasyPassword() {
   const sysConfig = configCache.getSystemConfig() || {};
-  return sysConfig.tasy_reports_password || process.env.TASY_REPORTS_PASSWORD || 'Dc153351##';
+  const pass = sysConfig.tasy_reports_password || process.env.TASY_REPORTS_PASSWORD;
+  if (!pass) throw new Error('Configuração tasy_reports_password ou TASY_REPORTS_PASSWORD ausente');
+  return pass;
 }
 function getTasyClientId() {
   const sysConfig = configCache.getSystemConfig() || {};
@@ -32,14 +38,30 @@ function getTasyTimezone() {
 let cachedAuth = null;
 let loginPromise = null;
 
-function requestHttp(options, postData = null) {
+function requestHttp(options, postData = null, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const isHttps = options.protocol === 'https:';
     const client = isHttps ? https : http;
 
-    const req = client.request(options, (res) => {
+    const reqOptions = {
+      ...options,
+      timeout: timeoutMs
+    };
+
+    const req = client.request(reqOptions, (res) => {
       const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
+      let totalBytes = 0;
+      const MAX_BYTES = 30 * 1024 * 1024; // 30MB max
+
+      res.on('data', (chunk) => {
+        totalBytes += chunk.length;
+        if (totalBytes > MAX_BYTES) {
+          req.destroy(new Error('Resposta do TASY excedeu o limite máximo de 30MB'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+
       res.on('end', () => {
         const buffer = Buffer.concat(chunks);
         resolve({
@@ -56,6 +78,10 @@ function requestHttp(options, postData = null) {
           }
         });
       });
+    });
+
+    req.on('timeout', () => {
+      req.destroy(new Error(`Timeout de ${timeoutMs / 1000}s excedido na comunicação com TASY Reports/Storage`));
     });
 
     req.on('error', (err) => reject(err));

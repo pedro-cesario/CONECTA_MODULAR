@@ -1,6 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const recepcaoController = require('./recepcaoController');
+const { validarModuloPermissao } = require('../../core/utils/acesso');
+
+// Middleware de Autorização Obrigatória do Módulo de Recepção (C-02)
+router.use((req, res, next) => {
+  const usuario = req.session?.usuario;
+  if (!usuario) {
+    return res.status(401).json({ success: false, message: 'Sessão expirada. Faça login novamente.' });
+  }
+  if (usuario.is_admin || usuario.nm_usuario === 'admin' || validarModuloPermissao(usuario, 'recepcao')) {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'Acesso negado: seu perfil não possui permissão para acessar o módulo de Recepção & Acolhimento.'
+  });
+});
 
 // PILAR 1: Senhas e Guichê
 router.get('/filas', recepcaoController.listarFilasSenhas);

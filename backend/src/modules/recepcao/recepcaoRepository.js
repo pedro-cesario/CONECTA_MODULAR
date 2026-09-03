@@ -87,7 +87,9 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
            AND dt_fim_atendimento IS NULL
            AND dt_chamada IS NULL
          ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha DESC
-       ) WHERE ROWNUM = 1`,
+       )
+       WHERE ROWNUM = 1
+       FOR UPDATE SKIP LOCKED`,
       { fila: parseInt(nrSeqFila, 10) }
     );
 
@@ -98,7 +100,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     const nrSeqSenha = proxima.rows[0].NR_SEQUENCIA;
     const cdSenha = proxima.rows[0].CD_SENHA_GERADA;
 
-    await conn.execute(
+    const updateRes = await conn.execute(
       `UPDATE paciente_senha_fila
        SET dt_chamada = SYSDATE,
            dt_primeira_chamada = NVL(dt_primeira_chamada, SYSDATE),
@@ -108,9 +110,15 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
            dt_inicio_atendimento = NVL(dt_inicio_atendimento, SYSDATE),
            dt_atualizacao = SYSDATE,
            nm_usuario = :usuario
-       WHERE nr_sequencia = :seq`,
+       WHERE nr_sequencia = :seq
+         AND dt_chamada IS NULL`,
       { seq: nrSeqSenha, maquina: dsMaquina || 'GUICHE-WEB', usuario: nmUsuario }
     );
+
+    if (updateRes.rowsAffected === 0) {
+      await conn.rollback();
+      return null;
+    }
 
     await conn.execute(
       `INSERT INTO paciente_senha_fila_hist (
