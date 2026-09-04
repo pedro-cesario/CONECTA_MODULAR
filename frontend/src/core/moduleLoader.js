@@ -10,7 +10,8 @@ const moduleLoaders = {
   escala: () => import('../modules/escala/escala.js'),
   registros: () => import('../modules/registros/registros.js'),
   auditorias: () => import('../modules/auditorias/auditorias.js'),
-  recepcao: () => import('../modules/recepcao/recepcao.js')
+  recepcao: () => import('../modules/recepcao/recepcao.js'),
+  painel_senhas: () => import('../modules/painel_senhas/painel_senhas.js')
 };
 
 const loadedModules = new Map();

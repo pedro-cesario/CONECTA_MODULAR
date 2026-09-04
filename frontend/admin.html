@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/style.css?v=318" rel="stylesheet">
+  <link href="css/style.css?v=319" rel="stylesheet">
 
   <style>
     .admin-container {
@@ -303,21 +303,35 @@
     }
 
     .toast-container {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      z-index: 1060;
+      position: fixed !important;
+      top: 25px !important;
+      right: 25px !important;
+      z-index: 999999 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      pointer-events: none !important;
     }
 
     .toast {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      padding: 12px 18px;
-      margin-bottom: 8px;
-      border-left: 4px solid #00387A;
-      animation: slideInRight 0.3s ease;
-      font-size: 14px;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+      padding: 14px 20px !important;
+      margin-bottom: 0 !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 5px solid #00387A !important;
+      animation: slideInRight 0.3s ease !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      min-width: 320px !important;
+      max-width: 500px !important;
     }
 
     @keyframes slideInRight {
@@ -325,9 +339,10 @@
       to { transform: translateX(0); opacity: 1; }
     }
 
-    .toast.success { border-left-color: #28a745; }
-    .toast.error { border-left-color: #dc3545; }
-    .toast.warning { border-left-color: #ffc107; }
+    .toast.success { border-left-color: #10b981 !important; color: #065f46 !important; }
+    .toast.error { border-left-color: #ef4444 !important; color: #991b1b !important; }
+    .toast.warning { border-left-color: #f59e0b !important; color: #92400e !important; }
+    .toast.info { border-left-color: #0284c7 !important; color: #075985 !important; }
 
     .loader { display: none; text-align: center; padding: 20px; }
     .loader.active { display: block; }
@@ -359,15 +374,22 @@
 
     .modal {
       display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 1050;
-      align-items: center;
-      justify-content: center;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(15, 23, 42, 0.65) !important;
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
+      z-index: 99999 !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
-    .modal.show { display: flex; }
+    .modal.show { display: flex !important; }
 
     .modal-content {
       background: white;
@@ -825,19 +847,16 @@
       </div>
       <div class="admin-tabs" id="adminNav" role="tablist">
         <button class="admin-tab-btn active" id="pillar-acesso-tab" data-tab="pillar-acesso" role="tab" aria-controls="pillar-acesso" aria-selected="true">
-          <i class="bi bi-people-fill"></i> 1. Acesso & Perfis
+          <i class="bi bi-people-fill"></i> 1. Acesso & Governança
         </button>
         <button class="admin-tab-btn" id="pillar-clinico-tab" data-tab="pillar-clinico" role="tab" aria-controls="pillar-clinico" aria-selected="false">
-          <i class="bi bi-clipboard2-pulse-fill"></i> 2. Campos Clínicos
+          <i class="bi bi-clipboard2-pulse-fill"></i> 2. Operação Clínica & Atendimento
         </button>
         <button class="admin-tab-btn" id="pillar-seguranca-tab" data-tab="pillar-seguranca" role="tab" aria-controls="pillar-seguranca" aria-selected="false">
           <i class="bi bi-shield-check"></i> 3. Segurança & LGPD
         </button>
         <button class="admin-tab-btn" id="pillar-infra-tab" data-tab="pillar-infra" role="tab" aria-controls="pillar-infra" aria-selected="false">
-          <i class="bi bi-hdd-network-fill"></i> 4. Infraestrutura
-        </button>
-        <button class="admin-tab-btn" id="pillar-paineis-tab" data-tab="pillar-paineis" role="tab" aria-controls="pillar-paineis" aria-selected="false">
-          <i class="bi bi-tv-fill"></i> 5. Painéis & Guichês
+          <i class="bi bi-hdd-network-fill"></i> 4. Infraestrutura & Integrações
         </button>
       </div>
       <div class="topbar-right">
@@ -939,20 +958,29 @@
           </div>
         </div>
 
-        <!-- PILAR 2: CAMPOS CLÍNICOS & TELAS -->
+        <!-- PILAR 2: OPERAÇÃO CLÍNICA & ATENDIMENTO -->
         <div class="tab-pane" id="pillar-clinico" role="tabpanel" aria-labelledby="pillar-clinico-tab">
           <div class="admin-header-card">
-            <div class="mode-eyebrow">Pilar 2 — Configurações Clínicas & Telas</div>
-            <h3>Formulários Clínicos & Studio Visual</h3>
-            <p>Personalize os checklists da Passagem de Plantão e customize telas em estilo visual.</p>
+            <div class="mode-eyebrow">Pilar 2 — Operação Clínica & Atendimento</div>
+            <h3>Fluxos Clínicos, Recepção & Chamada de Senhas</h3>
+            <p>Gerencie os formulários da Passagem, catálogo de relatórios da Recepção, painéis de TV de chamada e telas assistenciais.</p>
           </div>
 
           <div class="admin-sub-nav">
             <button class="admin-sub-pill active" data-subpane="subpane-checkboxes">
-              <i class="bi bi-check2-square"></i> Itens de Intercorrência (Passagem)
+              <i class="bi bi-check2-square"></i> Passagem (Intercorrências)
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-recepcao-docs">
+              <i class="bi bi-file-earmark-medical"></i> Recepção & Relatórios TASY
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-paineis-tv">
+              <i class="bi bi-tv"></i> Painéis Conecta TV
+            </button>
+            <button class="admin-sub-pill" data-subpane="subpane-maquinas-guiches">
+              <i class="bi bi-display"></i> Mapeamento de Guichês
             </button>
             <button class="admin-sub-pill" data-subpane="subpane-studio">
-              <i class="bi bi-palette-fill"></i> Studio de Telas (Wix)
+              <i class="bi bi-palette-fill"></i> Conecta Studio
             </button>
           </div>
 
@@ -979,7 +1007,7 @@
                         <th>Rótulo Visível</th>
                         <th>Identificador (Chave)</th>
                         <th>Categoria</th>
-                        <th style="width: 140px;">Status</th>
+                        <th style="width: 100px;">Status</th>
                         <th style="width: 110px;">Ações</th>
                       </tr>
                     </thead>
@@ -987,6 +1015,166 @@
                       <tr>
                         <td colspan="7" class="text-center text-muted py-4">Carregando checkboxes...</td>
                       </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 2: RECEPÇÃO & CATÁLOGO DE RELATÓRIOS TASY -->
+          <div class="admin-sub-pane" id="subpane-recepcao-docs">
+            <!-- Card 1: Catálogo de Relatórios Dinâmicos -->
+            <div class="admin-card mb-4">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="admin-card-title">
+                    <i class="bi bi-file-earmark-medical text-primary"></i> Catálogo Dinâmico de Relatórios do TASY (Guichê de Atendimento)
+                  </div>
+                  <small class="text-muted">Configure os documentos e relatórios oficiais que a recepção pode emitir com 1 clique</small>
+                </div>
+                <button class="btn btn-primary btn-sm fw-bold" id="btn-novo-relatorio-tasy" type="button">
+                  <i class="bi bi-plus-lg"></i> Novo Relatório TASY
+                </button>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0" id="tabela-relatorios-tasy">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 70px;">Ordem</th>
+                        <th style="width: 100px;">Cód TASY</th>
+                        <th style="width: 120px;">Sequência</th>
+                        <th>Título do Relatório / Documento</th>
+                        <th>Badge</th>
+                        <th>Status</th>
+                        <th class="text-end" style="width: 120px;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="relatorios-tasy-tbody">
+                      <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Carregando catálogo de relatórios...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Parâmetros Operacionais da Recepção -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">
+                  <i class="bi bi-sliders text-primary"></i> Parâmetros Operacionais de Atendimento no TASY
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <p class="text-muted small">Padrões preenchidos automaticamente na abertura de atendimentos e anexo de documentos GED.</p>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label for="config-recepcao-tipo-atend" class="form-label small fw-bold">Tipo de Atendimento Padrão</label>
+                    <input type="number" id="config-recepcao-tipo-atend" class="form-control" placeholder="3 (Internação/PA)">
+                    <small class="text-muted" style="font-size: 11px;">IE_TIPO_ATENDIMENTO no TASY</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-med-resp" class="form-label small fw-bold">Médico Responsável Padrão</label>
+                    <input type="text" id="config-recepcao-med-resp" class="form-control" placeholder="408120">
+                    <small class="text-muted" style="font-size: 11px;">CD_MED_RESP no TASY</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-setor-padrao" class="form-label small fw-bold">Setor Padrão</label>
+                    <input type="number" id="config-recepcao-setor-padrao" class="form-control" placeholder="39 (PA)">
+                    <small class="text-muted" style="font-size: 11px;">CD_SETOR_ATENDIMENTO</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-conv-padrao" class="form-label small fw-bold">Convênio Padrão</label>
+                    <input type="number" id="config-recepcao-conv-padrao" class="form-control" placeholder="3 (SUS)">
+                    <small class="text-muted" style="font-size: 11px;">CD_CONVENIO sugerido</small>
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label for="config-recepcao-estab" class="form-label small fw-bold">Estabelecimento</label>
+                    <input type="number" id="config-recepcao-estab" class="form-control" placeholder="1">
+                    <small class="text-muted" style="font-size: 11px;">CD_ESTABELECIMENTO</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-procedencia" class="form-label small fw-bold">Procedência Padrão</label>
+                    <input type="number" id="config-recepcao-procedencia" class="form-control" placeholder="1">
+                    <small class="text-muted" style="font-size: 11px;">CD_PROCEDENCIA</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-fila-destino" class="form-label small fw-bold">Fila Destino (Triagem)</label>
+                    <input type="number" id="config-recepcao-fila-destino" class="form-control" placeholder="18">
+                    <small class="text-muted" style="font-size: 11px;">NR_FILA_DESTINO</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-recepcao-ged-tipo" class="form-label small fw-bold">Tipo Documento GED</label>
+                    <input type="number" id="config-recepcao-ged-tipo" class="form-control" placeholder="10">
+                    <small class="text-muted" style="font-size: 11px;">NR_SEQ_TIPO_ARQUIVO no TASY</small>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <button class="btn btn-primary fw-bold" id="btn-save-config-recepcao" type="button">
+                    <i class="bi bi-check2-circle"></i> Salvar Parâmetros da Recepção
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 3: PAINÉIS CONECTA TV -->
+          <div class="admin-sub-pane" id="subpane-paineis-tv">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-tv text-primary"></i> Painéis de TV Cadastrados
+                </div>
+                <button class="btn btn-primary btn-sm fw-bold" id="btn-novo-painel-tv">
+                  <i class="bi bi-plus-lg"></i> Novo Painel de TV
+                </button>
+              </div>
+              <div class="admin-card-body">
+                <div class="row g-3" id="paineis-tv-grid">
+                  <!-- Renderizado via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 4: MAPEAMENTO DE GUICHÊS POR MÁQUINA -->
+          <div class="admin-sub-pane" id="subpane-maquinas-guiches">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-display text-primary"></i> Computadores e Postos de Atendimento Mapeados
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-primary btn-sm fw-bold" id="btn-identificar-meu-pc">
+                    <i class="bi bi-crosshair"></i> Identificar Este Computador
+                  </button>
+                  <button class="btn btn-primary btn-sm fw-bold" id="btn-nova-maquina-guiche">
+                    <i class="bi bi-plus-lg"></i> Mapear Máquina
+                  </button>
+                </div>
+              </div>
+              <div class="admin-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle m-0" id="tabela-maquinas-guiches">
+                    <thead>
+                      <tr>
+                        <th>Nome da Máquina / Hostname / IP</th>
+                        <th>Guichê / Posto Atribuído</th>
+                        <th>Painel TV Vinculado</th>
+                        <th>Chamada no Painel</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="maquinas-guiches-tbody">
+                      <!-- Renderizado via JS -->
                     </tbody>
                   </table>
                 </div>
@@ -1172,16 +1360,82 @@
 
           <div class="admin-sub-pane" id="subpane-telemetria">
             <div class="admin-card">
-              <div class="admin-card-header">
-                <div class="admin-card-title">
-                  <i class="bi bi-speedometer2"></i> Telemetria & Recursos do Backend
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="admin-card-title">
+                    <i class="bi bi-speedometer2 text-primary"></i> Telemetria & Recursos do Servidor Conecta
+                  </div>
+                  <small class="text-muted">Monitoramento em tempo real do runtime Node.js, pool Oracle e cache Redis</small>
                 </div>
+                <button class="btn btn-outline-primary btn-sm fw-bold" id="btn-refresh-telemetria" type="button">
+                  <i class="bi bi-arrow-clockwise"></i> Atualizar Métricas
+                </button>
               </div>
               <div class="admin-card-body">
-                <div class="p-4 text-center text-muted">
-                  <i class="bi bi-cpu" style="font-size: 2.5rem; color: var(--primary);"></i>
-                  <h6 class="mt-2 fw-bold text-dark">Métricas do Servidor</h6>
-                  <p class="small text-muted mb-0">Pronto para ser ativado com indicadores de memória Heap, pool Oracle e Redis.</p>
+                <div class="row g-4 mb-4">
+                  <!-- Memória Node.js Heap -->
+                  <div class="col-md-3">
+                    <div class="p-3 border rounded bg-light text-center h-100">
+                      <div class="text-muted small fw-bold mb-1"><i class="bi bi-memory text-primary"></i> Memória Heap (Node.js)</div>
+                      <h3 class="fw-bold text-dark m-0" id="telem-heap-used">-</h3>
+                      <small class="text-muted" id="telem-heap-total">Total: -</small>
+                    </div>
+                  </div>
+
+                  <!-- Uptime do Servidor -->
+                  <div class="col-md-3">
+                    <div class="p-3 border rounded bg-light text-center h-100">
+                      <div class="text-muted small fw-bold mb-1"><i class="bi bi-clock-history text-success"></i> Tempo de Atividade (Uptime)</div>
+                      <h4 class="fw-bold text-success m-0" id="telem-uptime">-</h4>
+                      <small class="text-muted" id="telem-node-ver">Node -</small>
+                    </div>
+                  </div>
+
+                  <!-- Pool de Conexões Oracle -->
+                  <div class="col-md-3">
+                    <div class="p-3 border rounded bg-light text-center h-100">
+                      <div class="text-muted small fw-bold mb-1"><i class="bi bi-database text-warning"></i> Conexões Oracle (Em Uso)</div>
+                      <h3 class="fw-bold text-primary m-0" id="telem-oracle-inuse">-</h3>
+                      <small class="text-muted" id="telem-oracle-capacity">Capacidade: -</small>
+                    </div>
+                  </div>
+
+                  <!-- Status Redis -->
+                  <div class="col-md-3">
+                    <div class="p-3 border rounded bg-light text-center h-100">
+                      <div class="text-muted small fw-bold mb-1"><i class="bi bi-layers text-danger"></i> Cache & Mensageria Redis</div>
+                      <h4 class="fw-bold m-0" id="telem-redis-status">-</h4>
+                      <small class="text-muted" id="telem-redis-host">-</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="border-top pt-3">
+                  <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-1"></i> Detalhes do Ambiente de Execução</h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered bg-white small mb-0">
+                      <tbody>
+                        <tr>
+                          <td class="bg-light fw-bold" style="width: 25%;">Processo PID:</td>
+                          <td id="telem-pid" class="font-monospace">-</td>
+                          <td class="bg-light fw-bold" style="width: 25%;">Plataforma / Arquitetura:</td>
+                          <td id="telem-arch" class="font-monospace">-</td>
+                        </tr>
+                        <tr>
+                          <td class="bg-light fw-bold">Memória RSS Total:</td>
+                          <td id="telem-rss" class="font-monospace">-</td>
+                          <td class="bg-light fw-bold">Driver Oracle:</td>
+                          <td id="telem-oracle-driver" class="font-monospace">-</td>
+                        </tr>
+                        <tr>
+                          <td class="bg-light fw-bold">Perfis Carregados em Memória:</td>
+                          <td id="telem-perfis-count" class="font-monospace">-</td>
+                          <td class="bg-light fw-bold">Módulos Registrados:</td>
+                          <td id="telem-modulos-count" class="font-monospace">-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1203,8 +1457,11 @@
             <button class="admin-sub-pill" data-subpane="subpane-ldap">
               <i class="bi bi-shield-lock-fill"></i> Active Directory LDAP
             </button>
+            <button class="admin-sub-pill" data-subpane="subpane-tasy-reports">
+              <i class="bi bi-cpu-fill"></i> Motor TasyAppServer
+            </button>
             <button class="admin-sub-pill" data-subpane="subpane-apontamentos">
-              <i class="bi bi-sliders"></i> Apontamentos do Conecta
+              <i class="bi bi-sliders"></i> Parâmetros Globais & Cache
             </button>
           </div>
 
@@ -1479,57 +1736,113 @@
             </div>
           </div>
 
-          <!-- SUB-ABA 3: APONTAMENTOS DO CONECTA -->
+          <!-- SUB-ABA 3: MOTOR TASYAPPSERVER -->
+          <div class="admin-sub-pane" id="subpane-tasy-reports">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-cpu-fill text-primary"></i> Integração com Servidor TasyAppServer (Motor de Relatórios & GED)
+                </div>
+                <span class="badge bg-primary-subtle text-primary fw-bold">OAuth REST TASY</span>
+              </div>
+              <div class="admin-card-body">
+                <p class="text-muted small">Configuração das credenciais do TasyAppServer utilizadas para geração de PDFs nativos e integração de prontuário com o TASY.</p>
+                <div class="row g-3 mb-4">
+                  <div class="col-md-5">
+                    <label for="config-tasy-reports-url" class="form-label small fw-bold">URL do Servidor TasyAppServer</label>
+                    <input type="text" id="config-tasy-reports-url" class="form-control" placeholder="http://192.168.1.25/TasyAppServer">
+                    <small class="text-muted" style="font-size: 11px;">Endpoint do motor TasyReports</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-tasy-reports-user" class="form-label small fw-bold">Usuário TASY (TasyAppServer)</label>
+                    <input type="text" id="config-tasy-reports-user" class="form-control" placeholder="pedro.cesario">
+                    <small class="text-muted" style="font-size: 11px;">Usuário habilitado no TASY</small>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="config-tasy-reports-password" class="form-label small fw-bold">Senha TASY (TasyAppServer)</label>
+                    <div class="input-group">
+                      <input type="password" id="config-tasy-reports-password" class="form-control" placeholder="•••••••• (vazio p/ manter)">
+                      <button type="button" class="btn btn-outline-secondary btn-toggle-pass" data-target="config-tasy-reports-password"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <small class="text-muted" style="font-size: 11px;">Credencial de emissão de relatórios</small>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-info w-50 fw-bold" id="btn-test-tasy-reports" type="button">
+                    <i class="bi bi-plug-fill"></i> Testar Conexão TasyAppServer
+                  </button>
+                  <button class="btn btn-primary w-50 fw-bold" id="btn-save-config-tasy-server" type="button">
+                    <i class="bi bi-check2-circle"></i> Salvar Credenciais TasyAppServer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 4: PARÂMETROS DO SISTEMA, HOSPITAL & CACHE -->
           <div class="admin-sub-pane" id="subpane-apontamentos">
             <div class="row g-4">
+              <!-- Card 1: Identidade do Hospital & Painéis TV -->
               <div class="col-md-6">
                 <div class="admin-card h-100">
                   <div class="admin-card-header">
                     <div class="admin-card-title">
-                      <i class="bi bi-hospital text-primary"></i> Dashboard Pronto Atendimento
+                      <i class="bi bi-building text-primary"></i> Identidade Hospitalar & Painéis TV
                     </div>
                   </div>
                   <div class="admin-card-body">
-                    <p class="text-muted small">Fila de espera de destino para pacientes aceitos pela enfermagem no P.A.</p>
                     <div class="mb-3">
-                      <label for="config-fila-destino" class="form-label small fw-bold">Fila TASY (Destino)</label>
-                      <select id="config-fila-destino" class="form-select">
-                        <option value="">Selecione a fila...</option>
-                      </select>
+                      <label for="config-nome-instituicao" class="form-label small fw-bold">Nome da Instituição (Exibido nas TVs e Relatórios)</label>
+                      <input type="text" id="config-nome-instituicao" class="form-control" placeholder="Hospital Espírita André Luiz" value="Hospital Espírita André Luiz">
                     </div>
-                    <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-pa">
-                      <i class="bi bi-check2-circle"></i> Salvar Apontamento P.A.
-                    </button>
+                    <div class="mb-3">
+                      <label for="config-tv-historico-limite" class="form-label small fw-bold">Limite de Senhas no Histórico da TV</label>
+                      <input type="number" id="config-tv-historico-limite" class="form-control" placeholder="7" value="7" min="3" max="15">
+                      <small class="text-muted">Quantidade máxima de chamadas anteriores retidas no histórico lateral da TV.</small>
+                    </div>
+                    <div class="mb-3">
+                      <label for="config-cache-setores" class="form-label small fw-bold">Setores para Pré-Aquecimento de Cache (IDs separados por vírgula)</label>
+                      <input type="text" id="config-cache-setores" class="form-control" placeholder="68, 28, 34, 59, 83" value="68, 28, 34, 59, 83">
+                      <small class="text-muted">Setores mantidos na memória RAM para carregamento ultrarrápido do Dashboard.</small>
+                    </div>
                   </div>
                 </div>
               </div>
 
+              <!-- Card 2: Configurações Gerais da Aplicação & Dashboard P.A. -->
               <div class="col-md-6">
                 <div class="admin-card h-100">
                   <div class="admin-card-header">
                     <div class="admin-card-title">
-                      <i class="bi bi-gear-wide-connected text-primary"></i> Configurações Gerais do Sistema
+                      <i class="bi bi-gear-wide-connected text-primary"></i> Sistema & Fila do Pronto Atendimento
                     </div>
                   </div>
                   <div class="admin-card-body">
-                    <p class="text-muted small">Versão da aplicação e avisos visuais de homologação.</p>
                     <div class="mb-3">
-                      <label for="config-app-version" class="form-label small fw-bold">Versão do Sistema</label>
-                      <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 1.6">
+                      <label for="config-fila-destino" class="form-label small fw-bold">Fila TASY de Destino (Pronto Atendimento)</label>
+                      <select id="config-fila-destino" class="form-select">
+                        <option value="">Selecione a fila...</option>
+                      </select>
                     </div>
                     <div class="mb-3">
+                      <label for="config-app-version" class="form-label small fw-bold">Versão do Sistema</label>
+                      <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 2.0">
+                    </div>
+                    <div class="mb-4">
                       <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="config-show-test-bar">
                         <label class="form-check-label fw-bold" for="config-show-test-bar">Exibir barra de homologação (Base de Testes)</label>
                       </div>
                     </div>
                     <button class="btn btn-primary w-100 fw-bold" id="btn-save-config-sistema">
-                      <i class="bi bi-check2-circle"></i> Salvar Configurações Gerais
+                      <i class="bi bi-check2-circle"></i> Salvar Todos os Parâmetros Globais
                     </button>
                   </div>
                 </div>
               </div>
 
+              <!-- Card 3: Apontamentos ECT -->
               <div class="col-md-12">
                 <div class="admin-card">
                   <div class="admin-card-header">
@@ -1559,172 +1872,61 @@
                   </div>
                 </div>
               </div>
-
-              <!-- CONFIGURAÇÕES DE RECEPÇÃO, TASYREPORTS & GED -->
-              <div class="col-md-12">
-                <div class="admin-card">
-                  <div class="admin-card-header">
-                    <div class="admin-card-title">
-                      <i class="bi bi-person-badge-fill text-primary"></i> Módulo de Recepção & Acolhimento — Parâmetros TASY, Reports & GED
-                    </div>
-                  </div>
-                  <div class="admin-card-body">
-                    <p class="text-muted small">Parâmetros operacionais para abertura de atendimentos, motor nativo do TasyReports e repositório de documentos GED.</p>
-                    
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-3">
-                        <label for="config-recepcao-tipo-atend" class="form-label small fw-bold">Tipo de Atendimento Padrão</label>
-                        <input type="number" id="config-recepcao-tipo-atend" class="form-control" placeholder="3 (Internação/PA)">
-                        <small class="text-muted" style="font-size: 11px;">IE_TIPO_ATENDIMENTO no TASY</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-med-resp" class="form-label small fw-bold">Médico Responsável Padrão</label>
-                        <input type="text" id="config-recepcao-med-resp" class="form-control" placeholder="408120">
-                        <small class="text-muted" style="font-size: 11px;">CD_MED_RESP no TASY</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-setor-padrao" class="form-label small fw-bold">Setor Padrão</label>
-                        <input type="number" id="config-recepcao-setor-padrao" class="form-control" placeholder="39 (PA)">
-                        <small class="text-muted" style="font-size: 11px;">CD_SETOR_ATENDIMENTO</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-conv-padrao" class="form-label small fw-bold">Convênio Padrão</label>
-                        <input type="number" id="config-recepcao-conv-padrao" class="form-control" placeholder="3 (SUS)">
-                        <small class="text-muted" style="font-size: 11px;">CD_CONVENIO sugerido</small>
-                      </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-3">
-                        <label for="config-recepcao-estab" class="form-label small fw-bold">Estabelecimento</label>
-                        <input type="number" id="config-recepcao-estab" class="form-control" placeholder="1">
-                        <small class="text-muted" style="font-size: 11px;">CD_ESTABELECIMENTO</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-procedencia" class="form-label small fw-bold">Procedência Padrão</label>
-                        <input type="number" id="config-recepcao-procedencia" class="form-control" placeholder="1">
-                        <small class="text-muted" style="font-size: 11px;">CD_PROCEDENCIA</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-fila-destino" class="form-label small fw-bold">Fila Destino (Triagem)</label>
-                        <input type="number" id="config-recepcao-fila-destino" class="form-control" placeholder="18">
-                        <small class="text-muted" style="font-size: 11px;">NR_FILA_DESTINO</small>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="config-recepcao-ged-tipo" class="form-label small fw-bold">Tipo Documento GED</label>
-                        <input type="number" id="config-recepcao-ged-tipo" class="form-control" placeholder="10">
-                        <small class="text-muted" style="font-size: 11px;">NR_SEQ_TIPO_ARQUIVO no TASY</small>
-                      </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-4">
-                        <label for="config-tasy-reports-url" class="form-label small fw-bold">URL Servidor TasyAppServer</label>
-                        <input type="text" id="config-tasy-reports-url" class="form-control" placeholder="http://192.168.1.25/TasyAppServer">
-                        <small class="text-muted" style="font-size: 11px;">Endpoint do motor TasyReports</small>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="config-tasy-reports-user" class="form-label small fw-bold">Usuário TASY (TasyAppServer)</label>
-                        <input type="text" id="config-tasy-reports-user" class="form-control" placeholder="pedro.cesario">
-                        <small class="text-muted" style="font-size: 11px;">Usuário habilitado no TASY</small>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="config-tasy-reports-password" class="form-label small fw-bold">Senha TASY (TasyAppServer)</label>
-                        <input type="password" id="config-tasy-reports-password" class="form-control" placeholder="Senha do TasyAppServer">
-                        <small class="text-muted" style="font-size: 11px;">Credencial de emissão de relatórios</small>
-                      </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mb-4">
-                      <button class="btn btn-outline-info w-50 fw-bold" id="btn-test-tasy-reports" type="button">
-                        <i class="bi bi-plug-fill"></i> Testar Conexão TasyAppServer
-                      </button>
-                      <button class="btn btn-primary w-50 fw-bold" id="btn-save-config-recepcao" type="button">
-                        <i class="bi bi-check2-circle"></i> Salvar Parâmetros da Recepção & TASY
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PILAR 5: PAINÉIS & GUICHÊS -->
-        <div class="tab-pane" id="pillar-paineis" role="tabpanel" aria-labelledby="pillar-paineis-tab">
-          <div class="admin-header-card">
-            <div class="mode-eyebrow">Pilar 5 — Gestão de Painéis de TV & Guichês</div>
-            <h3>Painéis de Chamada (Conecta TV) & Mapeamento de Guichês</h3>
-            <p>Gerencie as TVs de atendimento, filas vinculadas a cada painel e associe computadores aos seus respectivos guichês.</p>
-          </div>
-
-          <div class="admin-sub-nav">
-            <button class="admin-sub-pill active" data-subpane="subpane-paineis-tv">
-              <i class="bi bi-tv"></i> Painéis Conecta TV
-            </button>
-            <button class="admin-sub-pill" data-subpane="subpane-maquinas-guiches">
-              <i class="bi bi-display"></i> Mapeamento de Guichês por Computador
-            </button>
-          </div>
-
-          <!-- SUB-ABA 1: PAINÉIS CONECTA TV -->
-          <div class="admin-sub-pane active" id="subpane-paineis-tv">
-            <div class="admin-card">
-              <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <div class="admin-card-title">
-                  <i class="bi bi-tv text-primary"></i> Painéis de TV Cadastrados
-                </div>
-                <button class="btn btn-primary btn-sm fw-bold" id="btn-novo-painel-tv">
-                  <i class="bi bi-plus-lg"></i> Novo Painel de TV
-                </button>
-              </div>
-              <div class="admin-card-body">
-                <div class="row g-3" id="paineis-tv-grid">
-                  <!-- Renderizado via JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- SUB-ABA 2: MAPEAMENTO DE GUICHÊS POR MÁQUINA -->
-          <div class="admin-sub-pane" id="subpane-maquinas-guiches">
-            <div class="admin-card">
-              <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <div class="admin-card-title">
-                  <i class="bi bi-display text-primary"></i> Computadores e Postos de Atendimento Mapeados
-                </div>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-outline-primary btn-sm fw-bold" id="btn-identificar-meu-pc">
-                    <i class="bi bi-crosshair"></i> Identificar Este Computador
-                  </button>
-                  <button class="btn btn-primary btn-sm fw-bold" id="btn-nova-maquina-guiche">
-                    <i class="bi bi-plus-lg"></i> Mapear Máquina
-                  </button>
-                </div>
-              </div>
-              <div class="admin-card-body p-0">
-                <div class="table-responsive">
-                  <table class="table table-hover align-middle m-0" id="tabela-maquinas-guiches">
-                    <thead>
-                      <tr>
-                        <th>Nome da Máquina / Hostname / IP</th>
-                        <th>Guichê / Posto Atribuído</th>
-                        <th>Painel TV Vinculado</th>
-                        <th>Status</th>
-                        <th class="text-end">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody id="maquinas-guiches-tbody">
-                      <!-- Renderizado via JS -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
+  </div> <!-- Fecha .admin-container -->
+
+  <!-- Modal Novo / Editar Relatório TASY -->
+  <div class="modal" id="modal-relatorio-tasy">
+    <div class="modal-content" style="max-width: 560px; background: #ffffff; border-radius: 1rem; padding: 1.5rem;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="modal-title m-0" id="modal-relatorio-tasy-title" style="font-weight: 800; color: var(--primary);">Configurar Relatório TASY</h4>
+        <button type="button" class="close-modal" id="modal-relatorio-tasy-close" style="border: 0; background: transparent; font-size: 1.5rem;">&times;</button>
+      </div>
+      <form id="form-relatorio-tasy">
+        <input type="hidden" id="relatorio-tasy-id">
+        <div class="modal-body p-0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Código do Relatório (CD_RELATORIO) *</label>
+              <input type="number" id="relatorio-tasy-cd" class="form-control" placeholder="ex: 718" required>
+              <small class="text-muted">Código no motor TASY Reports</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Sequência (NR_SEQUENCIA) *</label>
+              <input type="number" id="relatorio-tasy-seq" class="form-control" placeholder="ex: 2750455" required>
+              <small class="text-muted">Sequência cadastrada no TASY</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Título / Nome de Exibição *</label>
+              <input type="text" id="relatorio-tasy-titulo" class="form-control" placeholder="ex: 718 — CHECKLIST PRONTUÁRIO" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Badge / Categoria</label>
+              <input type="text" id="relatorio-tasy-badge" class="form-control" placeholder="ex: Prontuário, Exames, Jurídico">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Ícone Bootstrap</label>
+              <input type="text" id="relatorio-tasy-icone" class="form-control" placeholder="bi-file-earmark-text" value="bi-file-earmark-text">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Ordem</label>
+              <input type="number" id="relatorio-tasy-ordem" class="form-control" value="1" min="1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" id="modal-relatorio-tasy-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold" id="btn-salvar-relatorio-tasy">
+            <i class="bi bi-check-lg"></i> Salvar Relatório
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Modal Novo / Editar Painel TV -->
   <div class="modal" id="modal-painel-tv">
@@ -1753,6 +1955,11 @@
               <label class="form-label small fw-bold">Filas Monitoradas (IDs separados por vírgula)</label>
               <input type="text" id="painel-tv-filas" class="form-control" placeholder="ex: 9, 10, 11, 12">
               <small class="text-muted">Exemplo: 9 = Recepção P.A., 12 = Triagem. Deixe vazio para todas.</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold"><i class="bi bi-display text-primary me-1"></i> Máquinas / Computadores que Abrem este Monitor</label>
+              <input type="text" id="painel-tv-maquinas" class="form-control" placeholder="ex: TV-SALA-ESPERA, NOTE-CESARIO, 192.168.12.158">
+              <small class="text-muted">Hostnames ou IPs dos computadores que abrirão automaticamente este monitor ao acessar "Painel de Senhas". Separe por vírgula.</small>
             </div>
             <div class="col-md-4">
               <div class="form-check form-switch mt-2">
@@ -1810,6 +2017,15 @@
               <select id="guiche-painel-id" class="form-select" required>
                 <option value="recepcao_principal">Recepção Principal</option>
               </select>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch mt-2 p-2 bg-light rounded border">
+                <input class="form-check-input ms-0 me-2" type="checkbox" id="guiche-permite-chamar" checked style="cursor: pointer;">
+                <label class="form-check-label fw-bold small text-dark" for="guiche-permite-chamar" style="cursor: pointer;">
+                  <i class="bi bi-megaphone-fill text-primary me-1"></i> Permitir que este posto chame senhas no painel indicado
+                </label>
+              </div>
+              <small class="text-muted d-block mt-1">Se desativado, o botão de chamar senha será bloqueado para este computador.</small>
             </div>
           </div>
         </div>
@@ -2137,13 +2353,23 @@
     };
 
     function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
       const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle-fill' : type === 'error' ? 'bi-x-circle-fill' : 'bi-info-circle-fill'}"></i> ${message}`;
+      toast.className = `toast show ${type}`;
+      const iconClass = type === 'success' ? 'bi-check-circle-fill text-success' : type === 'error' ? 'bi-x-circle-fill text-danger' : type === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-info-circle-fill text-info';
+      toast.innerHTML = `<i class="bi ${iconClass} fs-5"></i> <span>${escapeHtml(message)}</span>`;
       container.appendChild(toast);
       setTimeout(() => {
-        toast.remove();
+        toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 300);
       }, 5000);
     }
 
@@ -2775,6 +3001,42 @@
                 </div>
               ` : ''}
 
+              ${modulo.id === 'painel_senhas' ? `
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-megaphone-fill"></i> Operações do Painel de Senhas
+                  </div>
+                  <div class="perm-pills-container">
+                    <label class="perm-pill-item" for="perm-${perfilId}-painel_senhas-chamar">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-painel_senhas-chamar" value="chamar_senha" data-painelsenhas-permissao data-parent-mod="painel_senhas">
+                      <span><i class="bi bi-megaphone text-muted me-1"></i><strong>Chamar e Rechamar Senhas</strong></span>
+                    </label>
+                  </div>
+                </div>
+              ` : ''}
+
+              ${modulo.id === 'recepcao' ? `
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-person-badge-fill"></i> Funções da Recepção & Acolhimento
+                  </div>
+                  <div class="perm-pills-container">
+                    ${[
+                      ['chamar_senha', 'Chamar Próxima Senha (Guichê)', 'bi-megaphone'],
+                      ['cadastrar_pessoa_fisica', 'Cadastrar Nova Pessoa Física', 'bi-person-plus'],
+                      ['abrir_atendimento', 'Abertura de Atendimento TASY', 'bi-hospital'],
+                      ['emitir_relatorio', 'Emissão de Relatórios TasyReports', 'bi-printer'],
+                      ['anexar_documento_ged', 'Anexar Documentos no GED', 'bi-upload']
+                    ].map(([value, label, icon]) => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-recepcao-${value}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-recepcao-${value}" value="${value}" data-recepcao-permissao data-parent-mod="recepcao">
+                        <span><i class="bi ${icon} text-muted me-1"></i>${label}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
               ${modulo.id === 'livro' ? `
                 <div class="perm-subcard">
                   <div class="perm-subcard-header">
@@ -3007,6 +3269,18 @@
             checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'registros' && pp.permissao === checkbox.value);
           });
 
+          // 11. Painel de Senhas
+          const painelSenhasChecks = document.querySelectorAll('input[data-painelsenhas-permissao]');
+          painelSenhasChecks.forEach(checkbox => {
+            checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'painel_senhas' && pp.permissao === checkbox.value);
+          });
+
+          // 12. Recepção e Acolhimento
+          const recepcaoChecks = document.querySelectorAll('input[data-recepcao-permissao]');
+          recepcaoChecks.forEach(checkbox => {
+            checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'recepcao' && pp.permissao === checkbox.value);
+          });
+
           // 10. Modelo de Plantão / Período default
           const plantaoRadio = document.getElementById(`perm-${perfilId}-modelo-plantao`);
           const periodoRadio = document.getElementById(`perm-${perfilId}-modelo-periodo`);
@@ -3057,6 +3331,14 @@
       const regChecks = document.querySelectorAll('input[data-registro-permissao]:checked');
       if (regChecks.length > 0) {
         permissoes['registros'] = Array.from(regChecks).map(c => c.value);
+      }
+      const pSenhasChecks = document.querySelectorAll('input[data-painelsenhas-permissao]:checked');
+      if (pSenhasChecks.length > 0) {
+        permissoes['painel_senhas'] = Array.from(pSenhasChecks).map(c => c.value);
+      }
+      const recChecks = document.querySelectorAll('input[data-recepcao-permissao]:checked');
+      if (recChecks.length > 0) {
+        permissoes['recepcao'] = Array.from(recChecks).map(c => c.value);
       }
 
       const setoresPorModulo = {
@@ -3188,18 +3470,31 @@
 
     async function loadConfigSistema() {
       try {
-        await loadAgendasEct();
-        await loadProcedimentosEct();
+        loadAgendasEct();
+        loadProcedimentosEct();
         
         const result = await api.get(`${apiConfig.baseUrl}/admin/system/config`);
         if (result.success && result.data) {
-          document.getElementById('config-app-version').value = result.data.app_version || '';
-          document.getElementById('config-show-test-bar').checked = result.data.show_test_bar === 'true';
+          if (document.getElementById('config-nome-instituicao')) {
+            document.getElementById('config-nome-instituicao').value = result.data.nome_instituicao || 'Hospital Espírita André Luiz';
+          }
+          if (document.getElementById('config-tv-historico-limite')) {
+            document.getElementById('config-tv-historico-limite').value = result.data.tv_historico_limite || '7';
+          }
+          if (document.getElementById('config-cache-setores')) {
+            document.getElementById('config-cache-setores').value = result.data.cache_setores_preaquecidos || '68, 28, 34, 59, 83';
+          }
+          if (document.getElementById('config-app-version')) {
+            document.getElementById('config-app-version').value = result.data.app_version || '2.0';
+          }
+          if (document.getElementById('config-show-test-bar')) {
+            document.getElementById('config-show-test-bar').checked = result.data.show_test_bar === 'true';
+          }
           
-          if (result.data.ect_cd_agenda) {
+          if (result.data.ect_cd_agenda && document.getElementById('config-ect-agenda')) {
             document.getElementById('config-ect-agenda').value = result.data.ect_cd_agenda;
           }
-          if (result.data.ect_cd_procedimento) {
+          if (result.data.ect_cd_procedimento && document.getElementById('config-ect-procedimento')) {
             document.getElementById('config-ect-procedimento').value = result.data.ect_cd_procedimento;
           }
 
@@ -3213,6 +3508,8 @@
             document.getElementById('config-recepcao-procedencia').value = result.data.recepcao_cd_procedencia || '1';
             document.getElementById('config-recepcao-fila-destino').value = result.data.recepcao_nr_fila_destino || '18';
             document.getElementById('config-recepcao-ged-tipo').value = result.data.recepcao_ged_tipo_arquivo || '10';
+          }
+          if (document.getElementById('config-tasy-reports-url')) {
             document.getElementById('config-tasy-reports-url').value = result.data.tasy_reports_url || 'http://192.168.1.25/TasyAppServer';
             document.getElementById('config-tasy-reports-user').value = result.data.tasy_reports_user || 'pedro.cesario';
             if (result.data.tasy_reports_password) {
@@ -3226,27 +3523,23 @@
     }
 
     document.getElementById('btn-test-tasy-reports')?.addEventListener('click', async () => {
-      const url = document.getElementById('config-tasy-reports-url').value;
-      const username = document.getElementById('config-tasy-reports-user').value;
-      const password = document.getElementById('config-tasy-reports-password').value;
-
-      if (!username || !password) {
-        return showToast('Informe o usuário e a senha do TasyAppServer para testar.', 'warning');
-      }
+      const url = document.getElementById('config-tasy-reports-url')?.value?.trim() || '';
+      const username = document.getElementById('config-tasy-reports-user')?.value?.trim() || '';
+      const password = document.getElementById('config-tasy-reports-password')?.value || '';
 
       const btn = document.getElementById('btn-test-tasy-reports');
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Testando...';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Testando TasyAppServer...';
 
       try {
         const result = await api.post(`${apiConfig.baseUrl}/admin/infra/testar-tasy-reports`, {
-          url,
-          username,
-          password
+          url: url || undefined,
+          username: username || undefined,
+          password: password || undefined
         });
         if (result.success) {
-          showToast(result.message || 'Conexão e Autenticação com TasyAppServer BEM-SUCEDIDAS!', 'success');
+          showToast(result.message || 'Autenticação com TasyAppServer BEM-SUCEDIDA!', 'success');
         } else {
           showToast(result.message || 'Falha na autenticação com TasyAppServer', 'error');
         }
@@ -3259,20 +3552,22 @@
     });
 
     document.getElementById('btn-save-config-sistema')?.addEventListener('click', async () => {
-      const app_version = document.getElementById('config-app-version').value;
-      const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
-      const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
-      const ect_cd_procedimento = document.getElementById('config-ect-procedimento').value;
+      const nome_instituicao = document.getElementById('config-nome-instituicao')?.value?.trim() || 'Hospital Espírita André Luiz';
+      const tv_historico_limite = document.getElementById('config-tv-historico-limite')?.value?.trim() || '7';
+      const cache_setores_preaquecidos = document.getElementById('config-cache-setores')?.value?.trim() || '68, 28, 34, 59, 83';
+      const app_version = document.getElementById('config-app-version')?.value || '2.0';
+      const show_test_bar = document.getElementById('config-show-test-bar')?.checked ? 'true' : 'false';
       
       try {
         const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
+          nome_instituicao,
+          tv_historico_limite,
+          cache_setores_preaquecidos,
           app_version,
-          show_test_bar,
-          ect_cd_agenda,
-          ect_cd_procedimento
+          show_test_bar
         });
         if (result.success) {
-          showToast('Configurações do sistema salvas com sucesso!', 'success');
+          showToast('Parâmetros globais salvos com sucesso!', 'success');
         } else {
           showToast(result.message || 'Erro ao salvar configurações', 'error');
         }
@@ -3281,16 +3576,32 @@
       }
     });
 
+    document.getElementById('btn-save-config-tasy-server')?.addEventListener('click', async () => {
+      const tasy_reports_url = document.getElementById('config-tasy-reports-url')?.value?.trim();
+      const tasy_reports_user = document.getElementById('config-tasy-reports-user')?.value?.trim();
+      const tasy_reports_password = document.getElementById('config-tasy-reports-password')?.value;
+
+      try {
+        const payload = { tasy_reports_url, tasy_reports_user };
+        if (tasy_reports_password) payload.tasy_reports_password = tasy_reports_password;
+
+        const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, payload);
+        if (result.success) {
+          showToast('Credenciais do TasyAppServer salvas com sucesso!', 'success');
+        } else {
+          showToast(result.message || 'Erro ao salvar credenciais', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar credenciais do TasyAppServer', 'error');
+      }
+    });
+
     document.getElementById('btn-save-config-ect')?.addEventListener('click', async () => {
-      const app_version = document.getElementById('config-app-version').value;
-      const show_test_bar = document.getElementById('config-show-test-bar').checked ? 'true' : 'false';
       const ect_cd_agenda = document.getElementById('config-ect-agenda').value;
       const ect_cd_procedimento = document.getElementById('config-ect-procedimento').value;
       
       try {
         const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
-          app_version,
-          show_test_bar,
           ect_cd_agenda,
           ect_cd_procedimento
         });
@@ -3313,9 +3624,6 @@
       const recepcao_cd_procedencia = document.getElementById('config-recepcao-procedencia').value;
       const recepcao_nr_fila_destino = document.getElementById('config-recepcao-fila-destino').value;
       const recepcao_ged_tipo_arquivo = document.getElementById('config-recepcao-ged-tipo').value;
-      const tasy_reports_url = document.getElementById('config-tasy-reports-url').value;
-      const tasy_reports_user = document.getElementById('config-tasy-reports-user').value;
-      const tasy_reports_password = document.getElementById('config-tasy-reports-password').value;
 
       try {
         const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
@@ -3326,13 +3634,10 @@
           recepcao_cd_estabelecimento,
           recepcao_cd_procedencia,
           recepcao_nr_fila_destino,
-          recepcao_ged_tipo_arquivo,
-          tasy_reports_url,
-          tasy_reports_user,
-          tasy_reports_password
+          recepcao_ged_tipo_arquivo
         });
         if (result.success) {
-          showToast('Parâmetros da Recepção & TASY salvos com sucesso!', 'success');
+          showToast('Parâmetros da Recepção salvos com sucesso!', 'success');
         } else {
           showToast(result.message || 'Erro ao salvar configurações', 'error');
         }
@@ -3381,10 +3686,14 @@
         }
         if (targetId === 'pillar-clinico') {
           loadCheckboxes();
+          loadRelatoriosTasy();
+          loadPaineisTv();
+          loadMaquinasGuiches();
           loadStudioPages();
         }
         if (targetId === 'pillar-seguranca') {
           loadSessoes();
+          loadTelemetria();
         }
         if (targetId === 'pillar-infra') {
           loadOracleConfig();
@@ -3401,10 +3710,6 @@
         if (targetId === 'pillar-acesso') {
           loadPerfis();
           loadModulos();
-        }
-        if (targetId === 'pillar-paineis') {
-          loadPaineisTv();
-          loadMaquinasGuiches();
         }
       });
     });
@@ -3429,11 +3734,27 @@
         if (targetSubpaneId === 'subpane-checkboxes') {
           loadCheckboxes();
         }
+        if (targetSubpaneId === 'subpane-recepcao-docs') {
+          loadRelatoriosTasy();
+          loadConfigSistema();
+        }
+        if (targetSubpaneId === 'subpane-paineis-tv') {
+          loadPaineisTv();
+        }
+        if (targetSubpaneId === 'subpane-maquinas-guiches') {
+          loadMaquinasGuiches();
+        }
+        if (targetSubpaneId === 'subpane-studio') {
+          loadStudioPages();
+        }
         if (targetSubpaneId === 'subpane-audit') {
           loadAuditTrail();
         }
         if (targetSubpaneId === 'subpane-sessoes') {
           loadSessoes();
+        }
+        if (targetSubpaneId === 'subpane-telemetria') {
+          loadTelemetria();
         }
         if (targetSubpaneId === 'subpane-oracle') {
           testarOracle();
@@ -3441,17 +3762,14 @@
         if (targetSubpaneId === 'subpane-ldap') {
           loadLdapConfig();
         }
+        if (targetSubpaneId === 'subpane-tasy-reports') {
+          loadConfigSistema();
+        }
         if (targetSubpaneId === 'subpane-apontamentos') {
           loadConfigSistema();
           loadConfigPA();
           loadAgendasEct();
           loadProcedimentosEct();
-        }
-        if (targetSubpaneId === 'subpane-paineis-tv') {
-          loadPaineisTv();
-        }
-        if (targetSubpaneId === 'subpane-maquinas-guiches') {
-          loadMaquinasGuiches();
         }
       });
     });
@@ -4539,6 +4857,9 @@
                 <p class="small text-muted mb-2">${escapeHtml(p.descricao || 'Sem descrição')}</p>
                 <div class="small mb-1"><strong>Filas:</strong> <span class="badge bg-light text-dark border">${escapeHtml(filasStr)}</span></div>
                 <div class="small mb-1"><strong>Sons:</strong> ${p.som_ativo ? '🔔 Ding-Dong' : '❌ Mudo'} | ${p.voz_ativa ? '🗣️ Voz Ativa' : '❌ Sem Voz'}</div>
+                <div class="small mt-2 pt-2 border-top text-muted">
+                  <i class="bi bi-display text-primary me-1"></i><strong>Máquinas:</strong> <span class="badge bg-light text-dark border">${escapeHtml(p.maquinas_autorizadas || 'Nenhuma (manual)')}</span>
+                </div>
               </div>
               <div class="card-footer bg-light d-flex justify-content-between align-items-center py-2">
                 <a href="/painel.html?painel=${encodeURIComponent(p.id)}" target="_blank" class="btn btn-outline-primary btn-sm fw-bold">
@@ -4585,6 +4906,7 @@
       const nomeEl = document.getElementById('painel-tv-nome');
       const descEl = document.getElementById('painel-tv-desc');
       const filasEl = document.getElementById('painel-tv-filas');
+      const maquinasEl = document.getElementById('painel-tv-maquinas');
       const somEl = document.getElementById('painel-tv-som');
       const vozEl = document.getElementById('painel-tv-voz');
       const velEl = document.getElementById('painel-tv-velocidade');
@@ -4598,6 +4920,7 @@
         let filas = [];
         try { filas = typeof item.filas_json === 'string' ? JSON.parse(item.filas_json) : (item.filas_json || []); } catch(e){}
         filasEl.value = Array.isArray(filas) ? filas.join(', ') : '';
+        if (maquinasEl) maquinasEl.value = item.maquinas_autorizadas || '';
         somEl.checked = Boolean(item.som_ativo);
         vozEl.checked = Boolean(item.voz_ativa);
         velEl.value = String(item.voz_velocidade || 1.0);
@@ -4608,6 +4931,7 @@
         nomeEl.value = '';
         descEl.value = '';
         filasEl.value = '9, 10, 11, 12';
+        if (maquinasEl) maquinasEl.value = '';
         somEl.checked = true;
         vozEl.checked = true;
         velEl.value = '1.0';
@@ -4626,6 +4950,7 @@
       const nome = document.getElementById('painel-tv-nome').value.trim();
       const descricao = document.getElementById('painel-tv-desc').value.trim();
       const filasRaw = document.getElementById('painel-tv-filas').value.trim();
+      const maquinas_autorizadas = document.getElementById('painel-tv-maquinas')?.value.trim() || '';
       const som_ativo = document.getElementById('painel-tv-som').checked ? 1 : 0;
       const voz_ativa = document.getElementById('painel-tv-voz').checked ? 1 : 0;
       const voz_velocidade = parseFloat(document.getElementById('painel-tv-velocidade').value) || 1.0;
@@ -4634,7 +4959,7 @@
 
       try {
         await api.post(`${apiConfig.baseUrl}/admin/paineis`, {
-          id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo: 1
+          id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, maquinas_autorizadas, ativo: 1
         });
         showToast('Painel salvo com sucesso!', 'success');
         document.getElementById('modal-painel-tv').classList.remove('show');
@@ -4662,7 +4987,7 @@
       if (!tbody) return;
 
       if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma máquina mapeada para guichê.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma máquina mapeada para guichê.</td></tr>`;
         return;
       }
 
@@ -4677,6 +5002,12 @@
           </td>
           <td>
             <span class="badge bg-info-subtle text-info border">${escapeHtml(m.painel_id || 'recepcao_principal')}</span>
+          </td>
+          <td>
+            <span class="badge ${m.permite_chamar_senha !== 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border'}">
+              <i class="bi ${m.permite_chamar_senha !== 0 ? 'bi-check-circle-fill' : 'bi-dash-circle'} me-1"></i>
+              ${m.permite_chamar_senha !== 0 ? 'Autorizado' : 'Desativado'}
+            </span>
           </td>
           <td>
             <span class="badge ${m.ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${m.ativo ? 'Ativo' : 'Inativo'}</span>
@@ -4720,17 +5051,20 @@
       const nomeEl = document.getElementById('guiche-maquina-nome');
       const dsGuicheEl = document.getElementById('guiche-ds-guiche');
       const painelEl = document.getElementById('guiche-painel-id');
+      const permiteChamarEl = document.getElementById('guiche-permite-chamar');
 
       if (item) {
         title.textContent = 'Editar Mapeamento de Guichê';
         nomeEl.value = item.nm_maquina || item.id;
         dsGuicheEl.value = item.ds_guiche || '';
         painelEl.value = item.painel_id || 'recepcao_principal';
+        if (permiteChamarEl) permiteChamarEl.checked = item.permite_chamar_senha !== 0;
       } else {
         title.textContent = 'Mapear Máquina para Guichê';
         nomeEl.value = '';
         dsGuicheEl.value = 'Guichê 01';
         painelEl.value = 'recepcao_principal';
+        if (permiteChamarEl) permiteChamarEl.checked = true;
       }
 
       modal.classList.add('show');
@@ -4748,7 +5082,8 @@
             id: res.data.nm_maquina,
             nm_maquina: res.data.nm_maquina,
             ds_guiche: res.data.ds_guiche,
-            painel_id: res.data.painel_id
+            painel_id: res.data.painel_id,
+            permite_chamar_senha: res.data.permite_chamar_senha !== false ? 1 : 0
           });
           showToast(`Computador identificado como "${res.data.nm_maquina}"`, 'info');
         }
@@ -4762,6 +5097,7 @@
       const nm_maquina = document.getElementById('guiche-maquina-nome').value.trim();
       const ds_guiche = document.getElementById('guiche-ds-guiche').value.trim();
       const painel_id = document.getElementById('guiche-painel-id').value;
+      const permite_chamar_senha = document.getElementById('guiche-permite-chamar')?.checked ? 1 : 0;
 
       try {
         await api.post(`${apiConfig.baseUrl}/admin/guiches`, {
@@ -4769,6 +5105,7 @@
           nm_maquina,
           ds_guiche,
           painel_id,
+          permite_chamar_senha,
           ativo: 1
         });
         showToast('Mapeamento salvo com sucesso!', 'success');
@@ -4777,6 +5114,220 @@
       } catch (err) {
         showToast('Erro ao salvar mapeamento: ' + err.message, 'error');
       }
+    });
+
+    // =========================================================================
+    // Catálogo Dinâmico de Relatórios TASY (Pilar 2)
+    // =========================================================================
+    let relatoriosTasyList = [];
+    async function loadRelatoriosTasy() {
+      const tbody = document.getElementById('relatorios-tasy-tbody');
+      if (!tbody) return;
+      try {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="bi bi-arrow-repeat spin"></i> Carregando catálogo de relatórios...</td></tr>';
+        const res = await api.get(`${apiConfig.baseUrl}/admin/relatorios-tasy`);
+        if (res && res.success) {
+          relatoriosTasyList = res.data || [];
+          renderRelatoriosTasy(relatoriosTasyList);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${res?.message || 'Falha ao carregar relatórios'}</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar relatórios: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderRelatoriosTasy(items) {
+      const tbody = document.getElementById('relatorios-tasy-tbody');
+      if (!tbody) return;
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhum relatório TASY cadastrado no catálogo.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(r => `
+        <tr>
+          <td><span class="badge bg-light text-dark border">${r.ordem || 1}</span></td>
+          <td><span class="fw-bold text-primary font-monospace">${r.cd_relatorio}</span></td>
+          <td><span class="badge bg-secondary-subtle text-secondary font-monospace">${r.nr_sequencia}</span></td>
+          <td>
+            <div class="fw-bold text-dark"><i class="bi ${escapeHtml(r.icone || 'bi-file-earmark-text')} text-primary me-2"></i> ${escapeHtml(r.ds_titulo)}</div>
+          </td>
+          <td><span class="badge bg-info-subtle text-info border">${escapeHtml(r.badge || 'Documento')}</span></td>
+          <td>
+            <button class="btn btn-sm ${r.ativo ? 'btn-success' : 'btn-outline-secondary'} btn-toggle-relatorio" data-id="${r.id}" data-ativo="${r.ativo}">
+              ${r.ativo ? '<i class="bi bi-check-circle me-1"></i> Ativo' : '<i class="bi bi-x-circle me-1"></i> Inativo'}
+            </button>
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary btn-editar-relatorio" data-id="${r.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger btn-deletar-relatorio" data-id="${r.id}" title="Excluir"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.btn-toggle-relatorio').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const ativoAtual = btn.dataset.ativo === '1' || btn.dataset.ativo === 'true';
+          try {
+            await api.put(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}/toggle`, { ativo: !ativoAtual });
+            showToast('Status do relatório atualizado', 'success');
+            await loadRelatoriosTasy();
+          } catch (err) {
+            showToast('Erro ao alterar status: ' + err.message, 'error');
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-editar-relatorio').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const r = relatoriosTasyList.find(x => String(x.id) === String(id));
+          if (r) abrirModalRelatorioTasy(r);
+        });
+      });
+
+      tbody.querySelectorAll('.btn-deletar-relatorio').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm('Deseja realmente excluir este relatório do catálogo da recepção?')) {
+            try {
+              await api.delete(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}`);
+              showToast('Relatório excluído do catálogo', 'success');
+              await loadRelatoriosTasy();
+            } catch (err) {
+              showToast('Erro ao excluir: ' + err.message, 'error');
+            }
+          }
+        });
+      });
+    }
+
+    function abrirModalRelatorioTasy(item = null) {
+      const modal = document.getElementById('modal-relatorio-tasy');
+      const title = document.getElementById('modal-relatorio-tasy-title');
+      const idEl = document.getElementById('relatorio-tasy-id');
+      const cdEl = document.getElementById('relatorio-tasy-cd');
+      const seqEl = document.getElementById('relatorio-tasy-seq');
+      const tituloEl = document.getElementById('relatorio-tasy-titulo');
+      const badgeEl = document.getElementById('relatorio-tasy-badge');
+      const iconeEl = document.getElementById('relatorio-tasy-icone');
+      const ordemEl = document.getElementById('relatorio-tasy-ordem');
+
+      if (item) {
+        title.textContent = 'Editar Relatório TASY';
+        idEl.value = item.id;
+        cdEl.value = item.cd_relatorio;
+        seqEl.value = item.nr_sequencia;
+        tituloEl.value = item.ds_titulo;
+        badgeEl.value = item.badge || '';
+        iconeEl.value = item.icone || 'bi-file-earmark-text';
+        ordemEl.value = item.ordem || 1;
+      } else {
+        title.textContent = 'Novo Relatório TASY';
+        idEl.value = '';
+        cdEl.value = '';
+        seqEl.value = '';
+        tituloEl.value = '';
+        badgeEl.value = 'Documento';
+        iconeEl.value = 'bi-file-earmark-text';
+        ordemEl.value = (relatoriosTasyList.length + 1);
+      }
+      modal.classList.add('show');
+    }
+
+    document.getElementById('btn-novo-relatorio-tasy')?.addEventListener('click', () => abrirModalRelatorioTasy());
+    document.getElementById('modal-relatorio-tasy-close')?.addEventListener('click', () => document.getElementById('modal-relatorio-tasy').classList.remove('show'));
+    document.getElementById('modal-relatorio-tasy-cancel')?.addEventListener('click', () => document.getElementById('modal-relatorio-tasy').classList.remove('show'));
+
+    document.getElementById('form-relatorio-tasy')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('relatorio-tasy-id').value;
+      const cd_relatorio = parseInt(document.getElementById('relatorio-tasy-cd').value, 10);
+      const nr_sequencia = parseInt(document.getElementById('relatorio-tasy-seq').value, 10);
+      const ds_titulo = document.getElementById('relatorio-tasy-titulo').value.trim();
+      const badge = document.getElementById('relatorio-tasy-badge').value.trim();
+      const icone = document.getElementById('relatorio-tasy-icone').value.trim();
+      const ordem = parseInt(document.getElementById('relatorio-tasy-ordem').value, 10) || 1;
+
+      try {
+        await api.post(`${apiConfig.baseUrl}/admin/relatorios-tasy`, {
+          id: id || undefined,
+          cd_relatorio,
+          nr_sequencia,
+          ds_titulo,
+          badge,
+          icone,
+          ordem,
+          ativo: 1
+        });
+        showToast('Relatório salvo com sucesso no catálogo!', 'success');
+        document.getElementById('modal-relatorio-tasy').classList.remove('show');
+        await loadRelatoriosTasy();
+      } catch (err) {
+        showToast('Erro ao salvar relatório: ' + err.message, 'error');
+      }
+    });
+
+    // =========================================================================
+    // Telemetria & Monitoramento em Tempo Real (Pilar 3)
+    // =========================================================================
+    async function loadTelemetria() {
+      try {
+        const res = await api.get(`${apiConfig.baseUrl}/admin/infra/telemetria`);
+        if (res && res.success && res.data) {
+          renderTelemetria(res.data);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar telemetria:', err);
+      }
+    }
+
+    function renderTelemetria(d) {
+      if (!d) return;
+      // Node Heap
+      if (document.getElementById('telem-heap-used')) {
+        document.getElementById('telem-heap-used').textContent = `${d.node.memory.heapUsedMb} MB`;
+        document.getElementById('telem-heap-total').textContent = `Total alocado: ${d.node.memory.heapTotalMb} MB (RSS: ${d.node.memory.rssMb} MB)`;
+      }
+      // Uptime
+      if (document.getElementById('telem-uptime')) {
+        document.getElementById('telem-uptime').textContent = d.node.uptimeFormatted;
+        document.getElementById('telem-node-ver').textContent = `Node.js ${d.node.version} (PID ${d.node.pid})`;
+      }
+      // Oracle Pool
+      if (document.getElementById('telem-oracle-inuse')) {
+        const inUse = d.oracle.pool.connectionsInUse || 0;
+        const open = d.oracle.pool.connectionsOpen || 0;
+        const max = d.oracle.pool.poolMax || 15;
+        document.getElementById('telem-oracle-inuse').textContent = `${inUse} ativa(s)`;
+        document.getElementById('telem-oracle-capacity').textContent = `Abertas: ${open} / Máx: ${max} (${d.oracle.thickMode ? 'Thick Client' : 'Thin'})`;
+      }
+      // Redis
+      if (document.getElementById('telem-redis-status')) {
+        if (d.redis.connected) {
+          document.getElementById('telem-redis-status').innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Online</span>';
+          document.getElementById('telem-redis-host').textContent = `Host: ${d.redis.host} (Ping: ${d.redis.ping})`;
+        } else {
+          document.getElementById('telem-redis-status').innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> Desconectado</span>';
+          document.getElementById('telem-redis-host').textContent = d.redis.erro ? `Erro: ${d.redis.erro}` : 'Não configurado';
+        }
+      }
+      // Details
+      if (document.getElementById('telem-pid')) document.getElementById('telem-pid').textContent = d.node.pid;
+      if (document.getElementById('telem-arch')) document.getElementById('telem-arch').textContent = `${d.node.platform} (${d.node.arch})`;
+      if (document.getElementById('telem-rss')) document.getElementById('telem-rss').textContent = `${d.node.memory.rssMb} MB`;
+      if (document.getElementById('telem-oracle-driver')) document.getElementById('telem-oracle-driver').textContent = d.oracle.thickMode ? 'Oracle Instant Client 19c (Thick)' : 'node-oracledb (Thin)';
+      if (document.getElementById('telem-perfis-count')) document.getElementById('telem-perfis-count').textContent = `${d.sistema.perfisCount} perfis ativos`;
+      if (document.getElementById('telem-modulos-count')) document.getElementById('telem-modulos-count').textContent = `${d.sistema.modulosCount} módulos mapeados`;
+    }
+
+    document.getElementById('btn-refresh-telemetria')?.addEventListener('click', () => {
+      loadTelemetria();
+      showToast('Telemetria atualizada', 'info');
     });
 
     async function loadAdminData() {
@@ -4804,11 +5355,13 @@
         await loadSessoes();
         await loadAuditTrail();
         await loadCheckboxes();
+        await loadRelatoriosTasy();
         await loadStudioPages();
         await loadOracleConfig();
         await loadLdapConfig();
         await loadPaineisTv();
         await loadMaquinasGuiches();
+        await loadTelemetria();
       } catch (err) {
         console.error('[Admin] Erro ao verificar sessão:', err);
         window.location.href = '/';

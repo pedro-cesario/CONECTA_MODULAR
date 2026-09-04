@@ -4,6 +4,26 @@
  */
 
 const clients = new Map(); // Map<painelId, Set<res>>
+const recentCallsByPanel = new Map(); // Map<painelId, Array<dadosChamada>>
+
+function getRecentCalls(painelId) {
+  const pId = painelId || 'recepcao_principal';
+  return recentCallsByPanel.get(pId) || [];
+}
+
+function storeRecentCall(painelId, dadosChamada) {
+  const pId = painelId || 'recepcao_principal';
+  if (!recentCallsByPanel.has(pId)) {
+    recentCallsByPanel.set(pId, []);
+  }
+  const list = recentCallsByPanel.get(pId);
+  const filtered = list.filter(item => item.nr_sequencia !== dadosChamada.nr_sequencia);
+  filtered.unshift(dadosChamada);
+  if (filtered.length > 20) {
+    filtered.length = 20;
+  }
+  recentCallsByPanel.set(pId, filtered);
+}
 
 function addClient(painelId, res) {
   const pId = painelId || 'recepcao_principal';
@@ -32,6 +52,10 @@ function removeClient(painelId, res) {
 
 function broadcastChamada(painelId, dadosChamada) {
   const pId = painelId || 'recepcao_principal';
+
+  // Guarda no buffer de chamadas recentes em memória
+  storeRecentCall(pId, dadosChamada);
+
   const payload = JSON.stringify({
     tipo: 'CHAMADA_SENHA',
     painelId: pId,
@@ -80,5 +104,6 @@ setInterval(() => {
 module.exports = {
   addClient,
   removeClient,
-  broadcastChamada
+  broadcastChamada,
+  getRecentCalls
 };

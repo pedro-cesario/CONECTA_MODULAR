@@ -170,6 +170,17 @@ async function ensureAccessSchema() {
     await run("INSERT INTO config_migrations (id) VALUES ('2026_09_recepcao_permissoes')");
   }
 
+  // Migration: Módulo Painel de Senhas & Flag de Chamada em Guichês
+  const migrationPainelSenhas = await all("SELECT id FROM config_migrations WHERE id = '2026_09_painel_senhas_e_flag_guiche'");
+  if (migrationPainelSenhas.length === 0) {
+    await run(`INSERT OR IGNORE INTO modulos (id, nome, descricao, icon, setorId) VALUES ('painel_senhas', 'Painel de Senhas', 'Painel de chamada de senhas no guichê e transmissão para Conecta TV', 'bi-megaphone', NULL)`);
+    for (const perfil of ['admin', 'enfermagem', 'recepcao']) {
+      await run(`INSERT OR IGNORE INTO perfil_modulos (perfil_id, modulo_id) VALUES (?, 'painel_senhas')`, [perfil]);
+      await run(`INSERT OR IGNORE INTO perfil_permissoes (perfil_id, modulo_id, permissao) VALUES (?, 'painel_senhas', 'chamar_senha')`, [perfil]);
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_09_painel_senhas_e_flag_guiche')");
+  }
+
   await run(`CREATE TABLE IF NOT EXISTS studio_pages (
     id TEXT PRIMARY KEY,
     nome TEXT NOT NULL,
@@ -379,10 +390,16 @@ async function ensureAccessSchema() {
     som_ativo INTEGER DEFAULT 1,
     voz_ativa INTEGER DEFAULT 1,
     voz_velocidade REAL DEFAULT 1.0,
+    maquinas_autorizadas TEXT DEFAULT '',
     ativo INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   )`);
+
+  const colsPaineis = await all("PRAGMA table_info(paineis_tv)");
+  if (colsPaineis && colsPaineis.length > 0 && !colsPaineis.some(c => c.name === 'maquinas_autorizadas')) {
+    await run("ALTER TABLE paineis_tv ADD COLUMN maquinas_autorizadas TEXT DEFAULT ''");
+  }
 
   await run(`CREATE TABLE IF NOT EXISTS maquinas_guiches (
     id TEXT PRIMARY KEY,
@@ -391,9 +408,15 @@ async function ensureAccessSchema() {
     painel_id TEXT,
     cd_setor INTEGER,
     nm_usuario_padrao TEXT,
+    permite_chamar_senha INTEGER DEFAULT 1,
     ativo INTEGER DEFAULT 1,
     updated_at TEXT DEFAULT (datetime('now'))
   )`);
+
+  const colsGuiches = await all("PRAGMA table_info(maquinas_guiches)");
+  if (colsGuiches && colsGuiches.length > 0 && !colsGuiches.some(c => c.name === 'permite_chamar_senha')) {
+    await run("ALTER TABLE maquinas_guiches ADD COLUMN permite_chamar_senha INTEGER DEFAULT 1");
+  }
 
   const migrationPaineis = await all("SELECT id FROM config_migrations WHERE id = '2026_09_paineis_e_guiches'");
   if (migrationPaineis.length === 0) {
@@ -413,6 +436,51 @@ async function ensureAccessSchema() {
       VALUES ('GUICHE-02', 'GUICHE-02', 'Guichê 02', 'recepcao_principal', 1)`);
 
     await run("INSERT INTO config_migrations (id) VALUES ('2026_09_paineis_e_guiches')");
+  }
+
+  // Schema: Catálogo Dinâmico de Relatórios do TASY (Recepção & Atendimento)
+  await run(`CREATE TABLE IF NOT EXISTS relatorios_tasy (
+    id TEXT PRIMARY KEY,
+    cd_relatorio INTEGER NOT NULL,
+    nr_sequencia INTEGER NOT NULL,
+    ds_titulo TEXT NOT NULL,
+    icone TEXT DEFAULT 'bi-file-earmark-text',
+    badge TEXT DEFAULT 'Geral',
+    ativo INTEGER DEFAULT 1,
+    ordem INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  const migrationRelatorios = await all("SELECT id FROM config_migrations WHERE id = '2026_09_relatorios_tasy_v1'");
+  if (migrationRelatorios.length === 0) {
+    const defaultRelatorios = [
+      { id: 'rel_718', cd_relatorio: 718, nr_sequencia: 2750455, ds_titulo: '718 — CHECKLIST PRONTUÁRIO', icone: 'bi-check2-square', badge: 'Prontuário', ordem: 1 },
+      { id: 'rel_651', cd_relatorio: 651, nr_sequencia: 2750348, ds_titulo: '651 — HEAL - Autorização do responsável para contatos com o paciente', icone: 'bi-person-check', badge: 'Consentimento', ordem: 2 },
+      { id: 'rel_205', cd_relatorio: 205, nr_sequencia: 2750344, ds_titulo: '205 — HEAL - Comunicado de Alta - Involuntário - HTML5', icone: 'bi-file-earmark-medical', badge: 'Internação Involuntária', ordem: 3 },
+      { id: 'rel_206', cd_relatorio: 206, nr_sequencia: 2750347, ds_titulo: '206 — HEAL - Comunicado de Alta Médica Voluntária - HTML5', icone: 'bi-file-earmark-text', badge: 'Internação Voluntária', ordem: 4 },
+      { id: 'rel_643', cd_relatorio: 643, nr_sequencia: 2750843, ds_titulo: '643 — HEAL - Contrato de prestação de serviços hospitalar - HTML5', icone: 'bi-file-earmark-ruled', badge: 'Contrato Jurídico', ordem: 5 },
+      { id: 'rel_717', cd_relatorio: 717, nr_sequencia: 2750452, ds_titulo: '717 — TERMO DE AUTORIZAÇÃO PARA REALIZAÇÃO DE EXAMES LABORATORIAIS', icone: 'bi-eyedropper', badge: 'Exames', ordem: 6 },
+      { id: 'rel_70126', cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento', ordem: 7 }
+    ];
+    for (const r of defaultRelatorios) {
+      await run(
+        `INSERT OR IGNORE INTO relatorios_tasy (id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+        [r.id, r.cd_relatorio, r.nr_sequencia, r.ds_titulo, r.icone, r.badge, r.ordem]
+      );
+    }
+    await run("INSERT INTO config_migrations (id) VALUES ('2026_09_relatorios_tasy_v1')");
+  }
+
+  // Configurações Institucionais Padrão (Sem hardcode)
+  const defaultSysConfigs = [
+    { chave: 'nome_instituicao', valor: 'Hospital Espírita André Luiz' },
+    { chave: 'tv_historico_limite', valor: '7' },
+    { chave: 'cache_setores_preaquecidos', valor: '68,28,34,59,83' }
+  ];
+  for (const item of defaultSysConfigs) {
+    await run(`INSERT OR IGNORE INTO configuracoes_sistema (chave, valor) VALUES (?, ?)`, [item.chave, item.valor]);
   }
 }
 
@@ -435,6 +503,7 @@ async function load() {
 
     const paineis = await all('SELECT * FROM paineis_tv ORDER BY nome');
     const maquinasGuiches = await all('SELECT * FROM maquinas_guiches ORDER BY ds_guiche');
+    const relatoriosTasy = await all('SELECT * FROM relatorios_tasy ORDER BY ordem, cd_relatorio');
 
     cache = {
       perfis,
@@ -445,13 +514,66 @@ async function load() {
       dashboardPA,
       systemConfig,
       paineis: paineis || [],
-      maquinasGuiches: maquinasGuiches || []
+      maquinasGuiches: maquinasGuiches || [],
+      relatoriosTasy: relatoriosTasy || []
     };
     return true;
   } catch (err) {
     console.error('[ConfigCache] Erro ao carregar cache:', err.message);
     return false;
   }
+}
+
+function getRelatoriosTasy(apenasAtivos = false) {
+  if (apenasAtivos) {
+    return (cache.relatoriosTasy || []).filter(r => r.ativo === 1);
+  }
+  return cache.relatoriosTasy || [];
+}
+
+async function saveRelatorioTasy(dados) {
+  const cd = parseInt(dados.cd_relatorio, 10);
+  const nrSeq = parseInt(dados.nr_sequencia, 10);
+  if (!cd || !nrSeq || !dados.ds_titulo) {
+    throw new Error('Código do relatório, número de sequência e título são obrigatórios');
+  }
+  const id = dados.id || `rel_${cd}`;
+  const icone = dados.icone || 'bi-file-earmark-text';
+  const badge = dados.badge || 'Geral';
+  const ativo = dados.ativo === 0 ? 0 : 1;
+  const ordem = parseInt(dados.ordem, 10) || 0;
+
+  await run(
+    `INSERT INTO relatorios_tasy (id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET
+       cd_relatorio = excluded.cd_relatorio,
+       nr_sequencia = excluded.nr_sequencia,
+       ds_titulo = excluded.ds_titulo,
+       icone = excluded.icone,
+       badge = excluded.badge,
+       ativo = excluded.ativo,
+       ordem = excluded.ordem,
+       updated_at = datetime('now')`,
+    [id, cd, nrSeq, dados.ds_titulo, icone, badge, ativo, ordem]
+  );
+  await load();
+  return { id, cd_relatorio: cd, nr_sequencia: nrSeq, ds_titulo: dados.ds_titulo, icone, badge, ativo, ordem };
+}
+
+async function deleteRelatorioTasy(id) {
+  if (!id) throw new Error('ID é obrigatório');
+  await run('DELETE FROM relatorios_tasy WHERE id = ?', [id]);
+  await load();
+  return { success: true, id };
+}
+
+async function toggleRelatorioTasy(id, ativo) {
+  if (!id) throw new Error('ID é obrigatório');
+  const val = ativo ? 1 : 0;
+  await run("UPDATE relatorios_tasy SET ativo = ?, updated_at = datetime('now') WHERE id = ?", [val, id]);
+  await load();
+  return { success: true, id, ativo: val };
 }
 
 function getPaineisTv() {
@@ -464,24 +586,48 @@ function getPainelTvById(id) {
 }
 
 async function savePainelTv(painel) {
-  const { id, nome, descricao, filas_json, som_ativo = 1, voz_ativa = 1, voz_velocidade = 1.0, ativo = 1 } = painel;
+  const { id, nome, descricao, filas_json, som_ativo = 1, voz_ativa = 1, voz_velocidade = 1.0, maquinas_autorizadas = '', ativo = 1 } = painel;
   if (!id || !nome) throw new Error('ID e Nome do painel são obrigatórios');
   
   const existing = await all('SELECT id FROM paineis_tv WHERE id = ?', [id]);
   if (existing.length > 0) {
     await run(`UPDATE paineis_tv 
-      SET nome = ?, descricao = ?, filas_json = ?, som_ativo = ?, voz_ativa = ?, voz_velocidade = ?, ativo = ?, updated_at = datetime('now')
+      SET nome = ?, descricao = ?, filas_json = ?, som_ativo = ?, voz_ativa = ?, voz_velocidade = ?, maquinas_autorizadas = ?, ativo = ?, updated_at = datetime('now')
       WHERE id = ?`,
-      [nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, ativo ? 1 : 0, id]
+      [nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, String(maquinas_autorizadas || '').trim(), ativo ? 1 : 0, id]
     );
   } else {
-    await run(`INSERT INTO paineis_tv (id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, ativo ? 1 : 0]
+    await run(`INSERT INTO paineis_tv (id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, maquinas_autorizadas, ativo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, nome, descricao || '', typeof filas_json === 'string' ? filas_json : JSON.stringify(filas_json || []), som_ativo ? 1 : 0, voz_ativa ? 1 : 0, Number(voz_velocidade) || 1.0, String(maquinas_autorizadas || '').trim(), ativo ? 1 : 0]
     );
   }
   await load();
   return getPainelTvById(id);
+}
+
+function getPainelParaMaquina(nmMaquina, ip = '') {
+  const termo = String(nmMaquina || '').trim().toUpperCase();
+  const termoIp = String(ip || '').trim().toUpperCase();
+
+  const paineis = cache.paineis || [];
+  if (termo || termoIp) {
+    for (const p of paineis) {
+      if (!p.maquinas_autorizadas) continue;
+      const lista = p.maquinas_autorizadas.split(/[,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+      if (termo && lista.includes(termo)) return p;
+      if (termoIp && lista.includes(termoIp)) return p;
+    }
+  }
+
+  // Fallback: se a máquina tiver guichê cadastrado vinculado a um painel
+  const guicheMapping = getMaquinaGuiche(nmMaquina) || (ip ? getMaquinaGuiche(ip) : null);
+  if (guicheMapping && guicheMapping.painel_id) {
+    const painelGuiche = getPainelTvById(guicheMapping.painel_id);
+    if (painelGuiche) return painelGuiche;
+  }
+
+  return null;
 }
 
 async function deletePainelTv(id) {
@@ -504,21 +650,23 @@ function getMaquinaGuiche(nmMaquina) {
 }
 
 async function saveMaquinaGuiche(guiche) {
-  const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo = 1 } = guiche;
+  const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, permite_chamar_senha = 1, ativo = 1 } = guiche;
   const key = id || nm_maquina;
   if (!key || !ds_guiche) throw new Error('Identificador da máquina e descrição do guichê são obrigatórios');
+
+  const permChamar = (permite_chamar_senha === false || permite_chamar_senha === 0 || permite_chamar_senha === '0') ? 0 : 1;
 
   const existing = await all('SELECT id FROM maquinas_guiches WHERE id = ?', [key]);
   if (existing.length > 0) {
     await run(`UPDATE maquinas_guiches
-      SET nm_maquina = ?, ds_guiche = ?, painel_id = ?, cd_setor = ?, nm_usuario_padrao = ?, ativo = ?, updated_at = datetime('now')
+      SET nm_maquina = ?, ds_guiche = ?, painel_id = ?, cd_setor = ?, nm_usuario_padrao = ?, permite_chamar_senha = ?, ativo = ?, updated_at = datetime('now')
       WHERE id = ?`,
-      [nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, ativo ? 1 : 0, key]
+      [nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, permChamar, ativo ? 1 : 0, key]
     );
   } else {
-    await run(`INSERT INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [key, nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, ativo ? 1 : 0]
+    await run(`INSERT INTO maquinas_guiches (id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, permite_chamar_senha, ativo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [key, nm_maquina || key, ds_guiche, painel_id || 'recepcao_principal', cd_setor ? Number(cd_setor) : null, nm_usuario_padrao || null, permChamar, ativo ? 1 : 0]
     );
   }
   await load();
@@ -1046,10 +1194,15 @@ module.exports = {
   togglePassagemCheckbox,
   getPaineisTv,
   getPainelTvById,
+  getPainelParaMaquina,
   savePainelTv,
   deletePainelTv,
   getMaquinasGuiches,
   getMaquinaGuiche,
   saveMaquinaGuiche,
-  deleteMaquinaGuiche
+  deleteMaquinaGuiche,
+  getRelatoriosTasy,
+  saveRelatorioTasy,
+  deleteRelatorioTasy,
+  toggleRelatorioTasy
 };

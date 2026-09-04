@@ -811,11 +811,11 @@ async function listarPaineisTv(req, res) {
 
 async function salvarPainelTv(req, res) {
   try {
-    const { id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo } = req.body;
+    const { id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, maquinas_autorizadas, ativo } = req.body;
     if (!id || !nome) {
       return res.status(400).json({ success: false, message: 'ID e Nome do painel são obrigatórios' });
     }
-    const item = await configCache.savePainelTv({ id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, ativo });
+    const item = await configCache.savePainelTv({ id, nome, descricao, filas_json, som_ativo, voz_ativa, voz_velocidade, maquinas_autorizadas, ativo });
     res.json({ success: true, data: item });
   } catch (err) {
     console.error('[Admin] Erro ao salvar painel de TV:', err);
@@ -846,12 +846,12 @@ async function listarMaquinasGuiches(req, res) {
 
 async function salvarMaquinaGuiche(req, res) {
   try {
-    const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo } = req.body;
+    const { id, nm_maquina, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, permite_chamar_senha, ativo } = req.body;
     const key = id || nm_maquina;
     if (!key || !ds_guiche) {
       return res.status(400).json({ success: false, message: 'Nome da máquina e descrição do guichê são obrigatórios' });
     }
-    const item = await configCache.saveMaquinaGuiche({ id: key, nm_maquina: nm_maquina || key, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, ativo });
+    const item = await configCache.saveMaquinaGuiche({ id: key, nm_maquina: nm_maquina || key, ds_guiche, painel_id, cd_setor, nm_usuario_padrao, permite_chamar_senha, ativo });
     res.json({ success: true, data: item });
   } catch (err) {
     console.error('[Admin] Erro ao salvar máquina / guichê:', err);
@@ -866,6 +866,117 @@ async function deletarMaquinaGuiche(req, res) {
     res.json({ success: true, data: { id } });
   } catch (err) {
     console.error('[Admin] Erro ao deletar máquina / guichê:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// ============================================================================
+// RELATÓRIOS DINÂMICOS DO TASY (RECEPÇÃO & ATENDIMENTO)
+// ============================================================================
+async function listarRelatoriosTasy(req, res) {
+  try {
+    const items = configCache.getRelatoriosTasy(false);
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('[Admin] Erro ao listar relatórios TASY:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function salvarRelatorioTasy(req, res) {
+  try {
+    const { id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem } = req.body;
+    const item = await configCache.saveRelatorioTasy({ id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.error('[Admin] Erro ao salvar relatório TASY:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function deletarRelatorioTasy(req, res) {
+  try {
+    const { id } = req.params;
+    await configCache.deleteRelatorioTasy(id);
+    res.json({ success: true, data: { id } });
+  } catch (err) {
+    console.error('[Admin] Erro ao deletar relatório TASY:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+async function toggleRelatorioTasy(req, res) {
+  try {
+    const { id } = req.params;
+    const { ativo } = req.body;
+    const result = await configCache.toggleRelatorioTasy(id, ativo);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Admin] Erro ao alterar status do relatório TASY:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// ============================================================================
+// TELEMETRIA E SAÚDE DO SERVIDOR (PILAR 3)
+// ============================================================================
+async function obterTelemetriaServidor(req, res) {
+  try {
+    const mem = process.memoryUsage();
+    const uptimeSec = Math.floor(process.uptime());
+    const dias = Math.floor(uptimeSec / 86400);
+    const horas = Math.floor((uptimeSec % 86400) / 3600);
+    const minutos = Math.floor((uptimeSec % 3600) / 60);
+    const segundos = uptimeSec % 60;
+    const uptimeFmt = `${dias > 0 ? dias + 'd ' : ''}${horas}h ${minutos}m ${segundos}s`;
+
+    const dbModule = require('../../core/database');
+    const poolStats = dbModule.getPoolStats ? dbModule.getPoolStats() : null;
+    const oracleCfg = dbModule.getOracleConfig ? dbModule.getOracleConfig() : null;
+
+    let redisStatus = { connected: false, ping: 'N/A' };
+    try {
+      const redisClient = require('../../core/config/redisClient');
+      if (redisClient && redisClient.isReady) {
+        const pingRes = await redisClient.ping();
+        redisStatus = { connected: true, ping: pingRes, host: redisClient.options?.socket?.host || '172.18.0.2' };
+      }
+    } catch (e) {
+      redisStatus = { connected: false, erro: e.message };
+    }
+
+    res.json({
+      success: true,
+      data: {
+        node: {
+          version: process.version,
+          platform: process.platform,
+          arch: process.arch,
+          pid: process.pid,
+          uptimeSeconds: uptimeSec,
+          uptimeFormatted: uptimeFmt,
+          memory: {
+            heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100,
+            heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024 * 100) / 100,
+            rssMb: Math.round(mem.rss / 1024 / 1024 * 100) / 100,
+            externalMb: Math.round(mem.external / 1024 / 1024 * 100) / 100
+          }
+        },
+        oracle: {
+          thickMode: Boolean(dbModule.thickMode),
+          connectString: oracleCfg?.connectString || 'N/A',
+          pool: poolStats || { connectionsInUse: 0, connectionsOpen: 0, poolMin: 3, poolMax: 15 }
+        },
+        redis: redisStatus,
+        sistema: {
+          perfisCount: (configCache.getCachedPerfis() || []).length,
+          modulosCount: (configCache.getCachedModulos() || []).length,
+          timestamp: new Date().toISOString()
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[Admin] Erro ao obter telemetria do servidor:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 }
@@ -914,6 +1025,11 @@ module.exports = {
   deletarPainelTv,
   listarMaquinasGuiches,
   salvarMaquinaGuiche,
-  deletarMaquinaGuiche
+  deletarMaquinaGuiche,
+  listarRelatoriosTasy,
+  salvarRelatorioTasy,
+  deletarRelatorioTasy,
+  toggleRelatorioTasy,
+  obterTelemetriaServidor
 };
 

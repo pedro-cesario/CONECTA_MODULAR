@@ -309,3 +309,46 @@ Foram encontrados controles de autorização ausentes no módulo de Recepção, 
 **NÃO APTO PARA PRODUÇÃO.**
 
 O sistema compila e os serviços estavam ativos no instante da verificação, mas isso não é suficiente: há falhas críticas de segurança e autorização, pontos únicos de falha sem degradação segura, healthchecks enganosos e fluxos concorrentes capazes de gerar inconsistência operacional. A recomendação só deve mudar após correção dos itens críticos, validação em homologação e repetição das verificações de indisponibilidade, permissões, concorrência e sessão.
+
+## Atualização de revalidação — 03/09/2026
+
+**Data da atualização:** 03/09/2026. Nenhum código foi alterado nesta etapa.
+
+### Estado operacional confirmado
+
+- O serviço `conecta-modular-node` foi recriado usando a imagem e o Compose atuais.
+- O container está `healthy` e usa o healthcheck correto: `/health/readiness`.
+- O readiness retornou 200, com Oracle e Redis `UP`.
+- `/metrics` retorna 403 sem token, confirmando a proteção adicionada.
+- A sintaxe JavaScript, o Docker build e a suíte `npm test` foram aprovados; testes: 24/24.
+- A falha operacional anterior de container `unhealthy` foi resolvida.
+
+### Pendências que permanecem bloqueadoras
+
+- A autorização da Recepção ainda não é granular por ação, setor e recurso; o middleware introduz bypass por nome de usuário/admin que deve ser substituído por regra baseada em grupo/permissão.
+- A rotação das credenciais que estavam expostas no código não foi comprovada.
+- Oracle continua sem timeout de chamada aplicado, com DDL em startup e sem proteção para concorrência da Escala.
+- GED ainda não valida o conteúdo real (magic bytes/MIME), apenas nome/extensão declarada.
+- `npm audit --omit=dev` continua reportando 8 vulnerabilidades, incluindo 1 crítica e 3 altas.
+
+## Classificação após a revalidação
+
+**NÃO APTO PARA PRODUÇÃO.**
+
+O bloqueio de healthcheck foi resolvido, mas as pendências restantes incluem autorização incompleta, rotação de segredos não evidenciada, integridade concorrente, resiliência Oracle e vulnerabilidades críticas de dependência. A classificação só deve evoluir após essas correções e nova validação de permissões, concorrência e indisponibilidade.
+
+## Revalidação — commit bb7ddd1 (03/09/2026)
+
+**Resultado:** as correções recentes melhoraram de forma relevante a base de segurança e resiliência, mas a instância ativa ainda não corresponde ao artefato recém-construído.
+
+- **Runtime:** `node` e Redis estão saudáveis; a readiness responde `200` com Oracle e Redis disponíveis. `/metrics` sem credencial responde `403`.
+- **Sintaxe:** verificação de todos os arquivos JavaScript concluída sem erro.
+- **Testes:** suíte automatizada concluída com 24 testes aprovados.
+- **Imagem candidata:** `docker compose build --no-cache` foi concluído com sucesso.
+- **Dependências:** a imagem candidata reduz o audit para 4 vulnerabilidades moderadas (sem alta ou crítica); elas ainda exigem tratamento antes da produção.
+
+### Bloqueio atual
+
+O container `node` em execução ainda usa a imagem anterior e versões antigas das dependências, apesar de o código-fonte estar montado. Portanto, a validação do artefato atualizado não representa integralmente o runtime ativo. A recriação controlada do serviço é necessária, seguida de nova verificação de health, permissões, Oracle e concorrência. A proteção concorrente recém-incluída em Escalas também requer teste real em Oracle para confirmar o comportamento do bloqueio e do conflito `409`.
+
+**Classificação mantida: NÃO APTO PARA PRODUÇÃO.** A liberação depende, no mínimo, da recriação com a imagem atual, do tratamento das vulnerabilidades moderadas remanescentes e da evidência de testes ponta a ponta de autorização e concorrência.

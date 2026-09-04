@@ -63,7 +63,8 @@ export const moduleHandlers = {
   dashboard_internacao: async () => { const m = await loadModule('dashboard'); m?.enterDashboardInternacaoMode?.(); },
   registros: async () => { const m = await loadModule('registros'); m?.showRegistrosMenu?.(); },
   auditorias: async () => { const m = await loadModule('auditorias'); m?.showAuditorias?.(); },
-  recepcao: async () => { const m = await loadModule('recepcao'); m?.enterRecepcaoMode?.(); }
+  recepcao: async () => { const m = await loadModule('recepcao'); m?.enterRecepcaoMode?.(); },
+  painel_senhas: async () => { const m = await loadModule('painel_senhas'); m?.enterPainelSenhasMode?.(); }
 };
 
 export const topbarHandlers = {

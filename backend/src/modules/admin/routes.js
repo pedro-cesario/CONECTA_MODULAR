@@ -65,4 +65,13 @@ router.post('/guiches', requireAuth, requireAdmin, adminController.salvarMaquina
 router.put('/guiches/:id', requireAuth, requireAdmin, adminController.salvarMaquinaGuiche);
 router.delete('/guiches/:id', requireAuth, requireAdmin, adminController.deletarMaquinaGuiche);
 
+// Catálogo Dinâmico de Relatórios do TASY (Recepção)
+router.get('/relatorios-tasy', requireAuth, requireAdmin, adminController.listarRelatoriosTasy);
+router.post('/relatorios-tasy', requireAuth, requireAdmin, adminController.salvarRelatorioTasy);
+router.put('/relatorios-tasy/:id/toggle', requireAuth, requireAdmin, adminController.toggleRelatorioTasy);
+router.delete('/relatorios-tasy/:id', requireAuth, requireAdmin, adminController.deletarRelatorioTasy);
+
+// Telemetria & Monitor do Servidor
+router.get('/infra/telemetria', requireAuth, requireAdmin, adminController.obterTelemetriaServidor);
+
 module.exports = router;

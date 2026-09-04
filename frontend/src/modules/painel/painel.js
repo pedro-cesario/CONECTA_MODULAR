@@ -22,23 +22,90 @@ const painelState = {
 // 1. INICIALIZAÇÃO
 // ============================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. Lê painel da URL ?painel=slug
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Lê painel da URL ?painel=slug ou autodetecta pelo backend
   const params = new URLSearchParams(window.location.search);
-  painelState.painelId = params.get('painel') || 'recepcao_principal';
+  let painelId = params.get('painel');
+  if (painelId) {
+    painelState.painelId = painelId;
+    restaurarCacheLocal();
+  } else {
+    try {
+      const res = await fetch('/api/painel/minha-tv').then(r => r.json());
+      if (res && res.success && res.data?.painel?.id) {
+        painelId = res.data.painel.id;
+      }
+    } catch (e) {
+      console.warn('[Painel TV] Erro ao autodetectar monitor:', e);
+    }
+    painelState.painelId = painelId || 'recepcao_principal';
+    restaurarCacheLocal();
+  }
 
   // 2. Inicia Relógio
   iniciarRelogio();
 
-  // 3. Carrega Estado Inicial
-  carregarEstadoInicial();
+  // 3. Carrega Estado Inicial da API
+  await carregarEstadoInicial();
 
   // 4. Conecta SSE em Tempo Real
   conectarSSE();
 
   // 5. Configura Botões (Áudio & Fullscreen)
   configurarEventosUI();
+
+  // 6. Polling de sincronização periódico (mantém sincronizado mesmo em oscilações)
+  setInterval(() => {
+    carregarEstadoInicial();
+  }, 20000);
 });
+
+// ============================================================================
+// 1.1 PERSISTÊNCIA & CACHE LOCAL
+// ============================================================================
+
+function salvarCacheLocal() {
+  try {
+    const key = `conecta_tv_cache_${painelState.painelId}`;
+    const data = {
+      painelId: painelState.painelId,
+      painelConfig: painelState.painelConfig,
+      ultimaChamada: painelState.ultimaChamada,
+      historico: painelState.historico,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    // Modo anônimo ou storage indisponível
+  }
+}
+
+function restaurarCacheLocal() {
+  try {
+    const key = `conecta_tv_cache_${painelState.painelId}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data) return;
+
+    if (data.painelConfig && data.painelConfig.nome) {
+      const nomeEl = document.getElementById('painel-tv-nome');
+      if (nomeEl) nomeEl.textContent = data.painelConfig.nome;
+      painelState.painelConfig = Object.assign({}, painelState.painelConfig, data.painelConfig);
+    }
+
+    if (data.ultimaChamada) {
+      exibirChamada(data.ultimaChamada, false);
+    }
+
+    if (Array.isArray(data.historico) && data.historico.length > 0) {
+      painelState.historico = data.historico;
+      renderizarHistorico();
+    }
+  } catch (e) {
+    console.warn('[Painel TV] Aviso ao restaurar cache local:', e);
+  }
+}
 
 // ============================================================================
 // 2. RELÓGIO & STATUS
@@ -98,6 +165,7 @@ async function carregarEstadoInicial() {
         painelState.historico = json.historico;
         renderizarHistorico();
       }
+      salvarCacheLocal();
       setStatusConexao(true);
     }
   } catch (err) {
@@ -159,11 +227,62 @@ function processarNovaChamada(dados) {
     renderizarHistorico();
   }
 
-  exibirChamada(dados, true);
+  exibirChamada(dados, false);
+  salvarCacheLocal();
 
-  // Executa Som e Voz
+  // 1. Inicia Takeover de Tela Cheia com transição ultra-suave
+  iniciarTakeoverChamada();
+
+  // 2. Executa Som e Voz Masculina
   tocarAvisoSonoro();
   falarSenha(dados);
+}
+
+// ============================================================================
+// 5.1 TAKEOVER DE TELA CHEIA NA CHAMADA
+// ============================================================================
+
+let takeoverTimer = null;
+
+function iniciarTakeoverChamada() {
+  if (takeoverTimer) {
+    clearTimeout(takeoverTimer);
+    takeoverTimer = null;
+  }
+
+  const mainEl = document.querySelector('.painel-tv-main');
+  const cardEl = document.getElementById('painel-calling-card');
+
+  requestAnimationFrame(() => {
+    if (mainEl) mainEl.classList.add('takeover-active');
+    if (cardEl) {
+      cardEl.classList.remove('calling-animating');
+      cardEl.classList.add('calling-takeover');
+    }
+  });
+
+  // Fallback de segurança: caso o evento de término da voz não dispare, encerra após 7s
+  takeoverTimer = setTimeout(() => {
+    encerrarTakeoverChamada();
+  }, 7000);
+}
+
+function encerrarTakeoverChamada() {
+  if (takeoverTimer) {
+    clearTimeout(takeoverTimer);
+    takeoverTimer = null;
+  }
+
+  const mainEl = document.querySelector('.painel-tv-main');
+  const cardEl = document.getElementById('painel-calling-card');
+
+  requestAnimationFrame(() => {
+    if (mainEl) mainEl.classList.remove('takeover-active');
+    if (cardEl) {
+      cardEl.classList.remove('calling-takeover');
+      cardEl.classList.remove('calling-animating');
+    }
+  });
 }
 
 function exibirChamada(dados, animar = true) {
@@ -188,9 +307,10 @@ function exibirChamada(dados, animar = true) {
   if (filaEl) filaEl.textContent = fila;
 
   if (animar && cardEl) {
-    cardEl.classList.remove('calling-animating');
-    void cardEl.offsetWidth; // Trigger reflow
-    cardEl.classList.add('calling-animating');
+    requestAnimationFrame(() => {
+      cardEl.classList.remove('calling-animating');
+      cardEl.classList.add('calling-animating');
+    });
   }
 }
 
@@ -231,7 +351,7 @@ function renderizarHistorico() {
 }
 
 // ============================================================================
-// 6. ÁUDIO & SÍNTESE DE VOZ (WEB AUDIO API & SPEECH SYNTHESIS)
+// 6. ÁUDIO & SÍNTESE DE VOZ MASCULINA NATURAL
 // ============================================================================
 
 function tocarAvisoSonoro() {
@@ -283,36 +403,120 @@ function tocarAvisoSonoro() {
   }
 }
 
+let cachedMaleVoice = null;
+
+// Seleção e classificação de vozes masculinas naturais em pt-BR
+function selecionarMelhorVozMasculina() {
+  if (!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (voices.length === 0) return null;
+
+  const scored = voices.map(voice => {
+    let score = 0;
+    const name = (voice.name || '').toLowerCase();
+    const lang = (voice.lang || '').toLowerCase().replace('_', '-');
+
+    if (!lang.startsWith('pt')) return { voice, score: -100 };
+
+    if (lang === 'pt-br') score += 50;
+
+    // Prioridade máxima para vozes masculinas brasileiras
+    if (name.includes('antonio')) score += 100;
+    if (name.includes('felipe')) score += 95;
+    if (name.includes('daniel')) score += 90;
+    if (name.includes('fabio')) score += 85;
+    if (name.includes('male') || name.includes('homem') || name.includes('masculino') || name.includes('afs')) score += 80;
+
+    // Qualidade natural / neural
+    if (name.includes('natural') || name.includes('neural')) score += 40;
+
+    // Penaliza vozes femininas
+    if (name.includes('francisca') || name.includes('thalita') || name.includes('maria') || name.includes('luciana') || name.includes('heloisa') || name.includes('female')) {
+      score -= 50;
+    }
+
+    // Penaliza sintetizadores mecânicos antigos
+    if (name.includes('espeak') || name.includes('speech-dispatcher') || name.includes('mbrola')) {
+      score -= 60;
+    }
+
+    return { voice, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.length > 0 && scored[0].score > 0 ? scored[0].voice : null;
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    cachedMaleVoice = selecionarMelhorVozMasculina();
+    if (cachedMaleVoice) {
+      console.log('[Painel TV] Voz masculina nativa selecionada:', cachedMaleVoice.name, `(${cachedMaleVoice.lang})`);
+    }
+  };
+}
+
 function falarSenha(dados) {
-  if (!painelState.painelConfig.voz_ativa) return;
-  if (!('speechSynthesis' in window)) return;
+  if (!painelState.painelConfig.voz_ativa) {
+    // Se a voz estiver desativada, encerra o takeover visual após 3.5s
+    setTimeout(encerrarTakeoverChamada, 3500);
+    return;
+  }
 
-  window.speechSynthesis.cancel(); // Cancela chamadas anteriores pendentes
+  if (!('speechSynthesis' in window)) {
+    setTimeout(encerrarTakeoverChamada, 3500);
+    return;
+  }
 
-  // Aguarda 900ms para o Ding-Dong tocar primeiro
+  window.speechSynthesis.cancel();
+
+  // Aguarda 950ms para o Ding-Dong tocar primeiro
   setTimeout(() => {
     try {
       const numLimpo = String(dados.cd_senha_gerada || dados.cd_senha_completa || '').replace(/^[^\d]*/i, '').trim();
-      const guiche = dados.ds_guiche || 'Guichê 01';
+      let guiche = dados.ds_guiche || 'Guichê 01';
+      guiche = guiche.replace(/0(\d)/g, '$1');
 
-      // No Hospital Espírita André Luiz a pronúncia é: "Senha P [número], [Guichê]"
-      const frase = `Senha P ${numLimpo}, ${guiche}`.trim();
+      // Frase natural com cadência humana
+      const frase = `Senha P, ${numLimpo}. ${guiche}.`;
 
       const utterance = new SpeechSynthesisUtterance(frase);
       utterance.lang = 'pt-BR';
-      utterance.rate = painelState.painelConfig.voz_velocidade || 1.0;
-      utterance.pitch = 1.0;
 
-      // Tenta selecionar voz em português nativa
-      const voices = window.speechSynthesis.getVoices();
-      const ptVoice = voices.find(v => v.lang.includes('pt-BR') || v.lang.includes('pt_BR') || v.lang.includes('pt'));
-      if (ptVoice) {
-        utterance.voice = ptVoice;
+      const maleVoice = cachedMaleVoice || selecionarMelhorVozMasculina();
+      if (maleVoice) {
+        utterance.voice = maleVoice;
       }
+
+      // Se encontrou voz masculina nativa (ex: Microsoft Antonio ou Felipe)
+      const vName = (maleVoice?.name || '').toLowerCase();
+      const isExplicitMale = vName.includes('antonio') || vName.includes('felipe') || vName.includes('daniel') || vName.includes('male');
+
+      if (isExplicitMale) {
+        utterance.pitch = 0.95;
+        utterance.rate = (painelState.painelConfig.voz_velocidade || 1.0) * 0.92;
+      } else {
+        // Modula para frequência fundamental masculina (barítono encorpado e calmo)
+        utterance.pitch = 0.72;
+        utterance.rate = (painelState.painelConfig.voz_velocidade || 1.0) * 0.90;
+      }
+
+      // O efeito de takeover de tela inteira dura exatamente enquanto a voz fala + buffer suave
+      utterance.onend = () => {
+        setTimeout(() => {
+          encerrarTakeoverChamada();
+        }, 1200);
+      };
+
+      utterance.onerror = (err) => {
+        console.warn('[Painel TV] Aviso na fala da senha:', err);
+        setTimeout(encerrarTakeoverChamada, 2000);
+      };
 
       window.speechSynthesis.speak(utterance);
     } catch (err) {
-      console.warn('[Painel TV] Erro na síntese de voz:', err);
+      console.warn('[Painel TV] Erro ao anunciar senha:', err);
+      encerrarTakeoverChamada();
     }
   }, 950);
 }

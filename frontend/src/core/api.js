@@ -40,7 +40,12 @@ export const api = {
       const responseRequestId = res.headers.get('x-request-id') || requestId;
       const json = await res.json().catch(() => null);
 
+      
       if (!res.ok) {
+        if (res.status === 401) {
+          document.documentElement.classList.remove("has-session");
+          showToast("Sessão expirada. Faça login novamente.", "warning");
+        }
         const errorMsg = json?.message || `Erro na requisição (${res.status})`;
         const errorObj = {
           message: errorMsg,

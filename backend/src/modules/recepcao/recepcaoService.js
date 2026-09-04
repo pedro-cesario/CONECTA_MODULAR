@@ -18,6 +18,11 @@ async function listarSenhasEspera(nrSeqFila) {
 
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
   const mapping = configCache.getMaquinaGuiche(dsMaquina);
+  if (mapping && mapping.permite_chamar_senha === 0) {
+    const err = new Error('Este computador/posto não está autorizado a chamar senhas no painel indicado.');
+    err.status = 403;
+    throw err;
+  }
   const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
   const painelId = mapping?.painel_id || 'recepcao_principal';
 
@@ -32,6 +37,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     cd_senha_completa: `P ${result.cd_senha_gerada}`,
     cd_senha_pura: `P${result.cd_senha_gerada}`,
     ds_guiche: guicheFinal,
+    ds_fila: result.ds_fila || 'Recepção',
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     tipo_acao: 'CHAMADA'
   };
@@ -48,6 +54,11 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     throw err;
   }
   const mapping = configCache.getMaquinaGuiche(dsMaquina);
+  if (mapping && mapping.permite_chamar_senha === 0) {
+    const err = new Error('Este computador/posto não está autorizado a chamar senhas no painel indicado.');
+    err.status = 403;
+    throw err;
+  }
   const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
   const painelId = mapping?.painel_id || 'recepcao_principal';
 
@@ -59,6 +70,7 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     cd_senha_completa: `P ${result.cd_senha_gerada}`,
     cd_senha_pura: `P${result.cd_senha_gerada}`,
     ds_guiche: guicheFinal,
+    ds_fila: result.ds_fila || 'Recepção',
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     tipo_acao: 'RECHAMADA'
   };

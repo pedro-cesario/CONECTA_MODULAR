@@ -1,23 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const ocorrenciaController = require('./ocorrenciaController');
-const { requireAuth } = require('../../core/middlewares/authMiddleware');
+const { requireAuth, requirePermission } = require('../../core/middlewares/authMiddleware');
 
-router.post('/lote/draft', requireAuth, ocorrenciaController.salvarLoteDraft);
-router.get('/lote/draft', requireAuth, ocorrenciaController.obterLoteDraft);
-router.delete('/lote/draft', requireAuth, ocorrenciaController.limparLoteDraft);
-router.post('/salvar', requireAuth, ocorrenciaController.salvar);
-router.get('/passagens/anteriores', requireAuth, ocorrenciaController.listarPassagensAnteriores);
-router.get('/passagens/setores-historico', requireAuth, ocorrenciaController.listarSetoresHistorico);
+router.post('/lote/draft', requirePermission('passagem'), ocorrenciaController.salvarLoteDraft);
+router.get('/lote/draft', requirePermission('passagem'), ocorrenciaController.obterLoteDraft);
+router.delete('/lote/draft', requirePermission('passagem'), ocorrenciaController.limparLoteDraft);
+router.post('/salvar', requirePermission('passagem', 'lancar_nova_passagem'), ocorrenciaController.salvar);
+router.get('/passagens/anteriores', requirePermission('passagem'), ocorrenciaController.listarPassagensAnteriores);
+router.get('/passagens/setores-historico', requirePermission('passagem'), ocorrenciaController.listarSetoresHistorico);
 
-router.post('/livro-administrativo', requireAuth, ocorrenciaController.salvarLivroAdministrativo);
-router.get('/livro-administrativo', requireAuth, ocorrenciaController.obterLivroAdministrativo);
+router.post('/livro-administrativo', requirePermission('livro'), ocorrenciaController.salvarLivroAdministrativo);
+router.get('/livro-administrativo', requirePermission('livro'), ocorrenciaController.obterLivroAdministrativo);
 
-router.post('/escala-psicologia/publicar', requireAuth, ocorrenciaController.salvarEscalaPsicologia);
-router.get('/escala-psicologia/liberadas', requireAuth, ocorrenciaController.listarEscalasPsicologiaLiberadas);
+router.post('/escala-psicologia/publicar', requirePermission('escala', 'editar_publicar_escala'), ocorrenciaController.salvarEscalaPsicologia);
+router.get('/escala-psicologia/liberadas', requirePermission('escala'), ocorrenciaController.listarEscalasPsicologiaLiberadas);
 
-router.post('/escala-tecnica', requireAuth, ocorrenciaController.salvarEscalaTecnica);
-router.get('/escala-tecnica/todas', requireAuth, ocorrenciaController.listarTodasEscalasLiberadas);
-router.get('/escala-tecnica', requireAuth, ocorrenciaController.obterEscalaTecnica);
+router.post('/escala-tecnica', requirePermission('escala', 'editar_publicar_escala'), ocorrenciaController.salvarEscalaTecnica);
+router.get('/escala-tecnica/todas', requirePermission('escala'), ocorrenciaController.listarTodasEscalasLiberadas);
+router.get('/escala-tecnica', requirePermission('escala'), ocorrenciaController.obterEscalaTecnica);
 
 module.exports = router;

@@ -88,15 +88,16 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
 
     // Busca candidatos ordenados por prioridade e tempo de chegada
     const proxima = await conn.execute(
-      `SELECT nr_sequencia, cd_senha_gerada, nr_seq_fila_senha, cd_pessoa_fisica
-       FROM paciente_senha_fila
-       WHERE dt_inutilizacao IS NULL
-         AND dt_utilizacao IS NULL
-         AND dt_fim_atendimento IS NULL
-         AND dt_chamada IS NULL
-         AND dt_geracao_senha >= TRUNC(SYSDATE)
+      `SELECT psf.nr_sequencia, psf.cd_senha_gerada, psf.nr_seq_fila_senha, psf.cd_pessoa_fisica, fs.ds_fila
+       FROM paciente_senha_fila psf
+       LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+       WHERE psf.dt_inutilizacao IS NULL
+         AND psf.dt_utilizacao IS NULL
+         AND psf.dt_fim_atendimento IS NULL
+         AND psf.dt_chamada IS NULL
+         AND psf.dt_geracao_senha >= TRUNC(SYSDATE - 1)
          ${whereFila}
-       ORDER BY NVL(nr_prioridade, 3) ASC, dt_geracao_senha ASC`,
+       ORDER BY NVL(psf.nr_prioridade, 3) ASC, psf.dt_geracao_senha ASC`,
       binds
     );
 
@@ -108,6 +109,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     let cdSenha = null;
     let cdPf = null;
     let nrFila = null;
+    let dsFilaNome = 'Recepção';
     let nrPrioridade = 3;
 
     // Lock atômico direto na PK sem subquery para evitar ORA-02014
@@ -127,6 +129,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
           cdSenha = lockRes.rows[0].CD_SENHA_GERADA;
           cdPf = lockRes.rows[0].CD_PESSOA_FISICA;
           nrFila = lockRes.rows[0].NR_SEQ_FILA_SENHA;
+          dsFilaNome = cand.DS_FILA || 'Recepção';
           nrPrioridade = lockRes.rows[0].NR_PRIORIDADE || 3;
           break;
         }
@@ -199,6 +202,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       cd_senha_gerada: cdSenha,
       cd_pessoa_fisica: cdPf,
       nr_seq_fila_senha: nrFila,
+      ds_fila: dsFilaNome,
       nr_prioridade: nrPrioridade,
       ds_prioridade: dsPrioridade
     };
@@ -218,9 +222,10 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     const seqNum = parseInt(nrSeqSenha, 10);
 
     const checkRes = await conn.execute(
-      `SELECT cd_senha_gerada, nr_prioridade, nr_seq_fila_senha
-       FROM paciente_senha_fila
-       WHERE nr_sequencia = :seq`,
+      `SELECT psf.cd_senha_gerada, psf.nr_prioridade, psf.nr_seq_fila_senha, fs.ds_fila
+       FROM paciente_senha_fila psf
+       LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+       WHERE psf.nr_sequencia = :seq`,
       { seq: seqNum }
     );
 
@@ -276,6 +281,7 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
       success: true,
       nr_sequencia: seqNum,
       cd_senha_gerada: cdSenha,
+      ds_fila: checkRes.rows?.[0]?.DS_FILA || 'Recepção',
       nr_prioridade: nrPrioridade,
       ds_prioridade: dsPrioridade
     };
@@ -988,26 +994,32 @@ const MAPA_RELATORIOS_OFICIAIS = [
 ];
 
 async function listarRelatoriosAtendimento() {
+  const relsConfig = configCache.getRelatoriosTasy(true);
+  const relatoriosBase = (relsConfig && relsConfig.length > 0) ? relsConfig : MAPA_RELATORIOS_OFICIAIS;
+
   const conn = await getConnection();
   try {
-    const seqs = MAPA_RELATORIOS_OFICIAIS.map(r => r.nr_sequencia).join(',');
-    const result = await conn.execute(
-      `SELECT cd_relatorio, nr_sequencia, ds_titulo
-       FROM relatorio
-       WHERE nr_sequencia IN (${seqs})
-       ORDER BY cd_relatorio`
-    );
+    const seqs = relatoriosBase.map(r => r.nr_sequencia).filter(Boolean).join(',');
+    let dbMap = new Map();
+    if (seqs) {
+      const result = await conn.execute(
+        `SELECT cd_relatorio, nr_sequencia, ds_titulo
+         FROM relatorio
+         WHERE nr_sequencia IN (${seqs})
+         ORDER BY cd_relatorio`
+      );
+      dbMap = new Map((result.rows || []).map(r => [r.NR_SEQUENCIA, r]));
+    }
 
-    const dbMap = new Map((result.rows || []).map(r => [r.NR_SEQUENCIA, r]));
-
-    return MAPA_RELATORIOS_OFICIAIS.map(item => {
+    return relatoriosBase.map(item => {
       const dbRow = dbMap.get(item.nr_sequencia);
       return {
+        id: item.id || `rel_${item.cd_relatorio}`,
         cd_relatorio: item.cd_relatorio,
         nr_sequencia: item.nr_sequencia,
         ds_titulo: item.ds_titulo,
-        icone: item.icone,
-        badge: item.badge,
+        icone: item.icone || 'bi-file-earmark-text',
+        badge: item.badge || 'Geral',
         ds_titulo_tasy: dbRow?.DS_TITULO || item.ds_titulo
       };
     });
@@ -1022,10 +1034,12 @@ async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
     const cd = parseInt(cdRelatorio, 10);
     const nAtend = parseInt(nrAtendimento, 10);
 
-    const repInfo = MAPA_RELATORIOS_OFICIAIS.find(r => r.cd_relatorio === cd) || {
-      cd_relatorio: cd,
-      ds_titulo: `Relatório ${cd}`
-    };
+    const relsConfig = configCache.getRelatoriosTasy(false);
+    const repInfo = (relsConfig && relsConfig.find(r => r.cd_relatorio === cd)) ||
+      MAPA_RELATORIOS_OFICIAIS.find(r => r.cd_relatorio === cd) || {
+        cd_relatorio: cd,
+        ds_titulo: `Relatório ${cd}`
+      };
 
     let sql = null;
     if (repInfo.nr_sequencia) {

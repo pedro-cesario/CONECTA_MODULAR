@@ -42,6 +42,21 @@ function errorHandler(err, req, res, next) {
     });
   }
 
+  
+  // Compatibilidade com legacy services que lançam Error padrão com propriedades status/statusCode
+  const legacyStatus = err.status || err.statusCode;
+  if (legacyStatus >= 400 && legacyStatus < 500 && !(err instanceof AppError)) {
+    return res.status(legacyStatus).json({
+      success: false,
+      message: err.message,
+      requestId,
+      error: {
+        code: `HTTP_${legacyStatus}`,
+        message: err.message
+      }
+    });
+  }
+
   // Erro não tratado / interno
   logger.error(`[UnhandledError] ${req.method} ${req.originalUrl}: ${err?.message || err}`, {
     requestId,

@@ -138,6 +138,22 @@ const MODULOS_STATIC = [
       buttonId: 'btn-abrir-recepcao',
       workspaceId: 'workspace-recepcao'
     }
+  },
+  {
+    id: 'painel_senhas',
+    nome: 'Painel de Senhas',
+    descricao: 'Monitor de TV para exibição ao vivo de senhas chamadas no saguão e consultórios',
+    icon: 'bi-tv',
+    allowedProfiles: ['enfermagem', 'admin', 'recepcao'],
+    setorId: null,
+    backend: {
+      controller: 'painelController',
+      method: 'obterMinhaTv'
+    },
+    frontend: {
+      buttonId: 'btn-abrir-painel-senhas',
+      workspaceId: 'workspace-painel-senhas'
+    }
   }
 ];
 

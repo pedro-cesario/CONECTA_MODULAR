@@ -59,7 +59,9 @@ body.painel-tv-body {
   justify-content: space-between;
   padding: 0 2.5rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
-  z-index: 10;
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
 }
 
 .painel-brand {
@@ -173,22 +175,30 @@ body.painel-tv-body {
    2. MAIN LAYOUT
    ============================================================================ */
 .painel-tv-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 440px;
-  gap: 2rem;
-  padding: 2rem 2.5rem;
-  height: calc(100vh - 140px);
+  flex: 1 1 0;
+  display: flex;
+  gap: 1.75rem;
+  padding: 1.25rem 2.5rem;
+  min-height: 0;
+  max-height: calc(100vh - 140px);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================================================
    3. BIG CALLING CARD (CLEAN & LUMINOUS)
    ============================================================================ */
 .painel-calling-card {
+  flex: 1 1 0%;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  max-height: 100%;
   background: var(--tv-card-bg);
-  border: 2px solid var(--tv-card-border);
+  border: 3px solid var(--tv-card-border);
   border-radius: 28px;
-  padding: 2.5rem 3rem;
+  padding: 1.75rem 2.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -196,7 +206,16 @@ body.painel-tv-body {
   box-shadow: var(--tv-card-shadow);
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: box-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: box-shadow, border-color;
+}
+
+.painel-calling-card.calling-takeover {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 8px rgba(2, 132, 199, 0.22), 0 25px 65px rgba(0, 43, 102, 0.16);
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f0f7ff 100%);
 }
 
 .painel-calling-card::before {
@@ -260,41 +279,55 @@ body.painel-tv-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1rem 0;
+  margin: 0.5rem 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .calling-ticket-number {
-  font-size: 8.5rem;
+  font-size: clamp(8.5rem, 13vw, 13.5rem);
   font-weight: 900;
   color: var(--tv-primary-navy);
-  letter-spacing: 2px;
-  line-height: 1;
+  letter-spacing: -2px;
+  line-height: 0.92;
+  display: inline-block;
+  transform-origin: center center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.6s ease,
+              text-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .calling-destination-box {
   width: 100%;
   background: linear-gradient(135deg, #002b66, #0284c7);
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: 1.2rem 1.5rem;
   text-align: center;
   color: #ffffff;
   box-shadow: 0 10px 25px rgba(2, 132, 199, 0.25);
+  flex-shrink: 0;
+  transform-origin: center bottom;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .destination-label {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.85);
   font-weight: 800;
   letter-spacing: 3px;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .destination-target {
-  font-size: 3.5rem;
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
   font-weight: 900;
   color: #ffffff;
   letter-spacing: 1.5px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  line-height: 1.1;
 }
 
 .calling-meta-footer {
@@ -302,37 +335,79 @@ body.painel-tv-body {
   display: flex;
   justify-content: space-between;
   color: var(--tv-text-muted);
-  font-size: 1rem;
+  font-size: 0.95rem;
   border-top: 1px solid #f1f5f9;
-  padding-top: 1.25rem;
+  padding-top: 1rem;
+  flex-shrink: 0;
 }
 
 .calling-meta-footer strong {
   color: var(--tv-text-main);
 }
 
-/* Animação de Chamada Nova */
+/* Animação de Chamada Nova - Pulsar luminoso suave sem alterar dimensões */
 .calling-animating {
-  animation: call-flash-clean 1.2s ease-in-out 3;
+  animation: call-pulse-luminous 1.2s ease-in-out 3;
 }
 
-@keyframes call-flash-clean {
-  0% { transform: scale(1); border-color: var(--tv-primary-blue); box-shadow: 0 0 50px rgba(2, 132, 199, 0.4); }
-  50% { transform: scale(1.02); border-color: var(--tv-primary-navy); box-shadow: 0 0 70px rgba(0, 43, 102, 0.3); }
-  100% { transform: scale(1); border-color: var(--tv-card-border); box-shadow: var(--tv-card-shadow); }
+@keyframes call-pulse-luminous {
+  0% {
+    border-color: var(--tv-primary-blue);
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.3), 0 10px 30px rgba(2, 132, 199, 0.2);
+  }
+  50% {
+    border-color: var(--tv-primary-navy);
+    box-shadow: 0 0 0 6px rgba(0, 43, 102, 0.35), 0 15px 40px rgba(0, 43, 102, 0.25);
+  }
+  100% {
+    border-color: var(--tv-card-border);
+    box-shadow: var(--tv-card-shadow);
+  }
+}
+
+/* Elementos ampliados durante o Takeover de Tela Inteira (100% GPU-accelerated) */
+.painel-calling-card.calling-takeover .calling-ticket-number {
+  transform: scale(1.2);
+  color: #002b66;
+  text-shadow: 0 12px 35px rgba(2, 132, 199, 0.3);
+}
+
+.painel-calling-card.calling-takeover .calling-destination-box {
+  transform: scale(1.03);
+  box-shadow: 0 16px 45px rgba(2, 132, 199, 0.4);
 }
 
 /* ============================================================================
    4. SIDEBAR HISTÓRICO (CLEAN & ORGANIZED)
    ============================================================================ */
 .painel-history-sidebar {
+  width: 440px;
+  flex: 0 0 440px;
   background: var(--tv-card-bg);
   border: 2px solid var(--tv-card-border);
   border-radius: 28px;
-  padding: 1.75rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   box-shadow: var(--tv-card-shadow);
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  min-width: 0;
+  opacity: 1;
+  transform: translateX(0);
+  margin-right: 0;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              margin-right 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity, margin-right;
+}
+
+.painel-tv-main.takeover-active .painel-history-sidebar {
+  opacity: 0;
+  transform: translateX(80px);
+  margin-right: -468px; /* -440px largura - 28px (gap de 1.75rem) */
+  pointer-events: none;
 }
 
 .history-sidebar-header {
@@ -430,6 +505,9 @@ body.painel-tv-body {
   align-items: center;
   padding: 0 2.5rem;
   gap: 1.25rem;
+  position: relative;
+  z-index: 50;
+  flex-shrink: 0;
 }
 
 .ticker-badge {
@@ -489,4 +567,37 @@ body.painel-tv-body {
 
 .prompt-content strong {
   color: var(--tv-primary-navy);
+}
+
+/* ============================================================================
+   7. RESPONSIVIDADE PARA TELAS COMPACTAS (Ex: 720p / 768p)
+   ============================================================================ */
+@media (max-height: 800px) {
+  .painel-tv-header {
+    height: 70px;
+    padding: 0 1.75rem;
+  }
+  .painel-tv-main {
+    padding: 1rem 1.75rem;
+    gap: 1.25rem;
+  }
+  .painel-calling-card {
+    padding: 1.25rem 1.75rem;
+    border-radius: 20px;
+  }
+  .destination-target {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  }
+  .calling-destination-box {
+    padding: 0.9rem 1.25rem;
+    border-radius: 14px;
+  }
+  .calling-meta-footer {
+    padding-top: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .painel-tv-footer {
+    height: 48px;
+    padding: 0 1.75rem;
+  }
 }

@@ -134,3 +134,32 @@ Toda e qualquer interface, modal, botão, cabeçalho ou estilo deve seguir rigor
 | `core/ui.js` | `showToast(msg, type)`, `showModal(type, title, msg)`, `showConfirmModal(title, msg)`, `toggleSidebar()` |
 | `core/utils.js` | `escapeHtml(text)`, `debounce(fn, ms)`, `formatIsoDatePtBr(date)`, `getTodayIsoDate()`, `loadVersion()` |
 | `core/state.js` | `state` (objeto único com todos os dados da sessão, setores, pacientes e formulários) |
+
+
+---
+
+## 🚧 5. Lacunas Obrigatórias Antes de Produção
+
+Este manual define a organização do frontend, mas a arquitetura ainda precisa dos controles abaixo para que a plataforma seja considerada apta para produção. As pendências completas, evidências e componentes envolvidos estão no [`AUDITORIA_PRE_PRODUCAO.md`](./AUDITORIA_PRE_PRODUCAO.md).
+
+### Bloqueadores de produção
+
+1. **Segredos e integrações:** remover credenciais do código, rotacionar as já expostas e exigir configuração segura na inicialização. As integrações Oracle, TASY Reports e GED devem ter timeout, cancelamento, limites de tamanho e tratamento de indisponibilidade.
+2. **Autorização no backend:** proteger todas as rotas da Recepção por módulo, ação e escopo de setor. Regras aplicadas somente no menu ou no frontend não são controles de segurança.
+3. **Disponibilidade e readiness:** Redis e Oracle precisam ser dependências verificadas de verdade antes de receber tráfego. Corrigir healthchecks, política de reconexão e endpoint de readiness; `/metrics` não pode ser usado como prova de saúde das dependências.
+4. **Integridade concorrente:** tornar atômicas a chamada da próxima senha e a gravação de escala ativa, com lock/versão/condição de atualização e resposta `409 Conflict` quando houver edição concorrente.
+5. **Segurança de entrada e saída:** eliminar XSS armazenado em Passagem, reativar uma CSP compatível, validar uploads GED no servidor por tamanho/tipo/conteúdo e tornar cookies de sessão obrigatoriamente `Secure` em produção.
+
+### Melhorias necessárias para sustentar a arquitetura
+
+- Criar migrações Oracle versionadas e retirar DDL do caminho de startup da aplicação.
+- Padronizar validação de parâmetros e corpos de requisição antes de chegar aos repositórios.
+- Adicionar paginação, limites e consultas indexáveis nas listas e históricos de maior volume.
+- Centralizar timeout e cancelamento no `core/api.js`, com mensagens de erro recuperáveis e sem reenvio cego de operações mutáveis.
+- Proteger métricas por rede e credencial, ou restringi-las ao ambiente interno.
+- Implantar pipeline de qualidade: lint, validação de imports, testes de frontend/e2e para fluxos críticos e testes de integração isolados de serviços reais.
+- Atualizar dependências de forma controlada e repetir auditoria de vulnerabilidades antes da publicação.
+
+### Critério de liberação
+
+Uma publicação em produção somente deve ocorrer após os bloqueadores acima estarem corrigidos, com testes de autorização (401/403), indisponibilidade de Redis/Oracle/TASY, timeout, concorrência, upload e XSS passando no CI. A aprovação deve registrar as versões de schema, imagem e dependências utilizadas no deploy.

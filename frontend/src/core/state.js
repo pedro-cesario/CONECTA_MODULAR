@@ -181,6 +181,15 @@ export const MODULOS_CONFIG = {};
       topbarButtonId: 'nav-recepcao',
       activeModes: ['recepcao'],
       entryFnName: 'enterRecepcaoMode'
+    },
+    painel_senhas: {
+      id: 'painel_senhas',
+      nome: 'Painel de Senhas',
+      allowedProfiles: [],
+      buttonId: 'btn-abrir-painel-senhas',
+      topbarButtonId: 'nav-painel-senhas',
+      activeModes: ['painel_senhas'],
+      entryFnName: 'enterPainelSenhasMode'
     }
   };
 
@@ -192,7 +201,8 @@ export const MODULOS_DEFAULT = {
   escala: ['psicologia'],
   dashboard_pa: ['enfermagem'],
   registros: ['admin', 'servico_social'],
-  recepcao: ['enfermagem', 'admin', 'recepcao']
+  recepcao: ['enfermagem', 'admin', 'recepcao'],
+  painel_senhas: ['enfermagem', 'admin', 'recepcao']
 };
 
 export const draftHydratingModules = new Set();

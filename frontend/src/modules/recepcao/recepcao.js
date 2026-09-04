@@ -73,6 +73,27 @@ export async function initRecepcao() {
 
   bindRecepcaoEvents();
   await detectarEConfigurarGuiche();
+
+  // Restaura referência da última senha chamada se recente (12h)
+  try {
+    const raw = localStorage.getItem('conecta_recepcao_ultima_senha');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.numero && (Date.now() - (parsed.timestamp || 0) < 12 * 3600 * 1000)) {
+        recepcaoState.senhaAtiva = parsed.dados || {
+          cd_senha_gerada: parsed.numero,
+          ds_prioridade: parsed.tipo || 'Normal'
+        };
+        const numEl = document.getElementById('guiche-active-number');
+        const typeEl = document.getElementById('guiche-active-type');
+        if (numEl) numEl.textContent = `#${parsed.numero}`;
+        if (typeEl) typeEl.textContent = parsed.tipo || 'Chamado';
+      }
+    }
+  } catch (e) {
+    console.warn('[Recepção] Aviso ao restaurar última senha do guichê:', e);
+  }
+
   await carregarFilas();
   await carregarSenhas();
   await carregarAtendimentosHoje();
@@ -98,6 +119,33 @@ async function detectarEConfigurarGuiche() {
       }
       if (btnTv && res.data.painel_sugerido) {
         btnTv.href = `/painel.html?painel=${encodeURIComponent(res.data.painel_sugerido)}`;
+      }
+
+      const btnChamar = document.getElementById('btn-recepcao-chamar-proximo');
+      const btnRechamar = document.getElementById('btn-recepcao-rechamar');
+      const permiteChamar = res.data.permite_chamar_senha !== false;
+      if (!permiteChamar) {
+        if (btnChamar) {
+          btnChamar.disabled = true;
+          btnChamar.title = 'Este computador não possui permissão para chamar senhas no painel indicado.';
+          btnChamar.classList.add('opacity-50');
+        }
+        if (btnRechamar) {
+          btnRechamar.disabled = true;
+          btnRechamar.title = 'Este computador não possui permissão para chamar senhas no painel indicado.';
+          btnRechamar.classList.add('opacity-50');
+        }
+      } else {
+        if (btnChamar) {
+          btnChamar.disabled = false;
+          btnChamar.removeAttribute('title');
+          btnChamar.classList.remove('opacity-50');
+        }
+        if (btnRechamar) {
+          btnRechamar.disabled = false;
+          btnRechamar.removeAttribute('title');
+          btnRechamar.classList.remove('opacity-50');
+        }
       }
     }
   } catch (err) {
@@ -658,11 +706,22 @@ export function abrirModalAtendimento(senhaObj = null) {
   }
 }
 
-function atualizarDisplaySenha(numero, tipo) {
+function atualizarDisplaySenha(numero, tipo, dadosCompletos = null) {
   const numEl = document.getElementById('guiche-active-number');
   const typeEl = document.getElementById('guiche-active-type');
   if (numEl) numEl.textContent = numero ? `#${numero}` : '---';
   if (typeEl) typeEl.textContent = tipo || 'Nenhuma senha chamada';
+
+  if (numero) {
+    try {
+      localStorage.setItem('conecta_recepcao_ultima_senha', JSON.stringify({
+        numero,
+        tipo: tipo || 'Chamado',
+        dados: dadosCompletos || recepcaoState.senhaAtiva,
+        timestamp: Date.now()
+      }));
+    } catch (e) {}
+  }
 }
 
 // ============================================================================

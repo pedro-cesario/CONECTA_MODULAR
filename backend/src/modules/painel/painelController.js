@@ -2,9 +2,18 @@
  * Conecta HEAL 2.0 - Painel TV Controller
  */
 
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const crypto = require('crypto');
 const configCache = require('../../core/config/configCache');
 const { getConnection } = require('../../core/database');
 const painelEventsService = require('./painelEventsService');
+
+const ttsCacheDir = path.resolve(__dirname, '../../../../data/tts_cache');
+if (!fs.existsSync(ttsCacheDir)) {
+  fs.mkdirSync(ttsCacheDir, { recursive: true });
+}
 
 async function obterEstadoPainel(req, res, next) {
   try {
@@ -38,7 +47,7 @@ async function obterEstadoPainel(req, res, next) {
 
     const conn = await getConnection();
     try {
-      // 1. Busca as últimas senhas chamadas hoje para este painel
+      // 1. Busca as últimas senhas chamadas (hoje e recentes) para este painel
       const result = await conn.execute(
         `SELECT
            psf.nr_sequencia,
@@ -63,19 +72,45 @@ async function obterEstadoPainel(req, res, next) {
          LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
          WHERE psf.dt_inutilizacao IS NULL
            AND psf.dt_chamada IS NOT NULL
-           AND psf.dt_geracao_senha >= TRUNC(SYSDATE)
+           AND psf.dt_chamada >= TRUNC(SYSDATE - 1)
            ${whereFilas}
          ORDER BY psf.dt_chamada DESC
-         FETCH FIRST 10 ROWS ONLY`,
+         FETCH FIRST 15 ROWS ONLY`,
         binds
       );
 
-      const chamadas = result.rows || [];
-      const ultimaChamada = chamadas.length > 0 ? formatarItemPainel(chamadas[0]) : null;
-      const historico = chamadas.slice(1, 8).map(formatarItemPainel); // Exatamente as últimas 07 senhas chamadas
+      const sysConfig = configCache.getSystemConfig() || {};
+      const nomeHospital = sysConfig.nome_instituicao || 'Hospital Espírita André Luiz';
+      const limiteHistorico = Math.max(parseInt(sysConfig.tv_historico_limite, 10) || 7, 7);
+
+      const chamadasBanco = (result.rows || []).map(formatarItemPainel);
+      const memoria = painelEventsService.getRecentCalls(painel.id);
+
+      // Unifica memória (eventos transmitidos em tempo real) com os dados persistidos no banco
+      const unificadas = [];
+      const seqVistos = new Set();
+
+      for (const item of memoria) {
+        if (item && item.nr_sequencia && !seqVistos.has(Number(item.nr_sequencia))) {
+          seqVistos.add(Number(item.nr_sequencia));
+          unificadas.push(item);
+        }
+      }
+
+      for (const item of chamadasBanco) {
+        if (item && item.nr_sequencia && !seqVistos.has(Number(item.nr_sequencia))) {
+          seqVistos.add(Number(item.nr_sequencia));
+          unificadas.push(item);
+        }
+      }
+
+      const ultimaChamada = unificadas.length > 0 ? unificadas[0] : null;
+      const historico = unificadas.slice(1, limiteHistorico + 1);
 
       res.json({
         success: true,
+        instituicao: nomeHospital,
+        limiteHistorico,
         painel: {
           id: painel.id,
           nome: painel.nome,
@@ -138,7 +173,32 @@ async function detectarMinhaMaquina(req, res, next) {
       data: {
         nm_maquina: mapping.nm_maquina,
         ds_guiche: mapping.ds_guiche,
+        ds_guiche_sugerido: mapping.ds_guiche,
         painel_id: mapping.painel_id || 'recepcao_principal',
+        painel_sugerido: mapping.painel_id || 'recepcao_principal',
+        permite_chamar_senha: mapping.permite_chamar_senha !== 0,
+        paineisDisponiveis
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function obterMinhaTv(req, res, next) {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '';
+    const nmComputador = req.query.maquina || req.session?.usuario?.nm_computador || '';
+
+    const painelEncontrado = configCache.getPainelParaMaquina(nmComputador, ip);
+    const paineisDisponiveis = configCache.getPaineisTv();
+
+    res.json({
+      success: true,
+      data: {
+        nm_maquina: nmComputador || ip,
+        painel: painelEncontrado,
+        url: painelEncontrado ? `/painel.html?painel=${encodeURIComponent(painelEncontrado.id)}` : null,
         paineisDisponiveis
       }
     });
@@ -166,9 +226,60 @@ function formatarItemPainel(row) {
   };
 }
 
+async function gerarAudioVoz(req, res, next) {
+  try {
+    const rawTexto = req.query.texto || '';
+    const texto = String(rawTexto).trim().substring(0, 200);
+    if (!texto) {
+      return res.status(400).json({ success: false, message: 'Texto para fala é obrigatório' });
+    }
+
+    const hash = crypto.createHash('md5').update('pt-BR:' + texto).digest('hex');
+    const filePath = path.join(ttsCacheDir, `${hash}.mp3`);
+
+    // Se já estiver em cache, serve imediatamente do disco (<1ms)
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+      return fs.createReadStream(filePath).pipe(res);
+    }
+
+    // Busca áudio natural em português do Brasil
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=pt-BR&client=tw-ob&q=${encodeURIComponent(texto)}`;
+
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }, (googleRes) => {
+      if (googleRes.statusCode !== 200) {
+        return res.status(502).json({ success: false, message: 'Falha ao sintetizar voz no provedor de áudio' });
+      }
+
+      const chunks = [];
+      googleRes.on('data', chunk => chunks.push(chunk));
+      googleRes.on('end', () => {
+        const audioBuffer = Buffer.concat(chunks);
+        try {
+          fs.writeFileSync(filePath, audioBuffer);
+        } catch (writeErr) {
+          console.warn('[Painel TV] Aviso ao gravar cache de áudio:', writeErr.message);
+        }
+
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+        res.end(audioBuffer);
+      });
+    }).on('error', (err) => {
+      console.warn('[Painel TV] Erro de rede ao buscar áudio natural:', err.message);
+      res.status(503).json({ success: false, message: 'Serviço de voz temporariamente indisponível' });
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   obterEstadoPainel,
   streamPainel,
   detectarMinhaMaquina,
-  formatarItemPainel
+  obterMinhaTv,
+  formatarItemPainel,
+  gerarAudioVoz
 };

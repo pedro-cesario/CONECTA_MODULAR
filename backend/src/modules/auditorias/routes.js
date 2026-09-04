@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const auditoriaController = require('./auditoriaController');
+const { requirePermission } = require('../../core/middlewares/authMiddleware');
+
+router.use(requirePermission('auditorias'));
 
 router.get('/higiene-maos/opcoes', auditoriaController.listarOpcoes);
 router.post('/higiene-maos', auditoriaController.salvarHigieneMaos);

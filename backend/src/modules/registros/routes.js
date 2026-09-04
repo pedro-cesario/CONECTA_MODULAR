@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const registroController = require('./registroController');
+const { requirePermission } = require('../../core/middlewares/authMiddleware');
+
+router.use(requirePermission('registros'));
 
 router.get('/tipos', registroController.listarTipos);
 router.get('/pessoas', registroController.buscarPessoas);
