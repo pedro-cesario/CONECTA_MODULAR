@@ -48,13 +48,42 @@ if (TRUST_PROXY === 'true' || TRUST_PROXY === '1') {
   app.set('trust proxy', isNaN(TRUST_PROXY) ? TRUST_PROXY : parseInt(TRUST_PROXY));
 }
 
+// Tratamento de Crashes Globais do Node.js (Time Bomb mitigada)
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('[Global] Unhandled Rejection detectado', {
+    reason: reason?.message || reason,
+    stack: reason?.stack
+  });
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('[Global] Uncaught Exception detectado. O processo será encerrado de forma segura', {
+    error: err?.message,
+    stack: err?.stack
+  });
+  setTimeout(() => process.exit(1), 1000);
+});
+
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 const corsOptions = ALLOWED_ORIGINS.length > 0
   ? { origin: ALLOWED_ORIGINS, credentials: true }
   : { origin: false };
 
-app.use(helmet({ contentSecurityPolicy: false }));
+// Configuração estrita de Segurança de Cabeçalhos e CSP (XSS Protection)
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      "font-src": ["'self'", "https://cdn.jsdelivr.net", "data:"],
+      "img-src": ["'self'", "data:", "blob:"],
+      "connect-src": ["'self'", "https://*"]
+    }
+  }
+}));
 app.use(cors(corsOptions));
 
 // Limiter com Redis Store
