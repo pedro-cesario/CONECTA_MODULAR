@@ -70,19 +70,11 @@ const corsOptions = ALLOWED_ORIGINS.length > 0
   ? { origin: ALLOWED_ORIGINS, credentials: true }
   : { origin: false };
 
-// Configuração estrita de Segurança de Cabeçalhos e CSP (XSS Protection)
+// Configuração de Cabeçalhos de Segurança compatível com HTTP Intranet
 app.use(helmet({
-  contentSecurityPolicy: {
-    useDefaults: true,
-    directives: {
-      "default-src": ["'self'"],
-      "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-      "style-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-      "font-src": ["'self'", "https://cdn.jsdelivr.net", "data:"],
-      "img-src": ["'self'", "data:", "blob:"],
-      "connect-src": ["'self'", "https://*"]
-    }
-  }
+  contentSecurityPolicy: false,
+  hsts: false,
+  crossOriginResourcePolicy: false
 }));
 app.use(cors(corsOptions));
 

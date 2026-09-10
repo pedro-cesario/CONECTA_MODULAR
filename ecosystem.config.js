@@ -1,15 +1,15 @@
 module.exports = {
   apps: [{
     name: 'conecta-backend',
-    script: 'backend/server.js',
-    instances: 2,
-    exec_mode: 'cluster',
+    script: './run.sh',
+    interpreter: 'bash',
+    instances: 1,
+    exec_mode: 'fork',
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
     env: {
-      NODE_ENV: 'production',
-      LD_LIBRARY_PATH: '/tmp/ic19'
+      NODE_ENV: 'production'
     }
   }]
 };
