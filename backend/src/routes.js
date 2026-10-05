@@ -72,4 +72,7 @@ router.use('/auditorias', requireAuth, auditoriasRoutes);
 router.use('/recepcao', recepcaoRoutes);
 router.use('/painel', painelRoutes);
 
+const evolucaoRoutes = require('./modules/evolucao/routes');
+router.use('/evolucao', evolucaoRoutes);
+
 module.exports = router;

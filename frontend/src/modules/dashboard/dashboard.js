@@ -1493,6 +1493,8 @@ export function initTriagemSenhasPA() {
   const btnShowCadastro = document.getElementById('btn-triagem-show-cadastro');
   const btnBackBusca = document.getElementById('btn-triagem-back-busca');
   const btnSalvarNovo = document.getElementById('btn-triagem-salvar-paciente');
+  const btnBackBuscaConf = document.getElementById('btn-triagem-back-busca-conf');
+  const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
 
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
@@ -1522,8 +1524,10 @@ export function initTriagemSenhasPA() {
   if (btnShowCadastro) {
     btnShowCadastro.addEventListener('click', () => {
       document.getElementById('triagem-modal-step-busca').classList.add('d-none');
+      document.getElementById('triagem-modal-step-confirmacao').classList.add('d-none');
       document.getElementById('triagem-modal-step-cadastro').classList.remove('d-none');
       document.getElementById('btn-triagem-salvar-paciente').classList.remove('d-none');
+      if (btnConfirmar) btnConfirmar.classList.add('d-none');
       document.getElementById('form-triagem-novo-paciente').reset();
       
       // Auto fill nome
@@ -1539,6 +1543,25 @@ export function initTriagemSenhasPA() {
       document.getElementById('triagem-modal-step-busca').classList.remove('d-none');
       document.getElementById('triagem-modal-step-cadastro').classList.add('d-none');
       document.getElementById('btn-triagem-salvar-paciente').classList.add('d-none');
+    });
+  }
+  
+  if (btnBackBuscaConf) {
+    btnBackBuscaConf.addEventListener('click', () => {
+      document.getElementById('triagem-modal-step-confirmacao').classList.add('d-none');
+      document.getElementById('triagem-modal-step-busca').classList.remove('d-none');
+      if (btnConfirmar) btnConfirmar.classList.add('d-none');
+    });
+  }
+
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', async () => {
+      const cdPf = btnConfirmar.getAttribute('data-cdpf');
+      if (cdPf) {
+        ui.setLoading(btnConfirmar, true);
+        await window.conectaCore.abrirAtendimentoExistenteTriagem(cdPf, true);
+        ui.setLoading(btnConfirmar, false);
+      }
     });
   }
 
@@ -1559,30 +1582,36 @@ async function buscarPacienteTriagem(termo) {
   `;
 
   try {
-    const res = await api.get(`/api/recepcao/pessoas/buscar?termo=${encodeURIComponent(termo)}`);
+    const res = await api.get(`/api/recepcao/pessoas/buscar?q=${encodeURIComponent(termo)}`);
     if (res.success && res.data && res.data.length > 0) {
       const pacientes = res.data.slice(0, 5);
       
-      let html = pacientes.map(p => `
+      let html = pacientes.map(p => {
+        const nome = p.NM_PESSOA_FISICA || 'Sem Nome';
+        const cpf = p.NR_CPF || '';
+        const nasc = p.DT_NASC_FMT || (p.DT_NASCIMENTO ? utils.formatDateToBr(p.DT_NASCIMENTO) : '');
+        const cdPf = p.CD_PESSOA_FISICA || '';
+
+        return `
         <div class="card border-0 shadow-sm border mb-2">
           <div class="card-body p-3 d-flex justify-content-between align-items-center">
             <div>
-              <h6 class="mb-1 fw-bold text-primary">${utils.escapeHtml(p.nm_pessoa_fisica)}</h6>
+              <h6 class="mb-1 fw-bold text-primary">${utils.escapeHtml(nome)}</h6>
               <div class="text-muted small">
-                ${p.nr_cpf ? `<i class="bi bi-person-vcard"></i> CPF: ${p.nr_cpf}` : ''}
-                ${p.dt_nascimento ? `<span class="ms-2"><i class="bi bi-calendar"></i> Nasc: ${utils.formatDateToBr(p.dt_nascimento)}</span>` : ''}
+                ${cpf ? `<i class="bi bi-person-vcard"></i> CPF: ${cpf}` : ''}
+                ${nasc ? `<span class="ms-2"><i class="bi bi-calendar"></i> Nasc: ${nasc}</span>` : ''}
               </div>
             </div>
             ${permAbrir ? `
-              <button class="btn btn-sm btn-outline-success fw-bold" onclick="window.conectaCore.abrirAtendimentoExistenteTriagem('${p.cd_pessoa_fisica}')">
-                <i class="bi bi-check-circle me-1"></i> Iniciar Triagem
+              <button class="btn btn-sm btn-outline-success fw-bold" onclick="window.conectaCore.prepararConfirmacaoTriagem('${btoa(encodeURIComponent(JSON.stringify({nome, cpf, nasc, cdPf})))}')">
+                <i class="bi bi-check-circle me-1"></i> Selecionar
               </button>
             ` : `
               <span class="badge bg-danger">Sem Permissão</span>
             `}
           </div>
         </div>
-      `).join('');
+      `}).join('');
       
       resultsContainer.innerHTML = html;
     } else {
@@ -1627,7 +1656,10 @@ window.conectaCore.abrirModalTriagemPA = function(nrSeq, cdFormatado, nomePrevis
   // Reseta estado UI do modal para Passo 1
   document.getElementById('triagem-modal-step-busca').classList.remove('d-none');
   document.getElementById('triagem-modal-step-cadastro').classList.add('d-none');
+  document.getElementById('triagem-modal-step-confirmacao').classList.add('d-none');
   document.getElementById('btn-triagem-salvar-paciente').classList.add('d-none');
+  const btnConfirm = document.getElementById('btn-triagem-confirmar-inicio');
+  if (btnConfirm) btnConfirm.classList.add('d-none');
   document.getElementById('form-triagem-novo-paciente').reset();
 
   const modal = new bootstrap.Modal(document.getElementById('modal-triagem-identificacao'));
@@ -1639,6 +1671,36 @@ window.conectaCore.abrirAtendimentoExistenteTriagem = async function(cdPessoaFis
   ui.setLoading(btn, true);
   await abrirAtendimentoTriagem(cdPessoaFisica);
   ui.setLoading(btn, false);
+};
+
+window.conectaCore.prepararConfirmacaoTriagem = function(base64Data) {
+  try {
+    const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
+    
+    // Mostra detalhes
+    document.getElementById('triagem-confirm-details').innerHTML = `
+      <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-fill"></i> ${utils.escapeHtml(paciente.nome)}</h5>
+      <ul class="list-unstyled mb-0">
+        <li class="mb-2"><strong>Cód. TASY:</strong> ${utils.escapeHtml(paciente.cdPf)}</li>
+        <li class="mb-2"><strong>CPF:</strong> ${paciente.cpf ? utils.escapeHtml(paciente.cpf) : '<span class="text-muted">Não informado</span>'}</li>
+        <li><strong>Nascimento:</strong> ${paciente.nasc ? utils.escapeHtml(paciente.nasc) : '<span class="text-muted">Não informado</span>'}</li>
+      </ul>
+    `;
+    
+    // Troca os steps
+    document.getElementById('triagem-modal-step-busca').classList.add('d-none');
+    document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
+    
+    // Prepara botão de confirmar
+    const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
+    if (btnConfirmar) {
+      btnConfirmar.classList.remove('d-none');
+      btnConfirmar.setAttribute('data-cdpf', paciente.cdPf);
+    }
+  } catch (err) {
+    console.error('Erro ao preparar confirmação:', err);
+    ui.showToast('Erro ao ler os dados do paciente.', 'error');
+  }
 };
 
 async function salvarENovoAtendimentoTriagem() {
@@ -1690,7 +1752,7 @@ async function abrirAtendimentoTriagem(cdPessoaFisica) {
       cd_pessoa_fisica: cdPessoaFisica,
       cd_estabelecimento: 1,
       cd_setor_atendimento: 39, // P.A. Geral
-      cd_procedencia: 23, // Recepcao Front
+      cd_procedencia: 1, // Recepcao Front
       ie_tipo_atendimento: 1, // Ambulatorial / PA
       ie_clinica: 1, 
       cd_motivo_atendimento: 1, 

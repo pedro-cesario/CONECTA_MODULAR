@@ -11,6 +11,7 @@ import * as auth from './core/auth.js';
 import * as router from './core/router.js';
 import * as draft from './core/draft.js';
 import { loadModule } from './core/moduleLoader.js';
+import { setupEvolucao } from './modules/evolucao/evolucao.js';
 
 // Expose global bridge for backwards compatibility
 window.conectaCore = {
@@ -354,6 +355,9 @@ async function initApp() {
   // 11. Startup Ping & Session Check
   await utils.loadVersion();
   await auth.checkSession();
+
+  setupEvolucao();
+
   window.dispatchEvent(new Event('conectaCore:ready'));
   console.log('[Conecta Assistencial] Sistema carregado e pronto com Lazy Loading!');
 }

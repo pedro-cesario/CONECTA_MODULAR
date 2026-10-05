@@ -68,5 +68,15 @@
     "source": "default",
     "version": 63,
     "evaluatedAt": "2026-10-05T16:26:27.982Z"
+  },
+  "conecta|pedro.cesario|f3465952-4e11-4473-a5bd-7e9d60244e58|est0243": {
+    "feature": "conecta",
+    "allowed": true,
+    "effect": "allow",
+    "policyId": "5b866d79-3ddc-42aa-a369-527d5548f614",
+    "policyLabel": "API_CONECTA_ASSISTENCIAL_ENF",
+    "source": "policy",
+    "version": 63,
+    "evaluatedAt": "2026-10-05T18:17:19.032Z"
   }
 }
