@@ -289,6 +289,8 @@ function exibirChamada(dados, animar = true) {
   painelState.ultimaChamada = dados;
 
   const numEl = document.getElementById('calling-ticket-number');
+  const patientNameEl = document.getElementById('calling-patient-name');
+  const ticketSubEl = document.getElementById('calling-ticket-sub');
   const targetEl = document.getElementById('calling-destination-target');
   const timeEl = document.getElementById('calling-time');
   const filaEl = document.getElementById('calling-fila-nome');
@@ -300,8 +302,33 @@ function exibirChamada(dados, animar = true) {
   const guiche = dados.ds_guiche || 'Guichê 01';
   const hr = dados.hr_chamada || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const fila = dados.ds_fila || 'Recepção';
+  const nomePaciente = dados.nm_paciente ? String(dados.nm_paciente).trim() : null;
 
-  if (numEl) numEl.textContent = cdCompleto;
+  if (nomePaciente) {
+    if (patientNameEl) {
+      patientNameEl.textContent = nomePaciente;
+      patientNameEl.classList.remove('d-none');
+    }
+    if (numEl) {
+      numEl.classList.add('d-none');
+    }
+    if (ticketSubEl) {
+      ticketSubEl.textContent = `SENHA: ${cdCompleto}`;
+      ticketSubEl.classList.remove('d-none');
+    }
+  } else {
+    if (patientNameEl) {
+      patientNameEl.classList.add('d-none');
+    }
+    if (numEl) {
+      numEl.textContent = cdCompleto;
+      numEl.classList.remove('d-none');
+    }
+    if (ticketSubEl) {
+      ticketSubEl.classList.add('d-none');
+    }
+  }
+
   if (targetEl) targetEl.textContent = guiche.toUpperCase();
   if (timeEl) timeEl.textContent = hr;
   if (filaEl) filaEl.textContent = fila;
@@ -335,11 +362,16 @@ function renderizarHistorico() {
   container.innerHTML = lista.map(item => {
     const numLimpo = String(item.cd_senha_gerada || item.cd_senha_completa || '').replace(/^[^\d]*/i, '').trim();
     const cdExibido = numLimpo ? `P ${numLimpo}` : (item.cd_senha_completa || item.cd_senha_gerada);
+    const nome = item.nm_paciente ? String(item.nm_paciente).trim() : null;
+
+    const mainDisplay = nome
+      ? `<div class="history-item-number" style="font-size: 1.15rem; font-family: inherit; font-weight: 800; line-height: 1.2;">${escapeHtml(nome)}</div><div class="text-primary small fw-bold mt-1" style="font-family: monospace;">Senha: ${cdExibido}</div>`
+      : `<div class="history-item-number">${cdExibido}</div>`;
 
     return `
       <div class="history-item-card">
-        <div>
-          <div class="history-item-number">${cdExibido}</div>
+        <div style="max-width: 65%;">
+          ${mainDisplay}
           <div class="history-item-target">${escapeHtml(item.ds_guiche || 'Guichê')}</div>
         </div>
         <div class="history-item-time">
@@ -476,9 +508,12 @@ function falarSenha(dados) {
       const numLimpo = String(dados.cd_senha_gerada || dados.cd_senha_completa || '').replace(/^[^\d]*/i, '').trim();
       let guiche = dados.ds_guiche || 'Guichê 01';
       guiche = guiche.replace(/0(\d)/g, '$1');
+      const nomePaciente = dados.nm_paciente ? String(dados.nm_paciente).trim() : null;
 
       // Frase natural com cadência humana
-      const frase = `Senha P, ${numLimpo}. ${guiche}.`;
+      const frase = nomePaciente 
+        ? `Paciente, ${nomePaciente}. Senha P, ${numLimpo}. ${guiche}.`
+        : `Senha P, ${numLimpo}. ${guiche}.`;
 
       const utterance = new SpeechSynthesisUtterance(frase);
       utterance.lang = 'pt-BR';

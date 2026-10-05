@@ -98,7 +98,8 @@ async function deletarModulo(req, res) {
 
 async function salvarPermissoesModulo(req, res) {
   try {
-    const { perfilId, modulos, permissoes, setoresPorModulo = {} } = req.body;
+    const { perfilId, modulos, permissoes, setoresPorModulo = {}, configRecepcao = null } = req.body;
+    console.log("[Admin] configRecepcao recebido:", configRecepcao);
 
     if (!perfilId || !Array.isArray(modulos)) {
       return res.status(400).json({ success: false, message: 'perfilId e modulos (array) são obrigatórios' });
@@ -116,11 +117,15 @@ async function salvarPermissoesModulo(req, res) {
       }
     }
 
-    await configCache.setProfileAccess(perfilId, modulos, permissoes || {}, setoresPorModulo);
+    await configCache.setProfileAccess(perfilId, modulos, permissoes || {}, setoresPorModulo, configRecepcao);
     res.json({ success: true, message: 'Permissões atualizadas com sucesso' });
   } catch (err) {
     console.error('[Admin] Erro ao salvar permissões:', err);
-    res.status(500).json({ success: false, message: err.message });
+    const isReadonly = err.message && err.message.includes('SQLITE_READONLY');
+    const publicMessage = isReadonly
+      ? 'Erro ao persistir permissões: base de dados de configuração em modo somente leitura (SQLITE_READONLY).'
+      : (err.message || 'Erro ao salvar permissões');
+    res.status(500).json({ success: false, message: publicMessage });
   }
 }
 
@@ -887,7 +892,17 @@ async function salvarRelatorioTasy(req, res) {
   try {
     const { id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem } = req.body;
     const item = await configCache.saveRelatorioTasy({ id, cd_relatorio, nr_sequencia, ds_titulo, icone, badge, ativo, ordem });
-    res.json({ success: true, data: item });
+    const { _cacheReloaded, ...data } = item;
+    if (_cacheReloaded === false) {
+      return res.status(200).json({
+        success: true,
+        partialSuccess: true,
+        cacheReloaded: false,
+        message: 'Alteração salva, mas os relatórios estão temporariamente indisponíveis.',
+        data
+      });
+    }
+    res.json({ success: true, data });
   } catch (err) {
     console.error('[Admin] Erro ao salvar relatório TASY:', err);
     res.status(500).json({ success: false, message: err.message });
@@ -897,7 +912,17 @@ async function salvarRelatorioTasy(req, res) {
 async function deletarRelatorioTasy(req, res) {
   try {
     const { id } = req.params;
-    await configCache.deleteRelatorioTasy(id);
+    const result = await configCache.deleteRelatorioTasy(id);
+    const { _cacheReloaded, ...data } = result;
+    if (_cacheReloaded === false) {
+      return res.status(200).json({
+        success: true,
+        partialSuccess: true,
+        cacheReloaded: false,
+        message: 'Relatório excluído, mas os relatórios estão temporariamente indisponíveis.',
+        data
+      });
+    }
     res.json({ success: true, data: { id } });
   } catch (err) {
     console.error('[Admin] Erro ao deletar relatório TASY:', err);
@@ -910,7 +935,17 @@ async function toggleRelatorioTasy(req, res) {
     const { id } = req.params;
     const { ativo } = req.body;
     const result = await configCache.toggleRelatorioTasy(id, ativo);
-    res.json({ success: true, data: result });
+    const { _cacheReloaded, ...data } = result;
+    if (_cacheReloaded === false) {
+      return res.status(200).json({
+        success: true,
+        partialSuccess: true,
+        cacheReloaded: false,
+        message: 'Status alterado, mas os relatórios estão temporariamente indisponíveis.',
+        data
+      });
+    }
+    res.json({ success: true, data });
   } catch (err) {
     console.error('[Admin] Erro ao alterar status do relatório TASY:', err);
     res.status(500).json({ success: false, message: err.message });

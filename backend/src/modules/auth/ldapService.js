@@ -11,7 +11,20 @@ function escapeLdapFilter(value) {
     .replace(/\//g, '\\2f');
 }
 
+let customCreateClient = null;
+
+function setCustomCreateClientForTest(fn) {
+  customCreateClient = fn;
+}
+
+function resetCustomCreateClientForTest() {
+  customCreateClient = null;
+}
+
 function createClient() {
+  if (customCreateClient) {
+    return customCreateClient();
+  }
   return new Promise((resolve, reject) => {
     try {
       const client = ldap.createClient({
@@ -212,13 +225,6 @@ function searchUserGroups(client, safeUsername, resolve, reject) {
             }
           });
           res2.on('end', () => {
-            
-            // Bypass temporário seguro de fallback caso ainda falhe o AD do hospital ou se o mock do admin for necessário
-            if (groups.length === 0 && (safeUsername.toLowerCase() === 'pedro.cesario' || safeUsername.toLowerCase() === 'pedro.davi')) {
-               groups.push('API_CONECTA_ADMIN');
-               groups.push('API_CONECTA_ASSISTENCIAL_ENF');
-            }
-            
             client.unbind(() => {});
             resolve(groups);
           });
@@ -365,4 +371,12 @@ function searchUsersInGroup(client, groupCn, resolve, reject) {
   });
 }
 
-module.exports = { authenticate, getUserGroups, getUserGroupsAsAdmin, getAllGroups, getUsersInGroupAsAdmin };
+module.exports = {
+  authenticate,
+  getUserGroups,
+  getUserGroupsAsAdmin,
+  getAllGroups,
+  getUsersInGroupAsAdmin,
+  setCustomCreateClientForTest,
+  resetCustomCreateClientForTest
+};

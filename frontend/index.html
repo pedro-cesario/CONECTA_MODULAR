@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/main.css?v=330" rel="stylesheet">
+  <link href="css/main.css?v=356" rel="stylesheet">
   <script>
     if (sessionStorage.getItem('session_active') === '1') {
       document.documentElement.classList.add('has-session');
@@ -813,8 +813,8 @@
           </button>
           <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
           <div>
-            <span class="livro-page-eyebrow">RECEPÇÃO & ACOLHIMENTO HOSPITALAR</span>
-            <h2>Painel de Recepção & Guichê</h2>
+            <span class="livro-page-eyebrow">RECEPÇÃO HOSPITALAR</span>
+            <h2>Recepção e Guiches</h2>
             <p>Acompanhamento de senhas em tempo real, chamador de guichê e prontuário TASY.</p>
           </div>
         </div>
@@ -828,11 +828,11 @@
       <div class="recepcao-sub-nav">
         <div class="recepcao-tab-pills">
           <button class="recepcao-tab-pill active" id="tab-btn-senhas" type="button" onclick="window.conectaCore.trocarAbaRecepcao('senhas')">
-            <i class="bi bi-ticket-perforated"></i> Fila de Espera (Guichê)
+            <i class="bi bi-ticket-perforated"></i> Fila de Espera
             <span class="badge" id="tab-badge-espera">0</span>
           </button>
           <button class="recepcao-tab-pill" id="tab-btn-historico" type="button" onclick="window.conectaCore.trocarAbaRecepcao('historico')">
-            <i class="bi bi-clock-history"></i> Atendimentos Realizados Hoje
+            <i class="bi bi-clock"></i> Atendimentos Hoje
             <span class="badge" id="tab-badge-hoje">0</span>
           </button>
         </div>
@@ -841,27 +841,27 @@
           <div class="d-flex align-items-center gap-1 bg-white border rounded px-2 py-1 shadow-sm">
             <i class="bi bi-display text-primary"></i>
             <span class="small fw-bold text-muted me-1">Meu Posto:</span>
-            <select class="form-select form-select-sm border-0 bg-transparent fw-bold py-0 ps-1 pe-4" id="recepcao-select-meu-guiche" style="width: auto; cursor: pointer;" title="Selecione o seu Guichê de Atendimento">
+            <select class="form-select form-select-sm border-0 bg-transparent fw-bold py-0 ps-1 pe-4 text-primary" id="recepcao-select-meu-guiche" style="width: auto; cursor: pointer;" title="Selecione o seu Guichê de Atendimento">
               <option value="Guichê 01">Guichê 01</option>
               <option value="Guichê 02">Guichê 02</option>
               <option value="Guichê 03">Guichê 03</option>
               <option value="Triagem P.A.">Triagem P.A.</option>
             </select>
           </div>
-          <a class="btn btn-sm btn-outline-info" id="btn-recepcao-abrir-tv" href="/painel.html?painel=recepcao_principal" target="_blank" title="Abrir Conecta TV em Nova Aba">
-            <i class="bi bi-tv"></i> Abrir Conecta TV
+          <a class="btn btn-sm btn-outline-info d-inline-flex align-items-center justify-content-center" id="btn-recepcao-abrir-tv" href="/painel.html?painel=recepcao_principal" target="_blank" title="Abrir Conecta TV em Nova Aba" style="width: 36px; height: 36px; border-radius: 8px;">
+            <i class="bi bi-tv"></i>
           </a>
-          <button class="btn btn-sm btn-outline-secondary" id="btn-recepcao-refresh" type="button" title="Atualizar fila">
-            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center" id="btn-recepcao-refresh" type="button" title="Atualizar fila" style="width: 36px; height: 36px; border-radius: 8px;">
+            <i class="bi bi-arrow-clockwise"></i>
           </button>
-          <button class="btn btn-sm btn-outline-warning" id="btn-recepcao-rechamar" type="button">
+          <button class="btn btn-sm btn-outline-warning fw-bold d-inline-flex align-items-center gap-1" id="btn-recepcao-rechamar" type="button" style="border-radius: 8px; font-size: 0.85rem; padding: 0.45rem 0.85rem;">
             <i class="bi bi-arrow-repeat"></i> Rechamar
           </button>
-          <button class="btn btn-sm btn-outline-primary" id="btn-recepcao-novo-avulso" type="button">
-            <i class="bi bi-person-plus"></i> Atendimento Avulso
+          <button class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1" id="btn-recepcao-novo-avulso" type="button" style="border-radius: 8px; font-size: 0.85rem; padding: 0.45rem 0.85rem;">
+            <i class="bi bi-person-plus"></i> Avulso
           </button>
-          <button class="btn btn-sm btn-primary fw-bold" id="btn-recepcao-chamar-proximo" type="button">
-            <i class="bi bi-megaphone-fill"></i> Chamar Próxima Senha
+          <button class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-2" id="btn-recepcao-chamar-proximo" type="button" style="background-color: var(--primary, #00387a); border-color: var(--primary, #00387a); border-radius: 8px; font-size: 0.85rem; padding: 0.45rem 1rem;">
+            <i class="bi bi-megaphone-fill"></i> Próxima Senha
           </button>
         </div>
       </div>
@@ -883,8 +883,8 @@
             <i class="bi bi-ticket-detailed-fill"></i>
           </div>
           <div>
-            <div class="recepcao-kpi-value" id="guiche-active-number" style="font-family: monospace;">---</div>
-            <div class="recepcao-kpi-label" id="guiche-active-type">Nenhuma senha chamada</div>
+            <div class="recepcao-kpi-value" id="guiche-active-number" style="font-family: inherit;">---</div>
+            <div class="recepcao-kpi-label" id="guiche-active-type">CHAMADO</div>
           </div>
         </div>
 
@@ -903,9 +903,12 @@
             <i class="bi bi-funnel-fill"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="recepcao-kpi-label mb-1">Filtrar por Fila</div>
-            <select id="recepcao-select-fila" class="form-select form-select-sm fw-bold">
-              <option value="">Carregando filas...</option>
+            <div class="recepcao-kpi-label">VISÃO DE FILAS</div>
+            <div class="fw-bold text-success d-flex align-items-center gap-1 mt-1" style="font-size: 0.92rem;">
+              <i class="bi bi-display"></i> Dinâmica por Perfil
+            </div>
+            <select id="recepcao-select-fila" class="d-none">
+              <option value="">Todas as Filas</option>
             </select>
           </div>
         </div>
@@ -931,8 +934,8 @@
         </div>
 
         <!-- Grade de Senhas em Espera -->
-        <div class="senhas-grid" id="recepcao-senhas-grid">
-          <div class="col-12 py-5 text-center text-muted">
+        <div class="recepcao-filas-board" id="recepcao-senhas-grid">
+          <div class="col-12 py-5 text-center text-muted w-100">
             <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
             <div>Carregando fila de senhas do TASY...</div>
           </div>
@@ -1537,7 +1540,32 @@
       <div class="dashboard-patients-grid" id="dashboard-pacientes-grid"></div>
     </section>
 
-    <section class="dashboard-workspace d-none" id="workspace-dashboard-internacao">
+    <section class="dashboard-workspace d-none" id="workspace-dashboard-internacao" style="padding: 0; overflow: hidden; background: #f8fafc;">
+      <div class="row m-0 h-100 w-100">
+        <!-- LADO ESQUERDO: TRIAGEM (GRADE DE SENHAS) -->
+        <div class="col-12 col-xl-5 col-xxl-4 p-0 d-flex flex-column border-end bg-white" style="height: 100%; overflow-y: auto;">
+          
+          <!-- Header Fixo Triagem -->
+          <div class="p-3 border-bottom d-flex justify-content-between align-items-center sticky-top shadow-sm" style="background: var(--primary); z-index: 10;">
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2 text-white">
+              <i class="bi bi-ticket-perforated text-warning"></i> Fila de Triagem (P.A.)
+            </h5>
+            <button class="btn btn-sm btn-outline-light fw-bold shadow-sm" id="btn-triagem-refresh" type="button" onclick="window.conectaCore.carregarSenhas(true)" title="Atualizar Fila">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+
+          <!-- Grade de Senhas (Espelho Recepção) -->
+          <div id="triagem-senhas-grid" class="flex-grow-1 p-3" style="background: var(--slate-50); overflow-y: auto;">
+             <div class="text-center text-muted mt-5">
+               <div class="spinner-border text-primary mb-3" role="status"></div>
+               <p class="fw-bold" style="opacity: 0.7;">Carregando fila de senhas...</p>
+             </div>
+          </div>
+        </div>
+
+        <!-- LADO DIREITO: DASHBOARD PA -->
+        <div class="col-12 col-xl-7 col-xxl-8 p-0 d-flex flex-column" style="height: 100%; overflow-y: auto;">
       <div class="dashboard-header-panel">
         <div class="dashboard-header-main">
           <div class="dashboard-brand">
@@ -1584,6 +1612,8 @@
       </div>
 
       <div class="dashboard-pa-patients-grid" id="dashboard-pa-patients-grid"></div>
+        </div>
+      </div>
     </section>
 
     <section class="livro-workspace livro-stitch-page d-none" id="workspace-livro">
@@ -1942,6 +1972,99 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="src/main.js?v=352"></script>
+  <script type="module" src="src/main.js?v=356"></script>
+
+    <!-- Modal Triagem: Identificação e Abertura -->
+    <div class="modal fade" id="modal-triagem-identificacao" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+          <div class="modal-header text-white border-0 d-flex justify-content-between align-items-center" style="background: var(--slate-800);">
+            <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-person-bounding-box text-warning"></i> Identificação do Paciente
+            </h5>
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-warning text-dark fs-6" id="triagem-modal-senha-badge">Senha ---</span>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+          </div>
+          
+          <div class="modal-body p-0 bg-light">
+            <!-- Passo 1: Busca -->
+            <div id="triagem-modal-step-busca" class="p-4">
+              <p class="text-muted fw-bold mb-3"><i class="bi bi-search me-1"></i> Busque o paciente no TASY ou cadastre um novo:</p>
+              
+              <div class="input-group input-group-lg shadow-sm mb-4">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0 fw-bold" id="triagem-modal-search-input" placeholder="Nome, CPF ou Prontuário...">
+              </div>
+
+              <div id="triagem-modal-search-results" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                <div class="text-center text-muted py-4">
+                  <i class="bi bi-keyboard" style="font-size: 2rem; opacity: 0.3;"></i>
+                  <p class="mt-2 small">Digite para pesquisar...</p>
+                </div>
+              </div>
+              
+              <div class="mt-4 text-center border-top pt-4">
+                <p class="text-muted small mb-2">Não encontrou o paciente?</p>
+                <button class="btn btn-outline-primary fw-bold px-4" id="btn-triagem-show-cadastro">
+                  <i class="bi bi-person-plus-fill me-1"></i> Cadastrar Novo Paciente (Básico)
+                </button>
+              </div>
+            </div>
+
+            <!-- Passo 2: Cadastro Novo -->
+            <div id="triagem-modal-step-cadastro" class="p-4 d-none">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary m-0"><i class="bi bi-person-plus"></i> Novo Cadastro</h6>
+                <button class="btn btn-sm btn-link text-muted" id="btn-triagem-back-busca"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
+              </div>
+              
+              <form id="form-triagem-novo-paciente">
+                <div class="mb-3">
+                  <label class="form-label fw-bold text-muted small mb-1">Nome Completo <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control fw-bold" id="triagem-form-nome" required>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">CPF</label>
+                    <input type="text" class="form-control" id="triagem-form-cpf" placeholder="000.000.000-00">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">Data Nasc. <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="triagem-form-nascimento" required>
+                  </div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">Sexo <span class="text-danger">*</span></label>
+                    <select class="form-select" id="triagem-form-sexo" required>
+                      <option value="">Selecione...</option>
+                      <option value="M">Masculino</option>
+                      <option value="F">Feminino</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">Telefone Celular</label>
+                    <input type="text" class="form-control" id="triagem-form-telefone" placeholder="(00) 00000-0000">
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label fw-bold text-muted small mb-1">Nome da Mãe</label>
+                  <input type="text" class="form-control" id="triagem-form-mae">
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <div class="modal-footer bg-white border-top d-flex justify-content-between">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-triagem-salvar-paciente">
+              <i class="bi bi-check-circle me-1"></i> Salvar e Iniciar Triagem
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html>

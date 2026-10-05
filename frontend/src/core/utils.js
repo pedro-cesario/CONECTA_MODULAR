@@ -135,13 +135,32 @@ export function getMonday(dateString) {
 
 export async function loadVersion() {
   try {
-    const result = await api.get('/api/ping');
+    const result = await api.get('/api/version');
+    
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      throw new Error('Resposta de versão incompatível (tipo inválido)');
+    }
+    
+    if (result.ok !== true) {
+      throw new Error('Resposta de versão incompatível (ok !== true)');
+    }
+    
+    if (typeof result.version !== 'string' || result.version.trim() === '') {
+      throw new Error('Resposta de versão incompatível (versão ausente)');
+    }
+    
+    if (typeof result.showTestBar !== 'boolean') {
+      throw new Error('Resposta de versão incompatível (showTestBar ausente)');
+    }
+
+    const version = result.version.trim();
+
     const el = document.getElementById('app-version-footer');
     const status = document.getElementById('system-status');
     const statusText = document.getElementById('system-status-text');
 
-    if (el && result.version) {
-      el.textContent = `v${result.version}`;
+    if (el) {
+      el.textContent = `v${version}`;
     }
 
     const testBar = document.getElementById('test-environment-bar');
@@ -151,7 +170,7 @@ export async function loadVersion() {
     }
 
     status?.classList.remove('offline');
-    if (statusText) statusText.textContent = 'Todos os serviços estão operando normalmente';
+    if (statusText) statusText.textContent = 'Aplicação disponível';
   } catch (e) {
     document.getElementById('system-status')?.classList.add('offline');
     const statusText = document.getElementById('system-status-text');

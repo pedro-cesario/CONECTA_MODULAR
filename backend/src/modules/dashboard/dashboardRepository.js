@@ -1,6 +1,16 @@
 const { getConnection } = require('../../core/database');
 const configCache = require('../../core/config/configCache');
 
+let customGetConnection = null;
+
+function setCustomGetConnectionForTest(fn) {
+  customGetConnection = fn;
+}
+
+function resetCustomGetConnectionForTest() {
+  customGetConnection = null;
+}
+
 function getInicioPlantao(turno) {
   const now = new Date();
   const hora = now.getHours();
@@ -39,7 +49,6 @@ async function findSetoresInternacao() {
 }
 
 async function findPacientesComStatus(cdSetor, turno) {
-  const conn = await getConnection();
   const setorNum = Number(cdSetor);
   const setorStr = String(cdSetor);
 
@@ -48,7 +57,9 @@ async function findPacientesComStatus(cdSetor, turno) {
   }
 
   const dtInicioPlantao = getInicioPlantao(turno);
+  const conn = customGetConnection ? await customGetConnection() : await getConnection();
 
+  let sqlError = null;
   try {
     const atendimentosResult = await conn.execute(
       `SELECT a.nr_atendimento
@@ -301,8 +312,20 @@ async function findPacientesComStatus(cdSetor, turno) {
         NEWS_RESULTADO: news ? news.resultado : null,
       };
     });
+  } catch (err) {
+    sqlError = err;
+    throw err;
   } finally {
-    await conn.close();
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error('[Dashboard] Erro ao fechar conexão Oracle:', closeErr.message);
+        if (!sqlError) {
+          throw closeErr;
+        }
+      }
+    }
   }
 }
 
@@ -387,8 +410,10 @@ async function findPacientesSalaObservacao() {
 
 async function findPacientesIndicacaoInternacao() {
   const conn = await getConnection();
+  let execErr = null;
+  let result;
   try {
-    const result = await conn.execute(
+    result = await conn.execute(
       `SELECT
          nr_atendimento,
          nome,
@@ -431,33 +456,39 @@ async function findPacientesIndicacaoInternacao() {
         ORDER BY nome`,
       []
     );
-    return result.rows || [];
+  } catch (err) {
+    execErr = err;
   } finally {
-    await conn.close();
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error('[Dashboard] Erro ao fechar conexão Oracle em findPacientesIndicacaoInternacao:', closeErr.message);
+        if (!execErr) throw closeErr;
+      }
+    }
+    if (execErr) throw execErr;
   }
+  return result ? result.rows || [] : [];
 }
 
 async function findPacientesDecididos() {
   const conn = await getConnection();
+  let execErr = null;
+  let result;
   try {
-    const result = await conn.execute(
+    result = await conn.execute(
       `SELECT
-         nr_atendimento,
-         nome,
-         nm_social,
-         unidade,
-         cd_convenio,
-         convenio,
-         cd_setor_atendimento,
-         setor,
-         nr_seq_templ,
-         decisao,
-         dt_decisao,
-         nm_usuario_decisao,
-         decidido_por,
-         motivo,
-         cd_setor_desejado,
-         ds_setor_desejado
+         ind.nr_atendimento,
+         ind.nome,
+         ind.nm_social,
+         ind.unidade,
+         ind.cd_convenio,
+         ind.convenio,
+         ind.cd_setor_atendimento,
+         ind.setor,
+         ind.nr_seq_templ,
+         g_psi.DS_OBSERVACAO AS decisao
        FROM (
          SELECT
            c.nr_atendimento,
@@ -468,66 +499,65 @@ async function findPacientesDecididos() {
            obter_desc_convenio(obter_convenio_atendimento(c.nr_atendimento)) AS convenio,
            c.cd_setor_atendimento,
            obter_desc_setor_atend(c.cd_setor_atendimento) AS setor,
-           ind.nr_seq_templ,
-            CASE WHEN h.NR_SEQ_MOTIVO_HISTORICO = 1 THEN 'aceito' ELSE 'recusado' END AS decisao,
-            TO_CHAR(h.DT_HISTORICO, 'YYYY-MM-DD HH24:MI:SS') AS dt_decisao,
-            h.NM_USUARIO AS nm_usuario_decisao,
-           obter_nome_usuario(h.NM_USUARIO) AS decidido_por,
-           h.DS_HISTORICO AS motivo,
-           g.cd_setor_desejado,
-           obter_desc_setor_atend(g.cd_setor_desejado) AS ds_setor_desejado,
-           ROW_NUMBER() OVER (PARTITION BY c.nr_atendimento ORDER BY h.DT_HISTORICO DESC) AS rn
-         FROM (
-           SELECT c2.nr_atendimento, a.nr_seq_templ
-           FROM ehr_registro a
-           INNER JOIN atendimento_paciente_v c2 ON c2.nr_atendimento = a.nr_atendimento
-           WHERE a.nr_seq_templ IN (100083, 100082)
-             AND a.dt_inativacao IS NULL
-             AND a.dt_liberacao IS NOT NULL
-             AND a.dt_liberacao >= SYSDATE - 1
-         ) ind
-         INNER JOIN atendimento_paciente_v c ON c.nr_atendimento = ind.nr_atendimento
+           a.nr_seq_templ,
+           ROW_NUMBER() OVER (PARTITION BY c.nr_atendimento ORDER BY a.dt_liberacao DESC) AS rn
+         FROM ehr_registro a
+         INNER JOIN atendimento_paciente_v c ON c.nr_atendimento = a.nr_atendimento
          INNER JOIN pessoa_fisica d ON c.cd_pessoa_fisica = d.cd_pessoa_fisica
-         INNER JOIN GESTAO_VAGA g ON g.NR_ATENDIMENTO = ind.nr_atendimento AND g.IE_TIPO_VAGA = 'PSI'
-         INNER JOIN GESTAO_VAGA_HIST h ON h.NR_SEQ_GESTAO = g.NR_SEQUENCIA AND h.NR_SEQ_MOTIVO_HISTORICO IN (1, 2)
-       )
-       WHERE rn = 1
-       ORDER BY nome`,
+          WHERE a.nr_seq_templ IN (100083, 100082)
+            AND a.dt_inativacao IS NULL
+            AND a.dt_liberacao IS NOT NULL
+            AND a.dt_liberacao >= SYSDATE - 2
+        ) ind
+       INNER JOIN (
+         SELECT
+           g.NR_ATENDIMENTO,
+           g.NR_SEQUENCIA,
+           h.DS_OBSERVACAO,
+           ROW_NUMBER() OVER (PARTITION BY g.NR_ATENDIMENTO ORDER BY h.DT_ATUALIZACAO DESC) AS rn
+         FROM GESTAO_VAGA g
+         INNER JOIN GESTAO_VAGA_HIST h ON h.NR_SEQ_GESTAO = g.NR_SEQUENCIA
+         WHERE g.IE_TIPO_VAGA = 'PSI'
+           AND h.NR_SEQ_MOTIVO_HISTORICO IN (1, 2)
+       ) g_psi ON g_psi.NR_ATENDIMENTO = ind.nr_atendimento AND g_psi.rn = 1
+       WHERE ind.rn = 1
+       ORDER BY ind.nome`,
       []
     );
-    return result.rows || [];
+  } catch (err) {
+    execErr = err;
   } finally {
-    await conn.close();
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error('[Dashboard] Erro ao fechar conexão Oracle em findPacientesDecididos:', closeErr.message);
+        if (!execErr) throw closeErr;
+      }
+    }
+    if (execErr) throw execErr;
   }
+  return result ? result.rows || [] : [];
 }
 
 async function findDetalhesInternacao(nrAtendimento, nrSeqTempl) {
+  const placeholders = nrSeqTempl ? String(nrSeqTempl).split(',').map(() => '?').join(',') : '';
+  const binds = nrSeqTempl ? [nrAtendimento, ...String(nrSeqTempl).split(',')] : [nrAtendimento];
+
   const conn = await getConnection();
+  let execErr = null;
+  let result;
   try {
-    let conteudos;
-    if (nrSeqTempl == 100082) {
-      conteudos = [289669, 289670];
-    } else {
-      conteudos = [289673, 289674, 289675];
-    }
-
-    const placeholders = conteudos.map((_, i) => `:c${i}`).join(', ');
-    const binds = { nr_atendimento: nrAtendimento };
-    conteudos.forEach((c, i) => { binds[`c${i}`] = c; });
-
-    const result = await conn.execute(
-      `SELECT ds_resultado, nr_seq_temp_conteudo
+    result = await conn.execute(
+      `SELECT *
        FROM (
          SELECT
-           a.ds_resultado,
            a.nr_seq_temp_conteudo,
-           ROW_NUMBER() OVER (
-             PARTITION BY a.nr_seq_temp_conteudo
-             ORDER BY a.dt_atualizacao DESC
-           ) AS rn
+           b.ds_resultado,
+           ROW_NUMBER() OVER (PARTITION BY a.nr_seq_temp_conteudo ORDER BY b.dt_atualizacao DESC) AS rn
          FROM
-           ehr_reg_elemento a
-           JOIN ehr_reg_template b ON a.nr_seq_reg_template = b.nr_sequencia
+           tpl_guia_conteudo_v a
+           JOIN ehr_registro_conteudo b ON a.nr_seq_temp_conteudo = b.nr_seq_temp_conteudo
            JOIN ehr_registro c ON b.nr_seq_reg = c.nr_sequencia
          WHERE
            c.nr_atendimento = :nr_atendimento
@@ -538,10 +568,20 @@ async function findDetalhesInternacao(nrAtendimento, nrSeqTempl) {
        WHERE rn = 1`,
       binds
     );
-    return result.rows || [];
+  } catch (err) {
+    execErr = err;
   } finally {
-    await conn.close();
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error('[Dashboard] Erro ao fechar conexão Oracle em findDetalhesInternacao:', closeErr.message);
+        if (!execErr) throw closeErr;
+      }
+    }
+    if (execErr) throw execErr;
   }
+  return result ? result.rows || [] : [];
 }
 
 async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisica, cdSetorDesejado, cdConvenio) {
@@ -631,110 +671,94 @@ async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisic
     await conn.commit();
     let warnings = [];
 
-    // Tenta transferir a senha se houver configuração de fila destino e a decisão for Aceitar ('O')
+    // Gera nova senha na fila de internação indicada na configuração (ou fallback fila 18)
     try {
       const configPA = configCache.getDashboardPAConfig();
-      if (configPA && configPA.nr_sequencia_fila) {
-        const nrFilaDestino = configPA.nr_sequencia_fila;
+      const nrFilaDestino = (configPA && configPA.nr_sequencia_fila) ? Number(configPA.nr_sequencia_fila) : 18;
 
-        // Busca se existe senha vinculada ativa para o atendimento
-        const pwQuery = await conn.execute(
-          `SELECT
-             ap.nr_seq_pac_senha_fila,
-             psf.cd_senha_gerada,
-             psf.nr_seq_fila_senha as nr_fila_origem,
-             psf.ds_maquina_chamada as ds_maquina,
-             (SELECT h.ds_maquina_chamada
-              FROM (
-                SELECT h2.ds_maquina_chamada
-                FROM paciente_senha_fila_hist h2
-                WHERE h2.nr_seq_senha = ap.nr_seq_pac_senha_fila
-                  AND h2.ds_maquina_chamada IS NOT NULL
-                  AND h2.dt_atualizacao >= SYSDATE - 1
-                ORDER BY h2.dt_atualizacao DESC
-              ) h
-              WHERE ROWNUM = 1) as ds_maquina_hist
+      if (nrFilaDestino) {
+        // 1. Busca dados do paciente e senha anterior vinculada ao atendimento
+        const pacRes = await conn.execute(
+          `SELECT 
+             ap.cd_pessoa_fisica,
+             pf.nm_pessoa_fisica,
+             pf.nm_social,
+             ap.nr_seq_pac_senha_fila
            FROM atendimento_paciente ap
-           LEFT JOIN paciente_senha_fila psf ON psf.nr_sequencia = ap.nr_seq_pac_senha_fila
-           WHERE ap.nr_atendimento = :nr_atendimento
-             AND psf.dt_inutilizacao IS NULL`,
+           LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = ap.cd_pessoa_fisica
+           WHERE ap.nr_atendimento = :nr_atendimento`,
           { nr_atendimento: nrAtendimento }
         );
 
-        if (pwQuery.rows.length > 0 && pwQuery.rows[0].NR_SEQ_PAC_SENHA_FILA) {
-          const pwd = pwQuery.rows[0];
+        const pacData = pacRes.rows && pacRes.rows.length > 0 ? pacRes.rows[0] : null;
+        const cdPFPaciente = pacData?.CD_PESSOA_FISICA || cdPessoaFisica || null;
+        const nmPaciente = pacData?.NM_SOCIAL || pacData?.NM_PESSOA_FISICA || null;
 
-          if (pwd.NR_FILA_ORIGEM !== nrFilaDestino) {
-            const dsMaquina = pwd.DS_MAQUINA || pwd.DS_MAQUINA_HIST || '';
-
+        // 2. Se houver senha anterior ativa, encerra para evitar duplicidade ou retenção em outra fila
+        if (pacData && pacData.NR_SEQ_PAC_SENHA_FILA) {
+          try {
             await conn.execute(
-              `UPDATE paciente_senha_fila 
-               SET nr_seq_fila_senha = :nr_fila_destino,
-                   dt_fim_atendimento = NULL
-               WHERE nr_sequencia = :nr_seq_senha`,
+              `UPDATE paciente_senha_fila
+               SET dt_fim_atendimento = SYSDATE,
+                   dt_atualizacao = SYSDATE,
+                   nm_usuario = :nm_usuario
+               WHERE nr_sequencia = :nr_seq_antiga AND dt_fim_atendimento IS NULL`,
               {
-                nr_fila_destino: nrFilaDestino,
-                nr_seq_senha: pwd.NR_SEQ_PAC_SENHA_FILA
+                nr_seq_antiga: pacData.NR_SEQ_PAC_SENHA_FILA,
+                nm_usuario: nmUsuario
               }
             );
-
-            await conn.execute(
-              `UPDATE paciente_senha_fila 
-               SET dt_primeira_chamada = SYSDATE,
-                   dt_chamada = SYSDATE,
-                   ds_maquina_chamada = :ds_maquina
-               WHERE nr_sequencia = :nr_seq_senha`,
-              {
-                nr_seq_senha: pwd.NR_SEQ_PAC_SENHA_FILA,
-                ds_maquina: dsMaquina
-              }
-            );
-
-            await conn.commit();
+          } catch (oldErr) {
+            console.warn('[Dashboard P.A.] Aviso ao finalizar senha anterior:', oldErr.message);
           }
-        } else {
-          // Paciente deu entrada sem senha vinculada: gera automaticamente na fila destino
-          const seqPwdRes = await conn.execute(`SELECT PACIENTE_SENHA_FILA_SEQ.NEXTVAL AS id FROM dual`);
-          const newSeqPwd = seqPwdRes.rows[0].ID;
-
-          const maxPwdRes = await conn.execute(
-            `SELECT NVL(MAX(cd_senha_gerada), 0) + 1 AS proxima FROM paciente_senha_fila WHERE nr_seq_fila_senha = :fila AND TRUNC(dt_geracao_senha) = TRUNC(SYSDATE)`,
-            { fila: nrFilaDestino }
-          );
-          const proximaSenha = maxPwdRes.rows[0].PROXIMA;
-
-          await conn.execute(
-            `INSERT INTO paciente_senha_fila (
-               nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
-               cd_senha_gerada, dt_geracao_senha, nr_seq_fila_senha, nr_seq_fila_senha_origem,
-               dt_chamada, dt_primeira_chamada, cd_estabelecimento, cd_pessoa_fisica, nr_prioridade
-             ) VALUES (
-               :seq, SYSDATE, :usuario, SYSDATE, :usuario,
-               :cd_senha, SYSDATE, :fila, :fila,
-               SYSDATE, SYSDATE, 1, :cd_pf, 2
-             )`,
-            {
-              seq: newSeqPwd,
-              usuario: nmUsuario,
-              cd_senha: proximaSenha,
-              fila: nrFilaDestino,
-              cd_pf: cdPessoaFisica ? String(cdPessoaFisica) : null
-            }
-          );
-
-          await conn.execute(
-            `UPDATE atendimento_paciente SET nr_seq_pac_senha_fila = :seq WHERE nr_atendimento = :nr`,
-            { seq: newSeqPwd, nr: nrAtendimento }
-          );
-
-          await conn.commit();
         }
+
+        // 3. Gera nova sequência e próximo número diário da fila destino
+        const seqPwdRes = await conn.execute(`SELECT PACIENTE_SENHA_FILA_SEQ.NEXTVAL AS id FROM dual`);
+        const newSeqPwd = seqPwdRes.rows[0].ID;
+
+        const maxPwdRes = await conn.execute(
+          `SELECT NVL(MAX(cd_senha_gerada), 0) + 1 AS proxima FROM paciente_senha_fila WHERE nr_seq_fila_senha = :fila AND TRUNC(dt_geracao_senha) = TRUNC(SYSDATE)`,
+          { fila: nrFilaDestino }
+        );
+        const proximaSenha = maxPwdRes.rows[0].PROXIMA;
+
+        // 4. Insere novo ticket na fila com vínculo do paciente
+        await conn.execute(
+          `INSERT INTO paciente_senha_fila (
+             nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
+             cd_senha_gerada, dt_geracao_senha, nr_seq_fila_senha, nr_seq_fila_senha_origem,
+             cd_estabelecimento, cd_pessoa_fisica, nm_paciente, nr_prioridade,
+             dt_chamada, dt_primeira_chamada, dt_fim_atendimento, dt_inutilizacao, dt_utilizacao
+           ) VALUES (
+             :seq, SYSDATE, :usuario, SYSDATE, :usuario,
+             :cd_senha, SYSDATE, :fila, :fila,
+             1, :cd_pf, :nm_paciente, 2,
+             NULL, NULL, NULL, NULL, NULL
+           )`,
+          {
+            seq: newSeqPwd,
+            usuario: nmUsuario,
+            cd_senha: proximaSenha,
+            fila: nrFilaDestino,
+            cd_pf: cdPFPaciente ? String(cdPFPaciente) : null,
+            nm_paciente: nmPaciente ? String(nmPaciente).substring(0, 100) : null
+          }
+        );
+
+        // 5. Vincula a nova senha gerada ao prontuário do paciente no TASY
+        await conn.execute(
+          `UPDATE atendimento_paciente SET nr_seq_pac_senha_fila = :seq WHERE nr_atendimento = :nr`,
+          { seq: newSeqPwd, nr: nrAtendimento }
+        );
+
+        await conn.commit();
       }
     } catch (pwErr) {
-      console.error('[Dashboard P.A.] Erro ao transferir senha da vaga aceita:', pwErr.message);
+      console.error('[Dashboard P.A.] Erro ao gerar nova senha da internação:', pwErr.message);
       warnings.push({
-        code: 'SENHA_TRANSFERENCIA_FALHOU',
-        message: 'A internação foi aceita, mas ocorreu uma falha ao tentar transferir a senha no TASY.'
+        code: 'SENHA_GERACAO_FALHOU',
+        message: 'A internação foi aceita, mas ocorreu uma falha ao gerar a nova senha no TASY.'
       });
     }
 
@@ -907,5 +931,7 @@ module.exports = {
   findPacientesDecididos,
   findDetalhesInternacao,
   aceitarInternacao,
-  recusarInternacao
+  recusarInternacao,
+  setCustomGetConnectionForTest,
+  resetCustomGetConnectionForTest
 };

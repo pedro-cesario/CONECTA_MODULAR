@@ -277,11 +277,38 @@ body.painel-tv-body {
 
 .calling-ticket-display {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin: 0.5rem 0;
   flex: 1;
   min-height: 0;
+}
+
+.calling-patient-name {
+  font-size: clamp(3.2rem, 5.5vw, 5.5rem);
+  font-weight: 900;
+  color: var(--tv-primary-navy);
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 95%;
+  word-break: break-word;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), color 0.6s ease;
+}
+
+.calling-ticket-sub {
+  font-size: clamp(1.8rem, 2.8vw, 3rem);
+  font-weight: 800;
+  font-family: monospace;
+  color: #0284c7;
+  letter-spacing: 2px;
+  margin-top: 0.75rem;
+  background: rgba(2, 132, 199, 0.08);
+  border: 2px solid rgba(2, 132, 199, 0.25);
+  border-radius: 999px;
+  padding: 0.35rem 1.75rem;
+  display: inline-block;
 }
 
 .calling-ticket-number {
@@ -370,6 +397,12 @@ body.painel-tv-body {
   transform: scale(1.2);
   color: #002b66;
   text-shadow: 0 12px 35px rgba(2, 132, 199, 0.3);
+}
+
+.painel-calling-card.calling-takeover .calling-patient-name {
+  transform: scale(1.08);
+  color: #002b66;
+  text-shadow: 0 8px 25px rgba(2, 132, 199, 0.25);
 }
 
 .painel-calling-card.calling-takeover .calling-destination-box {

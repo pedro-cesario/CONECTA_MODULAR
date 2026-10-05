@@ -1,4 +1,5 @@
 const dashboardRepository = require('.//dashboardRepository');
+const { NotFoundError } = require('../../core/errors/AppError');
 
 const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 30000);
 const DASHBOARD_CACHE_STALE_MS = Number(process.env.DASHBOARD_CACHE_STALE_MS || 300000);
@@ -320,9 +321,7 @@ async function listarDetalhesInternacao(nrAtendimento) {
     const decididos = await dashboardRepository.findPacientesDecididos();
     decidido = decididos.find(r => String(r.NR_ATENDIMENTO) === String(nrAtendimento));
     if (!decidido) {
-      const err = new Error('Paciente não encontrado na lista de indicação de internação');
-      err.status = 404;
-      throw err;
+      throw new NotFoundError('Paciente não encontrado na lista de indicação de internação');
     }
     paciente = decidido;
   }

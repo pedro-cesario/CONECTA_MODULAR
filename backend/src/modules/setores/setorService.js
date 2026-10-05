@@ -1,6 +1,9 @@
 const setorRepository = require('.//setorRepository');
 const { getPerfisFromGroups } = require('../../core/config/especialidades');
 const { getConnection } = require('../../core/database');
+let _getConnection = getConnection;
+function setCustomGetConnectionForTest(fn) { _getConnection = fn; }
+function resetCustomGetConnectionForTest() { _getConnection = getConnection; }
 const oracledb = require('oracledb');
 
 async function listarSetores() {
@@ -39,7 +42,12 @@ async function listarSetoresLivro(usuario, dataPlantao, turno) {
 }
 
 async function buscarSetoresComEscalaLiberada(dataPlantao, turno) {
-  const conn = await getConnection();
+  if (!dataPlantao) {
+    return [];
+  }
+
+  const conn = await _getConnection();
+  let execErr = null;
   try {
     const result = await conn.execute(
       `SELECT DISTINCT cd_setor_atendimento
@@ -56,8 +64,17 @@ async function buscarSetoresComEscalaLiberada(dataPlantao, turno) {
       setores.push(Number(row.CD_SETOR_ATENDIMENTO));
     }
     return setores;
+  } catch (err) {
+    execErr = err;
   } finally {
-    await conn.close();
+    try {
+      await conn.close();
+    } catch (closeErr) {
+      const logger = require('../../core/utils/logger');
+      logger.error('[Setores] Erro ao fechar conexão em buscarSetoresComEscalaLiberada:', closeErr);
+      if (!execErr) throw closeErr;
+    }
+    if (execErr) throw execErr;
   }
 }
 
@@ -84,4 +101,7 @@ async function listarSetoresInternacao() {
   return uniqueResult;
 }
 
-module.exports = { listarSetores, listarSetoresLivro, listarSetoresInternacao };
+module.exports = {
+  buscarSetoresComEscalaLiberada,
+  setCustomGetConnectionForTest,
+  resetCustomGetConnectionForTest, listarSetores, listarSetoresLivro, listarSetoresInternacao };

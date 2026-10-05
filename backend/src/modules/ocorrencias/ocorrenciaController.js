@@ -139,7 +139,10 @@ async function listarPassagensAnteriores(req, res) {
     }
 
     const perfilAtivo = getPerfilAtivo(usuario);
-    const cdPerfil = configCache.getPerfilIdTasy(perfilAtivo);
+    const cdPerfil = Number(usuario.cd_perfis?.[perfilAtivo]);
+    if (!Number.isInteger(cdPerfil)) {
+      return res.status(400).json({ success: false, message: 'Perfil não mapeado no banco local' });
+    }
     const setoresPermitidos = configCache.getSetoresPermitidos(perfilAtivo, 'passagem');
     const { setor, dtInicio, dtFim } = req.query || {};
     const resultado = await ocorrenciaService.listarPassagensAnteriores(cdPerfil, setoresPermitidos, { setor, dtInicio, dtFim });
@@ -236,6 +239,18 @@ async function salvarEscalaTecnica(req, res) {
       return res.status(403).json({ success: false, message: 'Sem permissão para editar/publicar escala' });
     }
 
+    const cdSetor = Number(req.body?.cd_setor_atendimento);
+    if (!Number.isInteger(cdSetor)) {
+      return res.status(400).json({ success: false, message: 'cd_setor_atendimento inválido' });
+    }
+
+    const perfilAtivo = getPerfilAtivo(usuario);
+    const podeLivro = temLivro && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+    const podeEscala = temEscalaEdit && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+    if (!podeLivro && !podeEscala) {
+      return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
+    }
+
     const resultado = await ocorrenciaService.salvarEscalaTecnica(req.body, usuario);
     return res.json({ success: true, data: resultado });
   } catch (err) {
@@ -255,9 +270,39 @@ async function obterEscalaTecnica(req, res) {
     }
 
     const data = req.query.data || null;
-    const cdSetor = req.query.cd_setor || null;
+    const cdSetor = req.query.cd_setor !== undefined ? Number(req.query.cd_setor) : null;
     const turno = req.query.turno || null;
-    const resultado = await ocorrenciaService.obterEscalaTecnica(data, cdSetor, turno);
+
+    if (req.query.cd_setor !== undefined) {
+      if (!Number.isInteger(cdSetor)) {
+        return res.status(400).json({ success: false, message: 'cd_setor inválido' });
+      }
+      const perfilAtivo = getPerfilAtivo(usuario);
+      const podeLivro = validarModuloPermissao(usuario, 'livro') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+      const podeEscala = validarModuloPermissao(usuario, 'escala') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+      if (!podeLivro && !podeEscala) {
+        return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
+      }
+    }
+
+    let resultado = await ocorrenciaService.obterEscalaTecnica(data, cdSetor, turno);
+
+    if (cdSetor === null && resultado) {
+      const perfilAtivo = getPerfilAtivo(usuario);
+      if (perfilAtivo) {
+        const setoresPermitidos = new Set([
+          ...(validarModuloPermissao(usuario, 'livro') ? configCache.getSetoresPermitidos(perfilAtivo, 'livro') : []),
+          ...(validarModuloPermissao(usuario, 'escala') ? configCache.getSetoresPermitidos(perfilAtivo, 'escala') : [])
+        ]);
+        const adminGranted = configCache.perfilTemPermissao(perfilAtivo, 'livro', 'admin') || configCache.perfilTemPermissao(perfilAtivo, 'escala', 'admin');
+        if (!adminGranted) {
+          if (!setoresPermitidos.has(Number(resultado.cd_setor_atendimento))) {
+            resultado = null;
+          }
+        }
+      }
+    }
+
     return res.json({ success: true, data: resultado });
   } catch (err) {
     console.error('[Escala Técnica] Erro ao consultar:', err.message);
@@ -284,14 +329,14 @@ async function listarTodasEscalasLiberadas(req, res) {
 
     if (perfilAtivo) {
       const configCache = require('../../core/config/configCache');
-      const setoresLivro = configCache.getSetoresPermitidos(perfilAtivo, 'livro');
+      const setoresPermitidos = new Set([
+        ...(validarModuloPermissao(usuario, 'livro') ? configCache.getSetoresPermitidos(perfilAtivo, 'livro') : []),
+        ...(validarModuloPermissao(usuario, 'escala') ? configCache.getSetoresPermitidos(perfilAtivo, 'escala') : [])
+      ]);
+      const adminGranted = configCache.perfilTemPermissao(perfilAtivo, 'livro', 'admin') || configCache.perfilTemPermissao(perfilAtivo, 'escala', 'admin');
       
-      const adminGranted = configCache.perfilTemPermissao(perfilAtivo, 'livro', 'admin');
-      
-      if (!adminGranted && setoresLivro.length > 0) {
-         resultado = resultado.filter(escala => setoresLivro.includes(Number(escala.cd_setor_atendimento)));
-      } else if (!adminGranted && setoresLivro.length === 0) {
-         resultado = [];
+      if (!adminGranted) {
+        resultado = resultado.filter(escala => setoresPermitidos.has(Number(escala.cd_setor_atendimento)));
       }
     }
 

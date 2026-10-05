@@ -8,12 +8,40 @@ const logger = require('../../core/utils/logger');
  * Módulo de Recepção & Acolhimento — Camada de Serviço
  */
 
-async function listarFilasSenhas() {
-  return recepcaoRepository.listarFilasSenhas();
+async function listarFilasSenhas(perfilAtivo) {
+  const todasFilas = await recepcaoRepository.listarFilasSenhas();
+  let filasPermitidas = [];
+  let modo_visualizacao = 'SENHA';
+
+  if (perfilAtivo) {
+    const perfil = configCache.getPerfilById(perfilAtivo);
+    if (perfil && perfil.config_recepcao) {
+      filasPermitidas = perfil.config_recepcao.filasPermitidas || [];
+      modo_visualizacao = perfil.config_recepcao.modoVisualizacao || 'SENHA';
+    }
+  }
+
+  const data = filasPermitidas.length > 0
+    ? todasFilas.filter(f => filasPermitidas.includes(f.NR_SEQUENCIA || f.nr_sequencia))
+    : todasFilas;
+
+  return { data, modo_visualizacao };
 }
 
-async function listarSenhasEspera(nrSeqFila) {
-  return recepcaoRepository.listarSenhasEspera(nrSeqFila);
+async function listarSenhasEspera(nrSeqFila, perfilAtivo) {
+  let senhas = await recepcaoRepository.listarSenhasEspera(nrSeqFila);
+
+  if (perfilAtivo) {
+    const perfil = configCache.getPerfilById(perfilAtivo);
+    if (perfil && perfil.config_recepcao && Array.isArray(perfil.config_recepcao.filasPermitidas)) {
+      const permitidas = perfil.config_recepcao.filasPermitidas;
+      if (permitidas.length > 0) {
+        senhas = senhas.filter(s => permitidas.includes(s.nr_seq_fila_senha || s.NR_SEQ_FILA_SENHA));
+      }
+    }
+  }
+
+  return senhas;
 }
 
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
@@ -36,6 +64,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     cd_senha_gerada: result.cd_senha_gerada,
     cd_senha_completa: `P ${result.cd_senha_gerada}`,
     cd_senha_pura: `P${result.cd_senha_gerada}`,
+    nm_paciente: result.nm_paciente || null,
     ds_guiche: guicheFinal,
     ds_fila: result.ds_fila || 'Recepção',
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -69,6 +98,7 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     cd_senha_gerada: result.cd_senha_gerada,
     cd_senha_completa: `P ${result.cd_senha_gerada}`,
     cd_senha_pura: `P${result.cd_senha_gerada}`,
+    nm_paciente: result.nm_paciente || null,
     ds_guiche: guicheFinal,
     ds_fila: result.ds_fila || 'Recepção',
     hr_chamada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -199,7 +229,6 @@ async function anexarDocumentoGED(dados, nmUsuario, userAuth = null) {
   const fileName = dados.ds_titulo || dados.ds_arquivo || 'documento.pdf';
   const ext = (fileName.split('.').pop() || 'pdf').toLowerCase();
   const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
-
   if (!ALLOWED_EXTS.includes(ext)) {
     const err = new Error(`Formato de arquivo ".${ext}" não permitido. Extensões aceitas: ${ALLOWED_EXTS.join(', ')}`);
     err.status = 400;
@@ -254,10 +283,36 @@ async function verificarDuplicidadePaciente(params) {
   return recepcaoRepository.verificarDuplicidadePaciente(params);
 }
 
+async function inutilizarSenha(nrSequencia, motivoId, nmUsuario, maquina) {
+  return recepcaoRepository.inutilizarSenha(nrSequencia, motivoId, nmUsuario, maquina);
+}
+
+async function listarMotivosInutilizacao() {
+  return recepcaoRepository.listarMotivosInutilizacao();
+}
+async function atualizarAtendimento(nrAtendimento, dados, nmUsuario) {
+  // Pass to repository
+  return recepcaoRepository.atualizarAtendimento(nrAtendimento, dados, nmUsuario);
+}
+async function obterDocumentoGED(nrSequencia) {
+  return recepcaoRepository.obterDocumentoGED(nrSequencia);
+}
+
+async function inativarDocumentoGED(nrSequencia, dsJustificativa, nmUsuario) {
+  if (!dsJustificativa || dsJustificativa.trim() === '') {
+    const err = new Error('Justificativa é obrigatória para excluir documento.');
+    err.status = 400;
+    throw err;
+  }
+  return recepcaoRepository.inativarDocumentoGED(nrSequencia, dsJustificativa, nmUsuario);
+}
+
 module.exports = {
   listarFilasSenhas,
   listarSenhasEspera,
   chamarProximaSenha,
+  inutilizarSenha,
+  listarMotivosInutilizacao,
   rechamarSenha,
   buscarPessoas,
   obterPessoaCompleta,
@@ -269,9 +324,18 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  atualizarAtendimento,
   listarAtendimentosHoje,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,
   listarDocumentosGED,
-  anexarDocumentoGED
+  anexarDocumentoGED,
+  obterDocumentoGED,
+  inativarDocumentoGED,
+  cancelarAtendimento
 };
+
+async function cancelarAtendimento(nrAtendimento, usuario, motivo) {
+  if (!nrAtendimento) throw new Error('Número do atendimento é obrigatório para cancelamento.');
+  return recepcaoRepository.cancelarAtendimento(nrAtendimento, usuario, motivo);
+}

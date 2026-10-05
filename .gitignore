@@ -7,4 +7,20 @@ data/
 .DS_Store
 Thumbs.db
 
+# Scratch and temporary scripts
+fix-*.js
+fix_*.js
+patch_*.js
+patch_*.sh
+*.patch
+test-*.js
+testApi.js
+testColumns.js
+testOcorrencia.js
+testService.js
+test_frontend.js
+printPerfis.js
+backend/test_db.js
+backend/test/test_mock.js
+
 

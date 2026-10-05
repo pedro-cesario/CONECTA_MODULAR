@@ -1,5 +1,6 @@
-const escalaAtivaService = require('.//escalaAtivaService');
-const { validarPerfil, validarModuloPermissao } = require('../../core/utils/acesso');
+const escalaAtivaService = require('./escalaAtivaService');
+const { validarPerfil, validarModuloPermissao, getPerfilAtivo } = require('../../core/utils/acesso');
+const configCache = require('../../core/config/configCache');
 
 async function loadEscalaAtiva(req, res) {
   try {
@@ -13,6 +14,13 @@ async function loadEscalaAtiva(req, res) {
 
     if (!Number.isInteger(cdSetor) || !dtPlantao) {
       return res.status(400).json({ success: false, message: 'Parâmetros cd_setor e dt_plantao são obrigatórios' });
+    }
+
+    const perfilAtivo = getPerfilAtivo(usuario);
+    const podeLivro = validarModuloPermissao(usuario, 'livro') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+    const podeEscala = validarModuloPermissao(usuario, 'escala') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+    if (!podeLivro && !podeEscala) {
+      return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
     }
 
     const data = await escalaAtivaService.obterEscalaAtiva(cdSetor, dtPlantao, turno);
@@ -57,8 +65,16 @@ async function saveEscalaAtiva(req, res) {
     }
 
     const { cd_setor_atendimento, data_plantao, turno } = req.body;
-    if (!Number.isInteger(Number(cd_setor_atendimento)) || !data_plantao || !turno) {
+    const cdSetor = Number(cd_setor_atendimento);
+    if (!Number.isInteger(cdSetor) || !data_plantao || !turno) {
       return res.status(400).json({ success: false, message: 'Dados incompletos' });
+    }
+
+    const perfilAtivo = getPerfilAtivo(usuario);
+    const podeLivro = temLivro && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+    const podeEscala = temEscalaEdit && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+    if (!podeLivro && !podeEscala) {
+      return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
     }
 
     const result = await escalaAtivaService.salvarEscalaAtiva(req.body, usuario.nm_usuario);
@@ -82,6 +98,13 @@ async function listarVersoes(req, res) {
 
     if (!Number.isInteger(cdSetor) || !dtPlantao) {
       return res.status(400).json({ success: false, message: 'Parâmetros obrigatórios' });
+    }
+
+    const perfilAtivo = getPerfilAtivo(usuario);
+    const podeLivro = validarModuloPermissao(usuario, 'livro') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+    const podeEscala = validarModuloPermissao(usuario, 'escala') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+    if (!podeLivro && !podeEscala) {
+      return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
     }
 
     const versoes = await escalaAtivaService.listarVersoes(cdSetor, dtPlantao, turno);
@@ -130,6 +153,13 @@ async function loadDiff(req, res) {
       return res.status(400).json({ success: false, message: 'Parâmetros obrigatórios' });
     }
 
+    const perfilAtivo = getPerfilAtivo(usuario);
+    const podeLivro = validarModuloPermissao(usuario, 'livro') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'livro');
+    const podeEscala = validarModuloPermissao(usuario, 'escala') && configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'escala');
+    if (!podeLivro && !podeEscala) {
+      return res.status(403).json({ success: false, message: 'Setor não autorizado para o perfil ativo' });
+    }
+
     const diff = await escalaAtivaService.compararVersoes(cdSetor, dtPlantao, turno, versao);
     return res.json({ success: true, data: diff });
   } catch (err) {
@@ -153,7 +183,37 @@ async function buscarPatioCirculanteGlobal(req, res) {
       return res.status(400).json({ success: false, message: 'Parâmetro dt_plantao é obrigatório' });
     }
 
-    const data = await escalaAtivaService.buscarPatioCirculanteGlobal(dtPlantao, turno);
+    let data = await escalaAtivaService.buscarPatioCirculanteGlobal(dtPlantao, turno);
+    
+    const { getPerfilAtivo } = require('../../core/utils/acesso');
+    const perfilAtivo = getPerfilAtivo(usuario);
+    if (perfilAtivo) {
+      const configCache = require('../../core/config/configCache');
+      const setoresPermitidos = new Set([
+        ...(validarModuloPermissao(usuario, 'livro') ? configCache.getSetoresPermitidos(perfilAtivo, 'livro') : []),
+        ...(validarModuloPermissao(usuario, 'escala') ? configCache.getSetoresPermitidos(perfilAtivo, 'escala') : [])
+      ]);
+      const adminGranted = configCache.perfilTemPermissao(perfilAtivo, 'livro', 'admin') || configCache.perfilTemPermissao(perfilAtivo, 'escala', 'admin');
+      
+      if (!adminGranted) {
+        data.patio = data.patio.filter(p => setoresPermitidos.has(p.cd_setor_atendimento));
+        data.circulante = data.circulante.filter(c => setoresPermitidos.has(c.cd_setor_atendimento));
+      }
+    }
+
+    // Deduplicate by cd_pessoa_fisica after filtering
+    const dedup = (arr) => {
+      const seen = new Set();
+      return arr.filter(item => {
+        if (seen.has(item.cd_pessoa_fisica)) return false;
+        seen.add(item.cd_pessoa_fisica);
+        return true;
+      }).map(({ cd_setor_atendimento, ...rest }) => rest);
+    };
+
+    data.patio = dedup(data.patio);
+    data.circulante = dedup(data.circulante);
+
     return res.json({ success: true, data });
   } catch (err) {
     console.error('[EscalaAtiva] patio-circulante-global:', err.message);

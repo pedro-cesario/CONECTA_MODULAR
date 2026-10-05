@@ -67,9 +67,11 @@ async function obterEstadoPainel(req, res, next) {
            psf.ds_maquina_chamada,
            psf.qt_chamadas,
            psf.nm_usuario_chamada,
+           COALESCE(psf.nm_paciente, pf.nm_social, pf.nm_pessoa_fisica) AS nm_paciente,
            ROUND((SYSDATE - psf.dt_geracao_senha) * 1440) AS minutos_espera
          FROM paciente_senha_fila psf
          LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+         LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1))
          WHERE psf.dt_inutilizacao IS NULL
            AND psf.dt_chamada IS NOT NULL
            AND psf.dt_chamada >= TRUNC(SYSDATE - 1)
@@ -213,6 +215,7 @@ function formatarItemPainel(row) {
   const dsGuiche = row.DS_MAQUINA_CHAMADA ?? row.ds_maquina_chamada ?? 'Guichê 01';
   const hrChamada = row.HR_CHAMADA ?? row.hr_chamada ?? '--:--';
   const dsFila = row.DS_FILA ?? row.ds_fila ?? 'Recepção';
+  const nmPaciente = row.NM_PACIENTE ?? row.nm_paciente ?? null;
 
   // No Hospital Espírita André Luiz, todas as senhas seguem o padrão P + número
   return {
@@ -220,6 +223,7 @@ function formatarItemPainel(row) {
     cd_senha_gerada: cdSenha,
     cd_senha_completa: `P ${cdSenha}`,
     cd_senha_pura: `P${cdSenha}`,
+    nm_paciente: nmPaciente,
     ds_guiche: dsGuiche,
     ds_fila: dsFila,
     hr_chamada: hrChamada

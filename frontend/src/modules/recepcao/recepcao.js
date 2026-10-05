@@ -63,13 +63,16 @@ export async function initRecepcao() {
   window.conectaCore.irParaPasso = irParaPasso;
   window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
   window.conectaCore.chamarSenhaEspecifica = chamarSenhaEspecifica;
+window.conectaCore.inutilizarSenha = inutilizarSenha;
   window.conectaCore.selecionarPaciente = selecionarPaciente;
   window.conectaCore.novoPaciente = novoPaciente;
   window.conectaCore.imprimirRelatorio = imprimirRelatorio;
   window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
   window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
   window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
+window.conectaCore.inativarGED = inativarGED;
   window.conectaCore.verificarDuplicidadeCpf = verificarDuplicidadeCpf;
+  window.conectaCore.carregarSenhas = carregarSenhas;
 
   bindRecepcaoEvents();
   await detectarEConfigurarGuiche();
@@ -280,45 +283,37 @@ export function trocarAbaRecepcao(aba) {
 // ============================================================================
 
 export async function carregarFilas() {
-  const select = document.getElementById('recepcao-select-fila');
   try {
     const res = await api.get('/api/recepcao/filas');
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.filasDisponiveis = res.data;
-      if (select) {
-        select.innerHTML = res.data.map(f => {
-          const seq = f.NR_SEQUENCIA ?? f.nr_sequencia;
-          const nome = f.DS_FILA ?? f.ds_fila ?? `Fila ${seq}`;
-          const isSelected = seq === 9 || String(seq) === '9';
-          return `<option value="${seq}" ${isSelected ? 'selected' : ''}>${escapeHtml(nome)}</option>`;
-        }).join('') + '<option value="">Todas as Filas Ativas</option>';
-      }
-      recepcaoState.filaSelecionada = 9;
-    } else if (select) {
-      select.innerHTML = '<option value="9" selected>PA - NORMAL</option><option value="">Todas as Filas Ativas</option>';
+      recepcaoState.modoVisualizacao = res.modo_visualizacao || 'SENHA';
+      recepcaoState.filaSelecionada = '';
+    } else {
+      recepcaoState.filaSelecionada = '';
     }
   } catch (err) {
     console.error('[Recepção] Erro ao carregar filas:', err);
-    if (select) {
-      select.innerHTML = '<option value="9" selected>PA - NORMAL</option><option value="">Todas as Filas Ativas</option>';
-    }
+    recepcaoState.filaSelecionada = '';
   }
 }
 
 export async function carregarSenhas(showFeedback = false) {
   const container = document.getElementById('recepcao-senhas-grid');
+  const containerTriagem = document.getElementById('triagem-senhas-grid');
   try {
-    const fila = recepcaoState.filaSelecionada || '';
-    const res = await api.get(`/api/recepcao/senhas?fila=${fila}`);
+    const res = await api.get(`/api/recepcao/senhas`);
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.senhasFila = res.data;
       renderizarBoardSenhas();
       if (showFeedback) {
         ui.showToast('Fila de senhas atualizada!', 'info');
       }
+    } else {
+      renderizarBoardSenhas([]);
     }
   } catch (err) {
-    console.error('[Recepção] Erro ao carregar senhas:', err);
+    console.error('[Recepção/Triagem] Erro ao carregar senhas:', err);
     if (container && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
       container.innerHTML = `
         <div class="col-12 p-5 text-center text-muted">
@@ -327,74 +322,194 @@ export async function carregarSenhas(showFeedback = false) {
           <p class="small text-muted">Novas senhas emitidas no totem aparecerão automaticamente aqui.</p>
         </div>`;
     }
+    if (containerTriagem && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
+      const isForbidden = err?.status === 403;
+      containerTriagem.innerHTML = `
+        <div class="col-12 p-4 text-center text-muted">
+          <i class="bi bi-${isForbidden ? 'shield-lock text-warning' : 'exclamation-circle text-danger'} fs-2 d-block mb-2"></i>
+          <h6 class="fw-bold ${isForbidden ? 'text-warning' : 'text-danger'}">${isForbidden ? 'Fila não habilitada para este perfil' : 'Erro ao carregar fila'}</h6>
+          <p class="small text-muted">${isForbidden ? 'Habilite as filas de triagem deste perfil no Conecta Admin.' : (err?.message || 'Verifique sua conexão.')}</p>
+          <button class="btn btn-sm btn-outline-primary mt-2" type="button" onclick="window.conectaCore.carregarSenhas(true)">
+            <i class="bi bi-arrow-clockwise me-1"></i> Tentar Novamente
+          </button>
+        </div>`;
+    }
   }
 }
 
 function renderizarBoardSenhas(listaFiltrada = null) {
+  const containerTriagem = document.getElementById('triagem-senhas-grid');
   const container = document.getElementById('recepcao-senhas-grid');
   const countBadge = document.getElementById('recepcao-queue-count');
   const tabBadge = document.getElementById('tab-badge-espera');
   const kpiTotal = document.getElementById('kpi-total-espera');
-  if (!container) return;
+  if (!container && !containerTriagem) return;
 
-  const lista = listaFiltrada !== null ? listaFiltrada : recepcaoState.senhasFila;
+  const lista = listaFiltrada !== null ? listaFiltrada : (recepcaoState.senhasFila || []);
 
   if (countBadge) countBadge.textContent = lista.length;
   if (tabBadge) tabBadge.textContent = lista.length;
-  if (kpiTotal) kpiTotal.textContent = recepcaoState.senhasFila.length;
+  if (kpiTotal) kpiTotal.textContent = (recepcaoState.senhasFila || []).length;
 
   if (lista.length === 0) {
-    container.innerHTML = `
-      <div class="col-12 p-5 text-center text-muted w-100" style="grid-column: 1 / -1;">
-        <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
-        <h5 class="fw-bold">Nenhuma senha aguardando atendimento</h5>
-        <p class="small text-muted mb-3">O guichê está livre. Clique em "Chamar Próxima Senha" ou "Atendimento Avulso" para iniciar.</p>
-        <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.abrirModalAtendimento()">
-          <i class="bi bi-person-plus"></i> Abrir Atendimento Avulso
-        </button>
-      </div>`;
+    if (container) {
+      container.className = 'w-100';
+      container.style = '';
+      container.innerHTML = `
+        <div class="col-12 p-5 text-center text-muted w-100" style="grid-column: 1 / -1;">
+          <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
+          <h5 class="fw-bold">Nenhuma senha aguardando atendimento</h5>
+          <p class="small text-muted mb-3">O guichê está livre. Clique em "Próxima Senha" ou "Avulso" para iniciar.</p>
+          <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.abrirModalAtendimento()">
+            <i class="bi bi-person-plus"></i> Abrir Atendimento Avulso
+          </button>
+        </div>`;
+    }
+    if (containerTriagem) {
+      containerTriagem.innerHTML = `
+        <div class="text-center text-muted mt-5 p-4">
+          <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
+          <h6 class="fw-bold text-dark">Nenhuma senha aguardando no momento</h6>
+          <p class="small text-muted mb-3">Todas as senhas desta fila foram atendidas ou não há novas emissões no totem.</p>
+          <button class="btn btn-sm btn-outline-primary shadow-sm" type="button" onclick="window.conectaCore.carregarSenhas(true)">
+            <i class="bi bi-arrow-clockwise me-1"></i> Atualizar Fila
+          </button>
+        </div>`;
+    }
     return;
   }
 
-  container.innerHTML = lista.map(s => {
-    const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
-    const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
-    const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
-    const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
+  // Agrupar senhas por fila
+  const senhasPorFila = {};
+  lista.forEach(s => {
+    const filaId = s.NR_SEQ_FILA_SENHA ?? s.nr_seq_fila_senha ?? 0;
     const dsFila = s.DS_FILA ?? s.ds_fila ?? 'Recepção';
-    const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
-    const hrGeracao = s.HR_GERACAO ?? s.hr_geracao ?? '';
+    if (!senhasPorFila[filaId]) {
+      senhasPorFila[filaId] = { id: filaId, nome: dsFila, senhas: [] };
+    }
+    senhasPorFila[filaId].senhas.push(s);
+  });
 
-    return `
-      <div class="senha-ticket-card normal">
-        <div class="senha-ticket-header">
-          <div class="senha-ticket-number">${escapeHtml(cdFormatado)}</div>
-          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-            <i class="bi bi-ticket-perforated me-1"></i> Em Espera
-          </span>
-        </div>
+  const modos = recepcaoState.modoVisualizacao || 'SENHA';
+  const mostrarNome = modos === 'SENHA_NOME';
 
-        <div class="senha-ticket-meta">
-          <div><i class="bi bi-diagram-3"></i> <strong>${escapeHtml(dsFila)}</strong></div>
-          <div><i class="bi bi-clock"></i> Chegada: ${escapeHtml(hrGeracao)}</div>
-        </div>
+  // Gerar grid flexível
+  const filasComSenhas = Object.values(senhasPorFila);
 
-        <div class="senha-ticket-footer">
-          <span class="senha-ticket-wait-time">
-            <i class="bi bi-hourglass-split"></i> Espera: <strong>${minEspera} min</strong>
-          </span>
-          <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-primary fw-bold px-3 py-1" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar esta senha na TV e no guichê">
-              <i class="bi bi-megaphone-fill me-1"></i> Chamar
-            </button>
-            <button class="btn btn-sm btn-outline-secondary fw-bold px-2 py-1" type="button" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})" title="Abrir ficha de atendimento">
-              Atender <i class="bi bi-arrow-right"></i>
-            </button>
+  if (containerTriagem) {
+    const triagemHtml = filasComSenhas.map(fila => {
+      return `
+        <div class="d-flex flex-column" style="flex: 1 1 0%; min-width: 320px;">
+          <div class="text-white p-2 rounded-top mb-2 fw-bold d-flex justify-content-between align-items-center shadow-sm" style="background-color: var(--primary);">
+            <span><i class="bi bi-diagram-3 me-2"></i>${escapeHtml(fila.nome)}</span>
+            <span class="badge bg-white rounded-pill" style="color: var(--primary);">${fila.senhas.length}</span>
+          </div>
+          <div class="d-flex flex-column gap-2 w-100" style="max-height: 70vh; overflow-y: auto; padding-right: 4px;">
+            ${fila.senhas.map(s => {
+              const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
+              const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
+              const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
+              const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
+              const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
+              const nomePaciente = s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? null;
+              const initials = numLimpo || 'S';
+              const badgeClass = minEspera > 15 ? 'bg-warning text-dark' : 'bg-primary-subtle text-primary';
+              return `
+                <div class="d-flex flex-wrap align-items-center justify-content-between rounded shadow-sm position-relative overflow-hidden w-100" style="border: 1px solid var(--slate-200); background-color: #ffffff; padding: 0.65rem; gap: 0.5rem;">
+                  <div style="width: 4px; height: 100%; background-color: var(--primary); position: absolute; left: 0; top: 0;"></div>
+                  <div class="d-flex align-items-center flex-grow-1 ms-2" style="min-width: 180px; max-width: 100%;">
+                    <div class="text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="background-color: var(--primary); width: 38px; height: 38px; font-size: 0.95rem; border-radius: 8px;">
+                      ${initials}
+                    </div>
+                    <div class="ms-2 d-flex flex-column flex-grow-1" style="min-width: 0;">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="fw-bold" style="font-size: 1.05rem; color: var(--slate-800);">${escapeHtml(cdFormatado)}</span>
+                        <span class="badge ${badgeClass} shadow-sm border" style="font-size: 0.65rem; border-color: rgba(0,0,0,0.05) !important;">
+                          <i class="bi bi-clock me-1"></i>${minEspera} min
+                        </span>
+                      </div>
+                      <div class="text-truncate text-muted mt-1" style="font-size: 0.75rem;" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
+                        ${nomePaciente ? escapeHtml(nomePaciente) : '<i class="bi bi-person-dash me-1"></i>Aguardando identificação'}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-1 ms-auto flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary fw-bold d-flex align-items-center justify-content-center" style="border-width: 1.5px; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar na TV">
+                      <i class="bi bi-megaphone-fill me-1"></i> Chamar
+                    </button>
+                    <button class="btn btn-sm fw-bold d-flex align-items-center justify-content-center text-white" style="background-color: var(--stable-green, #15803D); border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}')" title="Atender e Identificar">
+                      <i class="bi bi-person-check-fill me-1"></i> Atender
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+    containerTriagem.innerHTML = '<div class="d-flex w-100 gap-3" style="overflow-x: auto; padding-bottom: 8px;">' + triagemHtml + '</div>';
+  }
+
+  if (container) {
+    container.className = 'recepcao-filas-board';
+    container.style = '';
+    const colunasHtml = filasComSenhas.map(fila => {
+      const cardsHtml = fila.senhas.map(s => {
+        const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
+        const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada ?? '';
+        const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
+        const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
+        const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
+        const nomePaciente = s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? null;
+        const displayNumeroQuadrado = numLimpo || cdSenha || '---';
+
+        return `
+          <div class="recepcao-ticket-card" data-nr-seq="${nrSeq}">
+            <div class="recepcao-ticket-left">
+              <div class="recepcao-ticket-square">${escapeHtml(displayNumeroQuadrado)}</div>
+              <div class="recepcao-ticket-info">
+                <div class="recepcao-ticket-info-top">
+                  <span class="recepcao-ticket-num">${escapeHtml(cdFormatado)}</span>
+                  <span class="recepcao-ticket-wait">
+                    <i class="bi bi-clock"></i> ${minEspera} min
+                  </span>
+                </div>
+                <div class="recepcao-ticket-paciente" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
+                  <i class="bi bi-person"></i> ${escapeHtml(nomePaciente || 'Aguardando identificação')}
+                </div>
+              </div>
+            </div>
+            <div class="recepcao-ticket-actions">
+              <button class="btn-recepcao-chamar" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar no painel TV">
+                <i class="bi bi-megaphone-fill"></i> Chamar
+              </button>
+              <button class="btn-recepcao-atender" type="button" onclick="window.conectaCore.selecionarSenhaFila(${nrSeq})" title="Iniciar Atendimento">
+                <i class="bi bi-person-fill"></i> Atender
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="recepcao-fila-coluna">
+          <div class="recepcao-fila-header">
+            <div class="recepcao-fila-header-title">
+              <i class="bi bi-diagram-3"></i>
+              <span>${escapeHtml(fila.nome)}</span>
+            </div>
+            <span class="recepcao-fila-badge-count">${fila.senhas.length}</span>
+          </div>
+          <div class="recepcao-fila-items">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = colunasHtml;
+  }
 }
 
 function filtrarGridSenhas(termo) {
@@ -407,7 +522,8 @@ function filtrarGridSenhas(termo) {
     const cd = String(s.CD_SENHA_GERADA ?? s.cd_senha_gerada ?? '').toLowerCase();
     const prio = String(s.DS_PRIORIDADE ?? s.ds_prioridade ?? '').toLowerCase();
     const fila = String(s.DS_FILA ?? s.ds_fila ?? '').toLowerCase();
-    return cd.includes(q) || prio.includes(q) || fila.includes(q);
+    const nome = String(s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? '').toLowerCase();
+    return cd.includes(q) || prio.includes(q) || fila.includes(q) || nome.includes(q);
   });
   renderizarBoardSenhas(filtradas);
 }
@@ -475,6 +591,18 @@ function renderizarTabelaAtendimentosHoje(listaFiltrada = null) {
     const conv = item.DS_CONVENIO ?? item.ds_convenio ?? 'Particular / SUS';
     const setor = item.DS_SETOR ?? item.ds_setor ?? 'P.A.';
     const qtdGed = item.QTD_GED ?? item.qtd_ged ?? 0;
+    
+    const statusAtend = item.IE_STATUS_ATENDIMENTO ?? item.ie_status_atendimento;
+    const dtAlta = item.DT_ALTA ?? item.dt_alta;
+    const dtCancelamento = item.DT_CANCELAMENTO ?? item.dt_cancelamento;
+    const isCancelado = statusAtend === 'C' || dtCancelamento;
+
+    let badgeStatus = '<span class="badge bg-success-subtle text-success border border-success-subtle mt-1" style="font-size: 0.65rem;"><i class="bi bi-check-circle me-1"></i>Aberto</span>';
+    if (isCancelado) {
+      badgeStatus = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-1" style="font-size: 0.65rem;"><i class="bi bi-x-circle me-1"></i>Cancelado</span>';
+    } else if (dtAlta) {
+      badgeStatus = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle mt-1" style="font-size: 0.65rem;"><i class="bi bi-box-arrow-right me-1"></i>Alta</span>';
+    }
 
     const badgeGed = qtdGed > 0 
       ? `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-paperclip"></i> ${qtdGed} doc(s)</span>`
@@ -493,16 +621,22 @@ function renderizarTabelaAtendimentosHoje(listaFiltrada = null) {
           <small class="text-muted">Cód TASY: ${cdPf}</small>
         </td>
         <td><small class="text-secondary">${escapeHtml(cpf)}</small></td>
-        <td><span class="atend-badge-numero">#${atend}</span></td>
+        <td>
+          <span class="atend-badge-numero">#${atend}</span>
+          <div class="mt-1">${badgeStatus}</div>
+        </td>
         <td>
           <div class="small fw-semibold">${escapeHtml(conv)}</div>
           <small class="text-muted">${escapeHtml(setor)}</small>
         </td>
         <td>${badgeGed}</td>
-        <td class="text-end">
+        <td class="text-end text-nowrap">
           <button class="btn btn-sm btn-outline-primary fw-bold" type="button" onclick="window.conectaCore.abrirDocumentosAtendimento(${atend}, '${cdPf}', '${escapeHtml(nome)}', '${senha || ''}')">
-            <i class="bi bi-printer-fill me-1"></i> Documentos & GED
+            <i class="bi bi-printer-fill me-1"></i> Documentos
           </button>
+          ${isCancelado ? '' : `<button class="btn btn-sm btn-outline-danger fw-bold ms-1" type="button" onclick="window.conectaCore.cancelarAtendimento(${atend}, '${escapeHtml(nome)}')">
+            <i class="bi bi-x-circle"></i> Cancelar
+          </button>`}
         </td>
       </tr>
     `;
@@ -580,17 +714,22 @@ export async function chamarProximaSenha() {
   if (btn) ui.setLoading(btn, true);
 
   try {
-    const fila = recepcaoState.filaSelecionada || (recepcaoState.filasDisponiveis?.[0]?.NR_SEQUENCIA);
+    const fila = recepcaoState.filaSelecionada ? parseInt(recepcaoState.filaSelecionada, 10) : undefined;
     const maquina = obterNomeMaquina();
     const res = await api.post('/api/recepcao/senhas/chamar', {
-      nr_seq_fila_senha: fila || undefined,
+      nr_seq_fila_senha: fila,
       ds_maquina: maquina
     });
 
     if (res.success && res.proxima && res.data) {
       recepcaoState.senhaAtiva = res.data;
-      atualizarDisplaySenha(res.data.cd_senha_gerada, 'Chamado');
-      ui.showToast(`Senha #${res.data.cd_senha_gerada} chamada no guichê!`, 'success');
+      atualizarDisplaySenha(res.data.cd_senha_gerada, 'Chamado', res.data);
+      const nomeChamado = res.data.nm_paciente;
+      if (nomeChamado) {
+        ui.showToast(`Paciente ${nomeChamado} (Senha #${res.data.cd_senha_gerada}) chamado no guichê!`, 'success');
+      } else {
+        ui.showToast(`Senha #${res.data.cd_senha_gerada} chamada no guichê!`, 'success');
+      }
       await carregarSenhas();
       abrirModalAtendimento(res.data);
     } else {
@@ -614,7 +753,12 @@ export async function rechamarSenha() {
       nr_sequencia: recepcaoState.senhaAtiva.nr_sequencia,
       ds_maquina: maquina
     });
-    ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada no painel!`, 'info');
+    const nomeChamado = recepcaoState.senhaAtiva.nm_paciente;
+    if (nomeChamado) {
+      ui.showToast(`Paciente ${nomeChamado} (Senha #${recepcaoState.senhaAtiva.cd_senha_gerada}) rechamado no painel!`, 'info');
+    } else {
+      ui.showToast(`Senha #${recepcaoState.senhaAtiva.cd_senha_gerada} rechamada no painel!`, 'info');
+    }
   } catch (err) {
     ui.showToast('Erro ao rechamar senha: ' + err.message, 'error');
   }
@@ -629,6 +773,7 @@ export async function chamarSenhaEspecifica(nrSequencia, event) {
 
   const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
   const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
+  const nomePac = senha.NM_PACIENTE ?? senha.nm_paciente ?? senha.NM_SOCIAL ?? senha.nm_social ?? senha.NM_PESSOA_FISICA ?? senha.nm_pessoa_fisica ?? null;
   const maquina = obterNomeMaquina();
 
   try {
@@ -640,13 +785,18 @@ export async function chamarSenhaEspecifica(nrSequencia, event) {
     recepcaoState.senhaAtiva = {
       nr_sequencia: seq,
       cd_senha_gerada: cd,
+      nm_paciente: nomePac,
       ds_prioridade: senha.DS_PRIORIDADE ?? senha.ds_prioridade ?? 'Normal',
       nr_prioridade: senha.NR_PRIORIDADE ?? senha.nr_prioridade ?? 3,
       ds_guiche: maquina
     };
 
-    atualizarDisplaySenha(cd, 'Chamado');
-    ui.showToast(`Senha #${cd} chamada no guichê e na TV!`, 'success');
+    atualizarDisplaySenha(cd, 'Chamado', recepcaoState.senhaAtiva);
+    if (nomePac) {
+      ui.showToast(`Paciente ${nomePac} (Senha #${cd}) chamado no guichê e na TV!`, 'success');
+    } else {
+      ui.showToast(`Senha #${cd} chamada no guichê e na TV!`, 'success');
+    }
     await carregarSenhas();
     abrirModalAtendimento(recepcaoState.senhaAtiva);
   } catch (err) {
@@ -660,12 +810,14 @@ export function selecionarSenhaFila(nrSequencia) {
     const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
     const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
     const prio = senha.DS_PRIORIDADE ?? senha.ds_prioridade ?? 'Normal';
+    const nomePac = senha.NM_PACIENTE ?? senha.nm_paciente ?? senha.NM_SOCIAL ?? senha.nm_social ?? senha.NM_PESSOA_FISICA ?? senha.nm_pessoa_fisica ?? null;
     recepcaoState.senhaAtiva = {
       nr_sequencia: seq,
       cd_senha_gerada: cd,
+      nm_paciente: nomePac,
       ds_prioridade: prio
     };
-    atualizarDisplaySenha(cd, prio);
+    atualizarDisplaySenha(cd, prio, recepcaoState.senhaAtiva);
     abrirModalAtendimento(recepcaoState.senhaAtiva);
   }
 }
@@ -709,15 +861,37 @@ export function abrirModalAtendimento(senhaObj = null) {
 function atualizarDisplaySenha(numero, tipo, dadosCompletos = null) {
   const numEl = document.getElementById('guiche-active-number');
   const typeEl = document.getElementById('guiche-active-type');
-  if (numEl) numEl.textContent = numero ? `#${numero}` : '---';
-  if (typeEl) typeEl.textContent = tipo || 'Nenhuma senha chamada';
+  const dados = dadosCompletos || recepcaoState.senhaAtiva;
+  const nome = dados?.NM_PACIENTE || dados?.nm_paciente || dados?.NM_SOCIAL || dados?.nm_social || dados?.NM_PESSOA_FISICA || dados?.nm_pessoa_fisica || null;
+
+  if (numEl) {
+    if (nome) {
+      numEl.textContent = nome;
+      numEl.title = nome;
+      numEl.style.fontSize = '1.15rem';
+      numEl.classList.add('text-truncate');
+    } else {
+      numEl.textContent = numero ? `#${numero}` : '---';
+      numEl.removeAttribute('title');
+      numEl.style.fontSize = '';
+      numEl.classList.remove('text-truncate');
+    }
+  }
+
+  if (typeEl) {
+    if (nome && numero) {
+      typeEl.textContent = `Senha: #${numero} • ${tipo || 'Chamado'}`;
+    } else {
+      typeEl.textContent = tipo || 'Nenhuma senha chamada';
+    }
+  }
 
   if (numero) {
     try {
       localStorage.setItem('conecta_recepcao_ultima_senha', JSON.stringify({
         numero,
         tipo: tipo || 'Chamado',
-        dados: dadosCompletos || recepcaoState.senhaAtiva,
+        dados: dados,
         timestamp: Date.now()
       }));
     } catch (e) {}
@@ -945,6 +1119,52 @@ export async function selecionarPaciente(cdPessoaFisica) {
       }
 
       await carregarUltimoConvenioPaciente(cdPessoaFisica);
+      recepcaoState.atendimentoExistente = null;
+      const btnSubmit = document.getElementById('btn-recepcao-abrir-atendimento');
+      if (btnSubmit) {
+        btnSubmit.innerHTML = `<i class="bi bi-check2-circle fs-5 me-2"></i> Abrir Atendimento Oficial no TASY`;
+        btnSubmit.classList.replace('btn-warning', 'btn-primary');
+      }
+
+      if (res.data.atendimentosAbertos && res.data.atendimentosAbertos.length > 0) {
+        const configRec = (() => {
+          try {
+            const p = window.appState.usuario.perfilObj;
+            if (!p) return {};
+            if (p.config_recepcao_json) return JSON.parse(p.config_recepcao_json);
+            return p.config_recepcao || {};
+          } catch(e) { return {}; }
+        })();
+        
+        if (!configRec.permitirMultiplosAtendimentos) {
+          const openAtend = res.data.atendimentosAbertos[0];
+          recepcaoState.atendimentoExistente = openAtend;
+          
+          ui.showToast('Paciente possui atendimento em aberto. Fluxo alterado para atualizar.', 'warning');
+          
+          if (btnSubmit) {
+            btnSubmit.innerHTML = `<i class="bi bi-arrow-repeat fs-5 me-2"></i> Atualizar Atendimento (#${openAtend.NR_ATENDIMENTO || openAtend.nr_atendimento})`;
+            btnSubmit.classList.replace('btn-primary', 'btn-warning');
+          }
+          
+          // Try to pre-fill the form with openAtend details
+          document.getElementById('recepcao-estabelecimento').value = openAtend.CD_ESTABELECIMENTO || openAtend.cd_estabelecimento || '';
+          document.getElementById('recepcao-procedencia').value = openAtend.CD_PROCEDENCIA || openAtend.cd_procedencia || '';
+          document.getElementById('recepcao-convenio').value = openAtend.CD_CONVENIO || openAtend.cd_convenio || '';
+          
+          // trigger change to load categories
+          if (openAtend.CD_CONVENIO || openAtend.cd_convenio) {
+            carregarCategoriasConvenio(openAtend.CD_CONVENIO || openAtend.cd_convenio).then(() => {
+              document.getElementById('recepcao-categoria').value = openAtend.CD_CATEGORIA || openAtend.cd_categoria || '';
+            });
+          }
+          
+          document.getElementById('recepcao-setor').value = openAtend.CD_SETOR_ATENDIMENTO || openAtend.cd_setor_atendimento || '';
+          document.getElementById('recepcao-tipo-atendimento').value = openAtend.IE_TIPO_ATENDIMENTO || openAtend.ie_tipo_atendimento || '';
+        } else {
+          ui.showToast('Paciente possui atendimento aberto (criação de múltiplos permitida).', 'info');
+        }
+      }
       ui.showToast('Cadastro carregado do TASY!', 'success');
     }
   } catch (err) {
@@ -1260,14 +1480,23 @@ export async function abrirAtendimento() {
       nr_fila_destino: 18 // Fila de Triagem / P.A.
     };
 
-    const res = await api.post('/api/recepcao/atendimentos', payload);
+    const isUpdate = !!recepcaoState.atendimentoExistente;
+    const nrAtend = recepcaoState.atendimentoExistente?.NR_ATENDIMENTO || recepcaoState.atendimentoExistente?.nr_atendimento;
+    
+    let res;
+    if (isUpdate) {
+      res = await api.put(`/api/recepcao/atendimentos/${nrAtend}`, payload);
+    } else {
+      res = await api.post('/api/recepcao/atendimentos', payload);
+    }
+
     if (res.success && res.data) {
-      recepcaoState.atendimentoCriado = res.data.nr_atendimento;
+      recepcaoState.atendimentoCriado = res.data.nr_atendimento || nrAtend;
       
       const numAtendEl = document.getElementById('recepcao-atendimento-numero');
-      if (numAtendEl) numAtendEl.textContent = res.data.nr_atendimento;
+      if (numAtendEl) numAtendEl.textContent = recepcaoState.atendimentoCriado;
 
-      ui.showToast(`Atendimento #${res.data.nr_atendimento} aberto com sucesso no TASY!`, 'success');
+      ui.showToast(isUpdate ? `Atendimento #${recepcaoState.atendimentoCriado} atualizado com sucesso!` : `Atendimento #${recepcaoState.atendimentoCriado} aberto com sucesso no TASY!`, 'success');
       
       await carregarRelatorios();
       await carregarDocumentosGED();
@@ -1357,10 +1586,17 @@ export async function carregarDocumentosGED() {
         return;
       }
       container.innerHTML = res.data.map(doc => `
-        <div class="ged-file-item">
-          <i class="bi bi-file-earmark-text ged-file-icon"></i>
-          <strong>${escapeHtml(doc.DS_TITULO)}</strong>
-          <small class="text-muted">${escapeHtml(doc.DT_REGISTRO_FMT || '')} • Por: ${escapeHtml(doc.NM_USUARIO || '')}</small>
+        <div class="ged-file-item position-relative d-flex justify-content-between align-items-center" style="cursor: pointer; padding-right: 2.5rem;" onclick="window.open('/api/recepcao/ged/${doc.NR_SEQUENCIA}/download', '_blank')">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <i class="bi bi-file-earmark-text ged-file-icon flex-shrink-0"></i>
+            <div class="d-flex flex-column overflow-hidden">
+              <strong class="text-truncate">${escapeHtml(doc.DS_TITULO)}</strong>
+              <small class="text-muted text-truncate">${escapeHtml(doc.DT_REGISTRO_FMT || '')} • Por: ${escapeHtml(doc.NM_USUARIO || '')}</small>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="right: 0.5rem;" title="Inativar/Remover Documento" onclick="event.stopPropagation(); window.conectaCore.inativarGED(${doc.NR_SEQUENCIA})">
+            <i class="bi bi-trash3-fill"></i>
+          </button>
         </div>
       `).join('');
     }
@@ -1395,6 +1631,7 @@ export function abrirUploadGED() {
             ds_extensao_arquivo: file.name.split('.').pop(),
             conteudo_base64: base64Data,
             mime_type: file.type
+
           });
 
           ui.showToast('Documento anexado e sincronizado com o GED do TASY com sucesso!', 'success');
@@ -1427,3 +1664,162 @@ window.conectaCore.abrirModalAtendimento = abrirModalAtendimento;
 window.conectaCore.irParaPasso = irParaPasso;
 window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
 window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
+window.conectaCore.inativarGED = inativarGED;
+window.conectaCore.carregarSenhas = carregarSenhas;
+
+// ============================================================================
+// 10. CANCELAMENTO DE ATENDIMENTO NATIVO TASY
+// ============================================================================
+
+export async function cancelarAtendimento(nrAtendimento, nomePaciente) {
+  const numEl = document.getElementById('cancel-atendimento-numero');
+  const pacEl = document.getElementById('cancel-atendimento-paciente');
+  const nrHidden = document.getElementById('cancel-atendimento-nr-hidden');
+  const motivo = document.getElementById('cancel-atendimento-motivo');
+
+  if (numEl) numEl.textContent = '#' + nrAtendimento;
+  if (pacEl) pacEl.textContent = nomePaciente;
+  if (nrHidden) nrHidden.value = nrAtendimento;
+  if (motivo) motivo.value = '';
+  
+  const modalEl = document.getElementById('modal-cancelar-atendimento');
+  if (modalEl) {
+    modalEl.classList.remove('d-none');
+    document.body.classList.add('modal-open');
+  }
+}
+
+export function fecharModalCancelamento() {
+  const modalEl = document.getElementById('modal-cancelar-atendimento');
+  if (modalEl) {
+    modalEl.classList.add('d-none');
+    document.body.classList.remove('modal-open');
+  }
+}
+
+export async function confirmarCancelamentoAtendimento() {
+  const nrHidden = document.getElementById('cancel-atendimento-nr-hidden');
+  const motivoEl = document.getElementById('cancel-atendimento-motivo');
+  
+  const nrAtendimento = nrHidden ? nrHidden.value : null;
+  const motivo = motivoEl ? motivoEl.value : '';
+  
+  if (!nrAtendimento) return;
+
+  const btn = document.getElementById('btn-confirmar-cancelamento');
+  if (btn) ui.setLoading(btn, true);
+
+  try {
+    ui.showToast('Solicitando cancelamento no TASY...', 'info');
+    const res = await api.post(`/api/recepcao/atendimentos/${nrAtendimento}/cancelar`, { motivo });
+    
+    if (res && res.success) {
+      ui.showToast('Atendimento cancelado com sucesso no TASY!', 'success');
+      fecharModalCancelamento();
+      await carregarAtendimentosHoje();
+    } else {
+      ui.showToast(res.message || 'Erro ao cancelar atendimento', 'error');
+    }
+  } catch (err) {
+    ui.showToast('Falha na comunicação: ' + err.message, 'error');
+  } finally {
+    if (btn) ui.setLoading(btn, false);
+  }
+}
+
+window.conectaCore.cancelarAtendimento = cancelarAtendimento;
+window.conectaCore.fecharModalCancelamento = fecharModalCancelamento;
+window.conectaCore.confirmarCancelamentoAtendimento = confirmarCancelamentoAtendimento;
+export async function inativarGED(nrSequencia) {
+  const justificativa = prompt('Por favor, informe a justificativa para a exclusão/inativação deste documento no TASY:');
+  if (justificativa === null) return; // cancelou
+  if (justificativa.trim() === '') {
+    ui.showToast('Justificativa é obrigatória.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await api.post(`/api/recepcao/ged/${nrSequencia}/inativar`, { justificativa: justificativa.trim() });
+    if (res.success) {
+      ui.showToast('Documento removido com sucesso!', 'success');
+      carregarDocumentosGED(); // Recarrega a lista instantaneamente
+    }
+  } catch (err) {
+    ui.showToast('Erro ao remover documento: ' + err.message, 'error');
+  }
+}
+
+export async function inutilizarSenha(nrSequencia, event) {
+  if (event) event.stopPropagation();
+  
+  try {
+    const motivosRes = await api.get('/api/recepcao/senhas/motivos-inutilizacao');
+    const motivos = motivosRes.success ? motivosRes.data : [];
+    
+    let selectHtml = `<select id="motivo-inutilizacao-select" class="form-select mb-3">`;
+    motivos.forEach(m => {
+      selectHtml += `<option value="${m.NR_SEQUENCIA || m.nr_sequencia}">${escapeHtml(m.DS_MOTIVO_INUTILIZACAO || m.ds_motivo_inutilizacao)}</option>`;
+    });
+    if (motivos.length === 0) {
+      selectHtml += `<option value="3">Outros</option>`;
+    }
+    selectHtml += `</select>`;
+
+    return new Promise((resolve) => {
+      const modalHtml = `
+        <div class="modal fade" id="inutilizarModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Inutilizar Senha</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p class="text-muted text-start mb-2">Selecione o motivo para inutilizar esta senha:</p>
+                ${selectHtml}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmInutilizar">Confirmar Inutilização</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      const modalEl = document.getElementById('inutilizarModal');
+      const bsModal = new bootstrap.Modal(modalEl);
+      
+      const onConfirm = async () => {
+        const val = document.getElementById('motivo-inutilizacao-select').value;
+        bsModal.hide();
+        
+        try {
+          const maquina = document.getElementById('recepcao-select-meu-guiche')?.value || 'CONECTA_WEB';
+          const res = await api.post(`/api/recepcao/senhas/${nrSequencia}/inutilizar`, {
+            motivo_id: parseInt(val, 10),
+            ds_maquina: maquina
+          });
+
+          if (res.success) {
+            ui.showToast('Senha inutilizada com sucesso.', 'success');
+            carregarSenhas();
+          }
+        } catch (e) {
+          ui.showToast('Erro ao inutilizar senha: ' + e.message, 'error');
+        }
+      };
+
+      document.getElementById('btnConfirmInutilizar').addEventListener('click', onConfirm);
+
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        modalEl.remove();
+        resolve();
+      });
+
+      bsModal.show();
+    });
+  } catch (err) {
+    ui.showToast('Erro ao inutilizar senha: ' + err.message, 'error');
+  }
+}

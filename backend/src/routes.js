@@ -24,17 +24,10 @@ const adminRoutes = require('./modules/admin/routes');
 const setorController = require('./modules/setores/setorController');
 const pacienteController = require('./modules/pacientes/pacienteController');
 
-// Versão da API e status
-router.get('/version', (req, res) => {
-  let version = '1.0.0';
-  let showTestBar = false;
-  try {
-    const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'));
-    version = pkg.version || version;
-    showTestBar = !!pkg.showTestBar;
-  } catch {}
-  res.json({ ok: true, version, showTestBar });
-});
+const { versionHandler } = require('./core/utils/versionHandler');
+
+// Versão da API e status (suporta /version e alias /ping)
+router.get(['/version', '/ping'], versionHandler);
 
 // Módulo de Autenticação (Login, Logout, Me, Native SSO)
 router.use('/', authRoutes);
@@ -42,7 +35,15 @@ router.use('/', authRoutes);
 // Módulos (protegido) - Retorna módulos e permissões ativas do usuário
 router.get('/modulos', requireAuth, (req, res) => {
   const modulos = configCache.getAllModulosWithPermissoes();
-  res.json({ success: true, data: modulos });
+  const usuario = req.session?.usuario;
+  const perfisDisponiveis = new Set((usuario?.perfisDisponiveis || []).map(p => String(p.id)));
+
+  const projecao = modulos.map(mod => ({
+    ...mod,
+    perfisPermitidos: (mod.perfisPermitidos || []).filter(pId => perfisDisponiveis.has(String(pId)))
+  }));
+
+  res.json({ success: true, data: projecao });
 });
 
 // Checkboxes dinâmicos da Passagem de Plantão

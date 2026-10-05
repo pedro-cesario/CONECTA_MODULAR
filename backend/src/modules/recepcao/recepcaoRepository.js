@@ -1,5 +1,14 @@
 const { getConnection } = require('../../core/database');
+let _getConnection = getConnection;
 const configCache = require('../../core/config/configCache');
+
+function setCustomGetConnectionForTest(fn) {
+  _getConnection = fn;
+}
+
+function resetCustomGetConnectionForTest() {
+  _getConnection = getConnection;
+}
 
 /**
  * Módulo de Recepção & Acolhimento — Repositório Oracle TASY
@@ -11,7 +20,7 @@ const configCache = require('../../core/config/configCache');
 // ============================================================================
 
 async function listarFilasSenhas() {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT nr_sequencia, ds_fila, ie_situacao
@@ -26,10 +35,10 @@ async function listarFilasSenhas() {
 }
 
 async function listarSenhasEspera(nrSeqFila) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const binds = {};
-    let whereClause = `psf.dt_inutilizacao IS NULL AND psf.dt_fim_atendimento IS NULL`;
+    let whereClause = `psf.dt_inutilizacao IS NULL AND psf.dt_fim_atendimento IS NULL AND psf.dt_geracao_senha >= TRUNC(SYSDATE - 1)`;
     
     if (nrSeqFila) {
       whereClause += ` AND psf.nr_seq_fila_senha = :fila`;
@@ -52,20 +61,22 @@ async function listarSenhasEspera(nrSeqFila) {
          END AS ds_prioridade,
          psf.dt_chamada,
          TO_CHAR(psf.dt_chamada, 'HH24:MI:SS') AS hr_chamada,
-         psf.ds_maquina_chamada,
-         psf.qt_chamadas,
-         psf.cd_pessoa_fisica,
-         pf.nm_pessoa_fisica,
-         pf.nm_social,
-         ROUND((SYSDATE - psf.dt_geracao_senha) * 1440) AS minutos_espera
-       FROM paciente_senha_fila psf
-       LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
-       LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = psf.cd_pessoa_fisica
+          psf.ds_maquina_chamada,
+          psf.qt_chamadas,
+          COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1)) AS cd_pessoa_fisica,
+          COALESCE(psf.nm_paciente, pf.nm_social, pf.nm_pessoa_fisica) AS nm_paciente,
+          pf.nm_pessoa_fisica,
+          pf.nm_social,
+          ROUND((SYSDATE - psf.dt_geracao_senha) * 1440) AS minutos_espera
+        FROM paciente_senha_fila psf
+        LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+        LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1))
        WHERE ${whereClause}
        ORDER BY 
          CASE WHEN psf.dt_chamada IS NULL THEN 0 ELSE 1 END ASC,
          NVL(psf.nr_prioridade, 3) ASC,
-         psf.dt_geracao_senha DESC`,
+         psf.dt_geracao_senha DESC
+       FETCH FIRST 100 ROWS ONLY`,
       binds
     );
     return result.rows || [];
@@ -75,7 +86,7 @@ async function listarSenhasEspera(nrSeqFila) {
 }
 
 async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const filaInt = nrSeqFila ? parseInt(nrSeqFila, 10) : null;
     let whereFila = '';
@@ -88,16 +99,21 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
 
     // Busca candidatos ordenados por prioridade e tempo de chegada
     const proxima = await conn.execute(
-      `SELECT psf.nr_sequencia, psf.cd_senha_gerada, psf.nr_seq_fila_senha, psf.cd_pessoa_fisica, fs.ds_fila
+      `SELECT psf.nr_sequencia, psf.cd_senha_gerada, psf.nr_seq_fila_senha,
+              COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1)) AS cd_pessoa_fisica,
+              fs.ds_fila,
+              COALESCE(psf.nm_paciente, pf.nm_social, pf.nm_pessoa_fisica) AS nm_paciente
        FROM paciente_senha_fila psf
        LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+       LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1))
        WHERE psf.dt_inutilizacao IS NULL
          AND psf.dt_utilizacao IS NULL
          AND psf.dt_fim_atendimento IS NULL
          AND psf.dt_chamada IS NULL
          AND psf.dt_geracao_senha >= TRUNC(SYSDATE - 1)
          ${whereFila}
-       ORDER BY NVL(psf.nr_prioridade, 3) ASC, psf.dt_geracao_senha ASC`,
+       ORDER BY NVL(psf.nr_prioridade, 3) ASC, psf.dt_geracao_senha ASC
+       FETCH FIRST 50 ROWS ONLY`,
       binds
     );
 
@@ -111,6 +127,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     let nrFila = null;
     let dsFilaNome = 'Recepção';
     let nrPrioridade = 3;
+    let nmPacienteChamada = null;
 
     // Lock atômico direto na PK sem subquery para evitar ORA-02014
     for (const cand of proxima.rows) {
@@ -127,10 +144,11 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
         if (lockRes.rows && lockRes.rows.length > 0) {
           nrSeqSenha = lockRes.rows[0].NR_SEQUENCIA;
           cdSenha = lockRes.rows[0].CD_SENHA_GERADA;
-          cdPf = lockRes.rows[0].CD_PESSOA_FISICA;
+          cdPf = cand.CD_PESSOA_FISICA || lockRes.rows[0].CD_PESSOA_FISICA;
           nrFila = lockRes.rows[0].NR_SEQ_FILA_SENHA;
           dsFilaNome = cand.DS_FILA || 'Recepção';
           nrPrioridade = lockRes.rows[0].NR_PRIORIDADE || 3;
+          nmPacienteChamada = cand.NM_PACIENTE || null;
           break;
         }
       } catch (lockErr) {
@@ -201,6 +219,7 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
       nr_sequencia: nrSeqSenha,
       cd_senha_gerada: cdSenha,
       cd_pessoa_fisica: cdPf,
+      nm_paciente: nmPacienteChamada,
       nr_seq_fila_senha: nrFila,
       ds_fila: dsFilaNome,
       nr_prioridade: nrPrioridade,
@@ -215,22 +234,25 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
 }
 
 async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const maquinaFinal = dsMaquina || 'GUICHE-WEB';
     const usuarioFinal = nmUsuario || 'TASY';
     const seqNum = parseInt(nrSeqSenha, 10);
 
     const checkRes = await conn.execute(
-      `SELECT psf.cd_senha_gerada, psf.nr_prioridade, psf.nr_seq_fila_senha, fs.ds_fila
+      `SELECT psf.cd_senha_gerada, psf.nr_prioridade, psf.nr_seq_fila_senha, fs.ds_fila,
+              COALESCE(psf.nm_paciente, pf.nm_social, pf.nm_pessoa_fisica) AS nm_paciente
        FROM paciente_senha_fila psf
        LEFT JOIN fila_espera_senha fs ON fs.nr_sequencia = psf.nr_seq_fila_senha
+       LEFT JOIN pessoa_fisica pf ON pf.cd_pessoa_fisica = COALESCE(psf.cd_pessoa_fisica, (SELECT ap.cd_pessoa_fisica FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ROWNUM = 1))
        WHERE psf.nr_sequencia = :seq`,
       { seq: seqNum }
     );
 
     const cdSenha = checkRes.rows?.[0]?.CD_SENHA_GERADA || seqNum;
     const nrPrioridade = checkRes.rows?.[0]?.NR_PRIORIDADE || 3;
+    const nmPacienteRechamada = checkRes.rows?.[0]?.NM_PACIENTE || null;
     const dsPrioridade = nrPrioridade === 1 ? 'Emergência' : (nrPrioridade === 2 ? 'Prioritária' : 'Normal');
 
     await conn.execute(
@@ -281,6 +303,7 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
       success: true,
       nr_sequencia: seqNum,
       cd_senha_gerada: cdSenha,
+      nm_paciente: nmPacienteRechamada,
       ds_fila: checkRes.rows?.[0]?.DS_FILA || 'Recepção',
       nr_prioridade: nrPrioridade,
       ds_prioridade: dsPrioridade
@@ -303,7 +326,7 @@ function normalizarBusca(txt) {
 }
 
 async function buscarPessoas(termo) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const raw = String(termo || '').trim();
     const apenasDigitos = raw.replace(/\D/g, '');
@@ -381,7 +404,7 @@ async function buscarPessoas(termo) {
 }
 
 async function obterPessoaCompleta(cdPessoaFisica) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT
@@ -418,14 +441,25 @@ async function obterPessoaCompleta(cdPessoaFisica) {
     );
 
     if (result.rows.length === 0) return null;
-    return result.rows[0];
+    const pessoa = result.rows[0];
+
+    const openAtend = await conn.execute(
+      `SELECT nr_atendimento, cd_estabelecimento, cd_procedencia, cd_convenio, cd_categoria, ie_tipo_atendimento, cd_setor_atendimento, dt_entrada
+       FROM atendimento_paciente 
+       WHERE cd_pessoa_fisica = :cd AND ie_status_atendimento = 'E' AND dt_alta IS NULL
+       ORDER BY nr_atendimento DESC`,
+      { cd: String(cdPessoaFisica) }
+    );
+    pessoa.atendimentosAbertos = openAtend.rows || [];
+
+    return pessoa;
   } finally {
     await conn.close();
   }
 }
 
 async function salvarPessoaFisica(dados, nmUsuario) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     let cdPessoaFisica = dados.cd_pessoa_fisica;
     const isNew = !cdPessoaFisica;
@@ -652,7 +686,7 @@ async function salvarPessoaFisica(dados, nmUsuario) {
 // ============================================================================
 
 async function listarConvenios() {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT cd_convenio, ds_convenio
@@ -667,7 +701,7 @@ async function listarConvenios() {
 }
 
 async function listarCategoriasConvenio(cdConvenio) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT cd_categoria, ds_categoria
@@ -683,7 +717,7 @@ async function listarCategoriasConvenio(cdConvenio) {
 }
 
 async function obterUltimoConvenioPaciente(cdPessoaFisica) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT * FROM (
@@ -718,7 +752,7 @@ async function obterUltimoConvenioPaciente(cdPessoaFisica) {
 // ============================================================================
 
 async function listarSetoresAtendimento() {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT DISTINCT sa.cd_setor_atendimento, sa.ds_setor_atendimento
@@ -738,7 +772,7 @@ async function listarSetoresAtendimento() {
 // ============================================================================
 
 async function listarClassificacoesAtendimento() {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const result = await conn.execute(
       `SELECT nr_sequencia, ds_classificacao
@@ -757,7 +791,7 @@ async function listarClassificacoesAtendimento() {
 // ============================================================================
 
 async function abrirAtendimento(dados, nmUsuario) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const sysConfig = configCache.getSystemConfig() || {};
     const seqRes = await conn.execute(`SELECT ATENDIMENTO_PACIENTE_SEQ.NEXTVAL AS id FROM dual`);
@@ -979,6 +1013,51 @@ async function abrirAtendimento(dados, nmUsuario) {
   }
 }
 
+async function atualizarAtendimento(nrAtendimento, dados, nmUsuario) {
+  const conn = await _getConnection();
+  try {
+    const cdSetor = dados.cd_setor_atendimento ? parseInt(dados.cd_setor_atendimento, 10) : null;
+    const cdConvenio = dados.cd_convenio ? parseInt(dados.cd_convenio, 10) : null;
+    const cdCategoria = dados.cd_categoria ? String(dados.cd_categoria) : null;
+    const cdProcedencia = dados.cd_procedencia ? parseInt(dados.cd_procedencia, 10) : null;
+    
+    // Simplificado para atualizar o que a recepção costuma editar
+    let setClauses = [];
+    let binds = { nrAtendimento: parseInt(nrAtendimento, 10), nmUsuario };
+    
+    if (cdSetor) { setClauses.push('cd_setor_atendimento = :cdSetor'); binds.cdSetor = cdSetor; }
+    if (cdConvenio) { setClauses.push('cd_convenio = :cdConvenio'); binds.cdConvenio = cdConvenio; }
+    if (cdCategoria) { setClauses.push('cd_categoria = :cdCategoria'); binds.cdCategoria = cdCategoria; }
+    if (cdProcedencia) { setClauses.push('cd_procedencia = :cdProcedencia'); binds.cdProcedencia = cdProcedencia; }
+    
+    setClauses.push('dt_atualizacao = SYSDATE');
+    setClauses.push('nm_usuario = :nmUsuario');
+
+    if (setClauses.length > 2) {
+      await conn.execute(
+        `UPDATE atendimento_paciente SET ${setClauses.join(', ')} WHERE nr_atendimento = :nrAtendimento`,
+        binds, { autoCommit: true }
+      );
+    }
+    
+    // Se tiver senha vinculada nova, atualiza
+    if (dados.nr_seq_pac_senha_fila) {
+      await conn.execute(
+        `UPDATE paciente_senha_fila 
+         SET dt_inicio_atendimento = SYSDATE, 
+             dt_fim_atendimento = SYSDATE, 
+             nm_usuario_fim_atend = :nmUsuario 
+         WHERE nr_sequencia = :senhaId`,
+        { nmUsuario, senhaId: parseInt(dados.nr_seq_pac_senha_fila, 10) },
+        { autoCommit: true }
+      );
+    }
+    
+    return { nr_atendimento: nrAtendimento };
+  } finally {
+    await conn.close();
+  }
+}
 // ============================================================================
 // PILAR 5: RELATÓRIOS TASY & GED
 // ============================================================================
@@ -990,14 +1069,30 @@ const MAPA_RELATORIOS_OFICIAIS = [
   { cd_relatorio: 206, nr_sequencia: 2750347, ds_titulo: '206 — HEAL - Comunicado de Alta Médica Voluntária - HTML5', icone: 'bi-file-earmark-text', badge: 'Internação Voluntária' },
   { cd_relatorio: 643, nr_sequencia: 2750843, ds_titulo: '643 — HEAL - Contrato de prestação de serviços hospitalar - HTML5', icone: 'bi-file-earmark-ruled', badge: 'Contrato Jurídico' },
   { cd_relatorio: 717, nr_sequencia: 2750452, ds_titulo: '717 — TERMO DE AUTORIZAÇÃO PARA REALIZAÇÃO DE EXAMES LABORATORIAIS', icone: 'bi-eyedropper', badge: 'Exames' },
-  { cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento' }
+  { cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento' },
+  { cd_relatorio: 70125, nr_sequencia: 2750685, ds_titulo: '70125 — V.4.0 - TISS - Guia SP/SADT', icone: 'bi-file-earmark-text', badge: 'TISS / Faturamento' }
 ];
 
-async function listarRelatoriosAtendimento() {
-  const relsConfig = configCache.getRelatoriosTasy(true);
-  const relatoriosBase = (relsConfig && relsConfig.length > 0) ? relsConfig : MAPA_RELATORIOS_OFICIAIS;
+const { AppError, ForbiddenError } = require('../../core/errors/AppError');
 
-  const conn = await getConnection();
+function obterCatalogoBase() {
+  const state = configCache.getRelatoriosTasyState();
+  if (state === 'UNAVAILABLE') {
+    throw new AppError('Configuração de relatórios indisponível.', 503, 'SERVICE_UNAVAILABLE');
+  }
+  if (state === 'EMPTY') {
+    throw new ForbiddenError('Catálogo de relatórios vazio.');
+  }
+  if (state === 'ALL_DISABLED') {
+    return [];
+  }
+  return configCache.getRelatoriosTasy(true);
+}
+
+async function listarRelatoriosAtendimento() {
+  const relatoriosBase = obterCatalogoBase();
+
+  const conn = await _getConnection();
   try {
     const seqs = relatoriosBase.map(r => r.nr_sequencia).filter(Boolean).join(',');
     let dbMap = new Map();
@@ -1029,17 +1124,23 @@ async function listarRelatoriosAtendimento() {
 }
 
 async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
-  const conn = await getConnection();
-  try {
-    const cd = parseInt(cdRelatorio, 10);
-    const nAtend = parseInt(nrAtendimento, 10);
+  const cd = parseInt(cdRelatorio, 10);
+  const nAtend = parseInt(nrAtendimento, 10);
 
-    const relsConfig = configCache.getRelatoriosTasy(false);
-    const repInfo = (relsConfig && relsConfig.find(r => r.cd_relatorio === cd)) ||
-      MAPA_RELATORIOS_OFICIAIS.find(r => r.cd_relatorio === cd) || {
-        cd_relatorio: cd,
-        ds_titulo: `Relatório ${cd}`
-      };
+  if (Number.isNaN(cd) || Number.isNaN(nAtend)) {
+    throw new Error('Parâmetros inválidos para geração de relatório');
+  }
+
+  const relsConfig = configCache.getRelatoriosTasy(false);
+  const repInfo = (relsConfig && relsConfig.find(r => r.cd_relatorio === cd)) ||
+    MAPA_RELATORIOS_OFICIAIS.find(r => r.cd_relatorio === cd) || {
+      cd_relatorio: cd,
+      ds_titulo: `Relatório ${cd}`
+    };
+
+  const conn = await _getConnection();
+  let execErr = null;
+  try {
 
     let sql = null;
     if (repInfo.nr_sequencia) {
@@ -1051,7 +1152,7 @@ async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
     }
 
     let dados = {};
-    if (sql && cd !== 70126) {
+    if (sql && cd !== 70126 && cd !== 70125 && (cd < 70120 || cd > 70135)) {
       try {
         const dRes = await conn.execute(sql, { nr_atendimento: nAtend });
         dados = dRes.rows[0] || {};
@@ -1099,8 +1200,17 @@ async function gerarRelatorioAtendimento(cdRelatorio, nrAtendimento) {
     }
 
     return renderizarHtmlDocumento(cd, repInfo.ds_titulo, dados, nAtend);
+  } catch (err) {
+    execErr = err;
   } finally {
-    await conn.close();
+    try {
+      await conn.close();
+    } catch (closeErr) {
+      const logger = require('../../core/utils/logger');
+      logger.error('[Recepção] Erro ao fechar conexão em gerarRelatorioAtendimento:', closeErr);
+      if (!execErr) throw closeErr;
+    }
+    if (execErr) throw execErr;
   }
 }
 
@@ -1390,10 +1500,10 @@ function renderizarHtmlDocumento(cdRelatorio, titulo, d, nrAtendimento) {
 }
 
 async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const binds = {};
-    let where = '1=1';
+    let where = "(ga.ie_situacao IS NULL OR ga.ie_situacao <> 'I')";
 
     if (nrAtendimento) {
       where += ' AND ga.nr_atendimento = :atend';
@@ -1425,7 +1535,7 @@ async function listarDocumentosGED(nrAtendimento, cdPessoaFisica) {
 }
 
 async function anexarDocumentoGED(dados, nmUsuario) {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const seqRes = await conn.execute(`SELECT GED_ATENDIMENTO_SEQ.NEXTVAL AS id FROM dual`);
     const nrSeq = seqRes.rows[0].ID;
@@ -1490,7 +1600,7 @@ async function anexarDocumentoGED(dados, nmUsuario) {
 
 async function obterContaPaciente(nrAtendimento) {
   if (!nrAtendimento) return null;
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const res = await conn.execute(
       `SELECT nr_interno_conta FROM conta_paciente WHERE nr_atendimento = :atend ORDER BY dt_atualizacao DESC`,
@@ -1509,7 +1619,7 @@ async function obterContaPaciente(nrAtendimento) {
 }
 
 async function listarAtendimentosHoje() {
-  const conn = await getConnection();
+  const conn = await _getConnection();
   try {
     const maxRes = await conn.execute(`SELECT NVL(MAX(nr_atendimento), 0) AS max_id FROM atendimento_paciente`);
     const maxId = (maxRes.rows && maxRes.rows[0]) ? Number(maxRes.rows[0].MAX_ID) : 0;
@@ -1518,6 +1628,9 @@ async function listarAtendimentosHoje() {
     const res = await conn.execute(
       `SELECT 
          a.nr_atendimento,
+         a.ie_status_atendimento,
+         a.dt_alta,
+         a.dt_cancelamento,
          TO_CHAR(a.dt_entrada, 'HH24:MI') AS hr_entrada,
          TO_CHAR(a.dt_entrada, 'DD/MM/YYYY HH24:MI') AS dt_entrada_fmt,
          a.cd_pessoa_fisica,
@@ -1562,26 +1675,28 @@ async function listarAtendimentosHoje() {
 }
 
 async function verificarDuplicidadePaciente({ cpf, dtNascimento, cdPessoaFisica }) {
-  const conn = await getConnection();
+  const cpfLimpo = String(cpf || '').replace(/\D/g, '');
+  const binds = {};
+  const conds = [];
+
+  const dummyCpfs = ['00000000000', '11111111111', '22222222222', '33333333333', '44444444444', '55555555555', '66666666666', '77777777777', '88888888888', '99999999999'];
+  if (cpfLimpo && cpfLimpo.length === 11 && !dummyCpfs.includes(cpfLimpo)) {
+    conds.push(`(pf.nr_cpf = :cpf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') = :cpf)`);
+    binds.cpf = cpfLimpo;
+  }
+
+  if (dtNascimento) {
+    conds.push(`TRUNC(pf.dt_nascimento) = TO_DATE(:dtNasc, 'YYYY-MM-DD')`);
+    binds.dtNasc = dtNascimento.substring(0, 10);
+  }
+
+  if (conds.length === 0) {
+    return { duplicado: false };
+  }
+
+  const conn = await _getConnection();
+  let execErr = null;
   try {
-    const cpfLimpo = String(cpf || '').replace(/\D/g, '');
-    const binds = {};
-    const conds = [];
-
-    const dummyCpfs = ['00000000000', '11111111111', '22222222222', '33333333333', '44444444444', '55555555555', '66666666666', '77777777777', '88888888888', '99999999999'];
-    if (cpfLimpo && cpfLimpo.length === 11 && !dummyCpfs.includes(cpfLimpo)) {
-      conds.push(`(pf.nr_cpf = :cpf OR REPLACE(REPLACE(pf.nr_cpf, '.', ''), '-', '') = :cpf)`);
-      binds.cpf = cpfLimpo;
-    }
-
-    if (dtNascimento) {
-      conds.push(`TRUNC(pf.dt_nascimento) = TO_DATE(:dtNasc, 'YYYY-MM-DD')`);
-      binds.dtNasc = dtNascimento.substring(0, 10);
-    }
-
-    if (conds.length === 0) {
-      return { duplicado: false };
-    }
 
     let excludeClause = '';
     if (cdPessoaFisica) {
@@ -1652,15 +1767,103 @@ async function verificarDuplicidadePaciente({ cpf, dtNascimento, cdPessoaFisica 
         isHoje: ultimoAtend.IS_HOJE === 1
       } : null
     };
+  } catch (err) {
+    execErr = err;
+  } finally {
+    try {
+      await conn.close();
+    } catch (closeErr) {
+      const logger = require('../../core/utils/logger');
+      logger.error('[Recepção] Erro ao fechar conexão em verificarDuplicidadePaciente:', closeErr);
+      if (!execErr) throw closeErr;
+    }
+    if (execErr) throw execErr;
+  }
+}
+
+async function inutilizarSenha(nrSequencia, motivoId, nmUsuario, maquina) {
+  const conn = await _getConnection();
+  try {
+    await conn.execute(
+      `UPDATE paciente_senha_fila 
+       SET dt_inutilizacao = SYSDATE, 
+           nm_usuario_inutilizacao = :usuario, 
+           ds_maquina_inutilizacao = :maquina,
+           nr_seq_motivo_inutilizacao = :motivo
+       WHERE nr_sequencia = :id`,
+      {
+        usuario: String(nmUsuario).substring(0, 50),
+        maquina: String(maquina).substring(0, 50),
+        motivo: parseInt(motivoId, 10) || 3, // 3 = Outros by default
+        id: parseInt(nrSequencia, 10)
+      },
+      { autoCommit: true }
+    );
+    return true;
   } finally {
     await conn.close();
   }
 }
 
+async function listarMotivosInutilizacao() {
+  const conn = await _getConnection();
+  try {
+    const res = await conn.execute(
+      `SELECT nr_sequencia, ds_motivo_inutilizacao 
+       FROM motivo_inutilizacao_senha 
+       WHERE ie_situacao = 'A' OR ie_situacao IS NULL
+       ORDER BY nr_sequencia`
+    );
+    return res.rows || [];
+  } finally {
+    await conn.close();
+  }
+}
+async function obterDocumentoGED(nrSequencia) {
+  const conn = await _getConnection();
+  try {
+    const res = await conn.execute(
+      `SELECT im_arquivo_banco, ds_extensao_arquivo FROM ged_atendimento WHERE nr_sequencia = :id`,
+      { id: parseInt(nrSequencia, 10) }
+    );
+    if (!res.rows || res.rows.length === 0) return null;
+    return res.rows[0];
+  } finally {
+    await conn.close();
+  }
+}
+
+async function inativarDocumentoGED(nrSequencia, dsJustificativa, nmUsuario) {
+  const conn = await _getConnection();
+  try {
+    await conn.execute(
+      `UPDATE ged_atendimento 
+       SET ie_situacao = 'I', 
+           dt_inativacao = SYSDATE, 
+           nm_usuario_inativacao = :usuario, 
+           ds_justificativa = :justificativa 
+       WHERE nr_sequencia = :id`,
+      {
+        usuario: String(nmUsuario).substring(0, 50),
+        justificativa: String(dsJustificativa).substring(0, 4000),
+        id: parseInt(nrSequencia, 10)
+      },
+      { autoCommit: true }
+    );
+    return true;
+  } finally {
+    await conn.close();
+  }
+}
 module.exports = {
+  obterCatalogoBase,
+  setCustomGetConnectionForTest,
+  resetCustomGetConnectionForTest,
   listarFilasSenhas,
   listarSenhasEspera,
   chamarProximaSenha,
+  inutilizarSenha,
+  listarMotivosInutilizacao,
   rechamarSenha,
   buscarPessoas,
   obterPessoaCompleta,
@@ -1672,10 +1875,40 @@ module.exports = {
   listarSetoresAtendimento,
   listarClassificacoesAtendimento,
   abrirAtendimento,
+  atualizarAtendimento,
   listarAtendimentosHoje,
   obterContaPaciente,
   listarRelatoriosAtendimento,
   gerarRelatorioAtendimento,
   listarDocumentosGED,
-  anexarDocumentoGED
+  anexarDocumentoGED,
+  obterDocumentoGED,
+  inativarDocumentoGED,
+  cancelarAtendimento
 };
+
+async function cancelarAtendimento(nrAtendimento, usuario, cdMotivo) {
+  const conn = await _getConnection();
+  try {
+    const sql = `
+      UPDATE tasy.atendimento_paciente 
+      SET ie_status_atendimento = 'C',
+          dt_cancelamento = SYSDATE,
+          nm_usuario_cancelamento = :usuario,
+          dt_atualizacao = SYSDATE,
+          nm_usuario = :usuario
+      WHERE nr_atendimento = :atendimento
+    `;
+    
+    const binds = {
+      usuario: String(usuario || 'CONECTA').substring(0, 50),
+      
+      atendimento: parseInt(nrAtendimento)
+    };
+    
+    await conn.execute(sql, binds, { autoCommit: true });
+    return true;
+  } finally {
+    await conn.close();
+  }
+}

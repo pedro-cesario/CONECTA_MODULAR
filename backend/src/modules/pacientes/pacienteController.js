@@ -2,6 +2,7 @@ const pacienteService = require('./pacienteService');
 const { validarPerfil, validarModuloPermissao, getPerfilAtivo } = require('../../core/utils/acesso');
 const configCache = require('../../core/config/configCache');
 const auditLogger = require('../../core/utils/auditLogger');
+const { ValidationError, ForbiddenError, UnauthorizedError } = require('../../core/errors/AppError');
 
 async function listarPacientes(req, res) {
   try {
@@ -64,34 +65,39 @@ async function listarPacientesSetor(req, res) {
   }
 }
 
-async function listarPacientesDashboard(req, res) {
+async function listarPacientesDashboard(req, res, next) {
   try {
     const usuario = req.session?.usuario;
     if (!usuario) {
-      return res.status(401).json({ success: false, message: 'Não autenticado' });
+      return next(new UnauthorizedError('Não autenticado'));
     }
     if (!validarModuloPermissao(usuario, 'dashboard')) {
       console.warn('[Dashboard Pacientes] Acesso negado para usuario:', usuario.nm_usuario, 'perfilAtivo:', usuario.perfilAtivo);
-      return res.status(403).json({ success: false, message: 'Dashboard disponível apenas para os perfis com este módulo habilitado' });
+      return next(new ForbiddenError('Dashboard disponível apenas para os perfis com este módulo habilitado'));
     }
 
-    const cdSetor = parseInt(req.params.cd_setor, 10);
-    if (!cdSetor) {
-      return res.status(400).json({ success: false, message: 'Setor inválido' });
+    const { cd_setor } = req.params;
+    const cdSetorStr = String(cd_setor || '');
+    if (!/^\d+$/.test(cdSetorStr)) {
+      return next(new ValidationError('Setor inválido'));
+    }
+
+    const cdSetorNum = Number(cdSetorStr);
+    if (!Number.isSafeInteger(cdSetorNum) || cdSetorNum <= 0) {
+      return next(new ValidationError('Setor inválido ou fora dos limites'));
     }
 
     const perfilAtivo = getPerfilAtivo(usuario);
-    if (!configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetor, 'dashboard')) {
-      console.warn('[Dashboard Pacientes] Setor não autorizado:', cdSetor, 'para perfil:', perfilAtivo);
-      return res.status(403).json({ success: false, message: 'Setor não autorizado para o dashboard' });
+    if (!configCache.perfilPodeVisualizarSetor(perfilAtivo, cdSetorNum, 'dashboard')) {
+      console.warn('[Dashboard Pacientes] Setor não autorizado:', cdSetorNum, 'para perfil:', perfilAtivo);
+      return next(new ForbiddenError('Setor não autorizado para o dashboard'));
     }
 
-    const pacientes = await pacienteService.listarPacientesComClassificacao(cdSetor);
-    console.log(`[Dashboard Pacientes] Retornando ${pacientes.length} pacientes para setor:`, cdSetor);
+    const pacientes = await pacienteService.listarPacientesComClassificacao(cdSetorNum);
+    console.log(`[Dashboard Pacientes] Retornando ${pacientes.length} pacientes para setor:`, cdSetorNum);
     return res.json({ success: true, data: pacientes });
   } catch (err) {
-    console.error('[Dashboard Pacientes] Erro:', err.message);
-    return res.status(err.status || 500).json({ success: false, message: err.message });
+    return next(err);
   }
 }
 

@@ -112,7 +112,7 @@ async function saveAtiva(payload, nmUsuario) {
     const { cd_setor_atendimento, dt_plantao, turno, items, expected_version } = payload;
 
     const checkResult = await conn.execute(
-      `SELECT COUNT(*) AS cnt, MAX(NR_VERSAO) AS max_ver
+      `SELECT NR_VERSAO
        FROM CONECTA_ESCALA_ATIVA
        WHERE CD_SETOR_ATENDIMENTO = :cd_setor
          AND TRUNC(DT_PLANTAO) = TO_DATE(:dt_plantao, 'YYYY-MM-DD')
@@ -121,7 +121,9 @@ async function saveAtiva(payload, nmUsuario) {
       { cd_setor: cd_setor_atendimento, dt_plantao: dt_plantao, ie_turno: turno }
     );
 
-    const maxVerAtual = checkResult.rows[0]?.MAX_VER || 0;
+    const cnt = checkResult.rows ? checkResult.rows.length : 0;
+    const maxVerAtual = cnt > 0 ? Math.max(...checkResult.rows.map(r => r.NR_VERSAO || 0)) : 0;
+
     if (expected_version !== undefined && expected_version !== null) {
       if (maxVerAtual > 0 && maxVerAtual !== Number(expected_version)) {
         const err = new Error(`Conflito de concorrência: a escala foi alterada por outro usuário (versão no banco: ${maxVerAtual}, sua versão: ${expected_version}). Recarregue antes de salvar.`);
@@ -130,8 +132,8 @@ async function saveAtiva(payload, nmUsuario) {
       }
     }
 
-    if (checkResult.rows[0].CNT > 0) {
-      const versaoAnterior = checkResult.rows[0].MAX_VER;
+    if (cnt > 0) {
+      const versaoAnterior = maxVerAtual;
       await conn.execute(
         `INSERT INTO CONECTA_ESCALA_LOG
            (NR_SEQUENCIA, CD_SETOR_ATENDIMENTO, DT_PLANTAO, IE_TURNO, NR_VERSAO,
@@ -154,7 +156,7 @@ async function saveAtiva(payload, nmUsuario) {
       );
     }
 
-    const novaVersao = checkResult.rows[0].CNT > 0 ? checkResult.rows[0].MAX_VER + 1 : 1;
+    const novaVersao = cnt > 0 ? maxVerAtual + 1 : 1;
 
     const insertSql = `INSERT INTO CONECTA_ESCALA_ATIVA
       (NR_SEQUENCIA, CD_SETOR_ATENDIMENTO, DT_PLANTAO, IE_TURNO, NR_VERSAO,
@@ -229,7 +231,7 @@ async function findPatioCirculanteGlobal(dtPlantao, turno) {
   const conn = await getConnection();
   try {
     const result = await conn.execute(
-      `SELECT DISTINCT a.IE_TIPO, a.CD_PESSOA_FISICA,
+      `SELECT DISTINCT a.IE_TIPO, a.CD_PESSOA_FISICA, a.CD_SETOR_ATENDIMENTO,
               obter_nome_usuario(u.nm_usuario) AS nome
        FROM CONECTA_ESCALA_ATIVA a
        JOIN usuario u ON u.cd_pessoa_fisica = a.CD_PESSOA_FISICA
@@ -246,7 +248,8 @@ async function findPatioCirculanteGlobal(dtPlantao, turno) {
     for (const row of (result.rows || [])) {
       const entry = {
         cd_pessoa_fisica: Number(row.CD_PESSOA_FISICA),
-        nome: row.NOME || ''
+        nome: row.NOME || '',
+        cd_setor_atendimento: Number(row.CD_SETOR_ATENDIMENTO)
       };
       if (row.IE_TIPO === 'PATIO') {
         patio.push(entry);

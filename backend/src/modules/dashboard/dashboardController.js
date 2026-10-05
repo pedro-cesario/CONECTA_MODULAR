@@ -1,3 +1,4 @@
+const { ValidationError } = require('../../core/errors/AppError');
 const dashboardService = require('.//dashboardService');
 const { perfilTemAcessoModulo } = require('../../core/config/modulos');
 
@@ -73,16 +74,24 @@ async function listarDashboardPA(req, res) {
   }
 }
 
-async function obterDetalhesInternacao(req, res) {
+async function obterDetalhesInternacao(req, res, next) {
   try {
     if (!validarAcessoDashboardPA(req, res)) return;
 
     const { nrAtendimento } = req.params;
-    const resultado = await dashboardService.listarDetalhesInternacao(nrAtendimento);
+    const nrStr = String(nrAtendimento || '');
+    if (!/^\d+$/.test(nrStr)) {
+      return next(new ValidationError('Número de atendimento inválido'));
+    }
+    const nrNum = Number(nrStr);
+    if (!Number.isSafeInteger(nrNum) || nrNum <= 0) {
+      return next(new ValidationError('Número de atendimento inválido ou fora dos limites'));
+    }
+
+    const resultado = await dashboardService.listarDetalhesInternacao(nrStr);
     return res.json({ success: true, data: resultado });
   } catch (err) {
-    console.error('[Dashboard P.A. Detalhes] Erro:', err.message);
-    return res.status(err.status || 500).json({ success: false, message: err.message });
+    next(err);
   }
 }
 

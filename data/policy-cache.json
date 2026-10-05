@@ -3,11 +3,11 @@
     "feature": "conecta",
     "allowed": true,
     "effect": "allow",
-    "policyId": null,
-    "policyLabel": null,
-    "source": "default",
-    "version": 40,
-    "evaluatedAt": "2026-09-04T15:19:20.386Z"
+    "policyId": "5b866d79-3ddc-42aa-a369-527d5548f614",
+    "policyLabel": "API_CONECTA_ASSISTENCIAL_ENF",
+    "source": "policy",
+    "version": 63,
+    "evaluatedAt": "2026-10-05T16:26:27.922Z"
   },
   "conecta|carlos.lacerda||": {
     "feature": "conecta",
@@ -57,6 +57,16 @@
     "policyLabel": null,
     "source": "default",
     "version": 40,
-    "evaluatedAt": "2026-08-31T18:10:02.218Z"
+    "evaluatedAt": "2026-09-15T12:52:30.148Z"
+  },
+  "conecta|pedro.davi||": {
+    "feature": "conecta",
+    "allowed": false,
+    "effect": "deny",
+    "policyId": null,
+    "policyLabel": null,
+    "source": "default",
+    "version": 63,
+    "evaluatedAt": "2026-10-05T16:26:27.982Z"
   }
 }

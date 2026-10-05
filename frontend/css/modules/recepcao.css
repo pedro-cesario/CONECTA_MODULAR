@@ -8,9 +8,8 @@
   flex-direction: column;
   gap: 1.25rem;
   width: 100%;
-  max-width: 1440px;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem 3.5rem 1.5rem;
+  padding: 1.25rem 2rem 3.5rem 2rem;
   overflow-y: auto;
   flex: 1 1 0%;
   min-height: 0;
@@ -24,60 +23,65 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
   background: #ffffff;
-  border: 1px solid var(--slate-200);
+  border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: var(--radius-lg, 12px);
-  padding: 0.75rem 1.25rem;
+  padding: 0.65rem 1.25rem;
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 .recepcao-tab-pills {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .recepcao-tab-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--slate-100);
-  border: 1px solid var(--slate-200);
+  padding: 0.5rem 1.1rem;
+  background: #ffffff;
+  border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: var(--radius-md, 8px);
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--slate-700);
+  color: var(--slate-700, #334155);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .recepcao-tab-pill:hover {
-  background: var(--slate-200);
-  color: var(--slate-900);
+  background: var(--slate-50, #f8fafc);
+  color: var(--slate-900, #0f172a);
 }
 
 .recepcao-tab-pill.active {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--primary, #00387a);
+  border-color: var(--primary, #00387a);
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 56, 122, 0.25);
 }
 
 .recepcao-tab-pill .badge {
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
-  color: inherit;
+  background: #64748b;
+  color: #ffffff;
 }
 
 .recepcao-tab-pill.active .badge {
-  background: rgba(255, 255, 255, 0.25);
+  background: #00224d;
   color: #ffffff;
 }
 
@@ -85,7 +89,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.recepcao-action-buttons > * {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -93,13 +104,25 @@
    ========================================================================== */
 .recepcao-kpi-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+  .recepcao-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .recepcao-kpi-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .recepcao-kpi-card {
   background: #ffffff;
-  border: 1px solid var(--slate-200);
+  border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: var(--radius-lg, 12px);
   padding: 1.15rem 1.25rem;
   display: flex;
@@ -126,18 +149,18 @@
 }
 
 .recepcao-kpi-icon.primary {
-  background: var(--primary-50);
-  color: var(--primary);
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .recepcao-kpi-icon.success {
-  background: #ecfdf5;
-  color: #059669;
+  background: #f0fdf4;
+  color: #16a34a;
 }
 
 .recepcao-kpi-icon.warning {
-  background: #fffbeb;
-  color: #d97706;
+  background: #fff7ed;
+  color: #ea580c;
 }
 
 .recepcao-kpi-icon.info {
@@ -188,6 +211,200 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.25rem;
+}
+
+/* ==========================================================================
+   3. BOARD DE FILAS POR COLUNAS (DESIGN OFICIAL RECEPCAO.JPEG)
+   ========================================================================== */
+.recepcao-filas-board {
+  display: flex;
+  gap: 1.25rem;
+  width: 100%;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+}
+
+.recepcao-fila-coluna {
+  flex: 1 1 0%;
+  min-width: 320px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid var(--slate-200, #e2e8f0);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.recepcao-fila-header {
+  background-color: var(--primary, #00387a);
+  color: #ffffff;
+  padding: 0.65rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.2px;
+}
+
+.recepcao-fila-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+}
+
+.recepcao-fila-badge-count {
+  background-color: #ffffff;
+  color: var(--primary, #00387a);
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  min-width: 22px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.recepcao-fila-items {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background-color: #ffffff;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.recepcao-ticket-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.recepcao-ticket-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.recepcao-ticket-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.recepcao-ticket-square {
+  background-color: var(--primary, #00387a);
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.recepcao-ticket-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.recepcao-ticket-info-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recepcao-ticket-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.recepcao-ticket-wait {
+  background-color: #fef3c7;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #fde68a;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.2;
+}
+
+.recepcao-ticket-paciente {
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.recepcao-ticket-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.btn-recepcao-chamar {
+  border: 1.5px solid #2563eb !important;
+  color: #2563eb !important;
+  background: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-recepcao-chamar:hover {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.btn-recepcao-atender {
+  background-color: #15803d !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  padding: 0.35rem 0.8rem !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-recepcao-atender:hover {
+  background-color: #166534 !important;
+  color: #ffffff !important;
 }
 
 .senha-ticket-card {

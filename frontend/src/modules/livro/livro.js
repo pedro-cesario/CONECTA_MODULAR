@@ -280,6 +280,7 @@ export function temAcessoTecnicoEnfermagem() {
       if (isStale()) return;
       ensureLivroEditable();
       preview.innerHTML = '<div class="loading-placeholder">Erro ao buscar escala</div>';
+      throw err;
     } finally {
       if (!isStale()) setLivroFormLoading(false);
     }
@@ -1937,7 +1938,9 @@ export function temAcessoTecnicoEnfermagem() {
     clearLivroForm();
     await loadPacientesSetor(state.livroSetorSelecionado);
     await refreshHistoricoButton();
-    await loadLivroAdministrativoByDate(getLivroDataSelecionada());
+    try {
+      await loadLivroAdministrativoByDate(getLivroDataSelecionada());
+    } catch (err) {}
     await checkPatioCirculanteGlobal();
   }
 
@@ -2124,7 +2127,7 @@ export function temAcessoTecnicoEnfermagem() {
 
   const loadLivroContextoDebounced = utils.debounce(async () => {
     const dateValue = getLivroDataSelecionada();
-    loadLivroAdministrativoByDate(dateValue);
+    loadLivroAdministrativoByDate(dateValue).catch(() => {});
     await checkPatioCirculanteGlobal();
     await loadSetoresLivro();
   }, 300);
@@ -2424,11 +2427,20 @@ export function temAcessoTecnicoEnfermagem() {
       const dtPlantao = payload.data_plantao || utils.getTodayIsoDate();
       const turno = payload.turno || 'M';
 
-      const checkResult = await api.get(
-        `/api/escala-ativa?cd_setor=${encodeURIComponent(String(setorId))}&dt_plantao=${encodeURIComponent(dtPlantao)}&turno=${encodeURIComponent(turno)}`
-      );
+      // 1. Pré-consulta: verificar existência de escala prévia
+      let checkResult;
+      try {
+        checkResult = await api.get(
+          `/api/escala-ativa?cd_setor=${encodeURIComponent(String(setorId))}&dt_plantao=${encodeURIComponent(dtPlantao)}&turno=${encodeURIComponent(turno)}`
+        );
+      } catch (err) {
+        // Falha antes de gravar: nenhuma gravação foi iniciada
+        const msg = err?.data?.message || err?.message || 'Falha na comunicação com o servidor';
+        ui.showToast(`Falha ao verificar escala ativa: ${msg}. Nenhuma alteração foi gravada.`, 'error');
+        return;
+      }
 
-      if (checkResult.success && checkResult.data && checkResult.data.tecnicos && checkResult.data.tecnicos.length > 0) {
+      if (checkResult?.success && checkResult.data && checkResult.data.tecnicos && checkResult.data.tecnicos.length > 0) {
         const confirm = await ui.showConfirmModal(
           'Escala já existente',
           'Já existe uma escala para este setor, data e turno. Deseja alterar?'
@@ -2440,23 +2452,54 @@ export function temAcessoTecnicoEnfermagem() {
         payload.ds_justificativa = justificativa;
       }
 
-      const resultDb = await api.put('/api/escala-ativa', payload);
-      if (!resultDb.success) {
-        ui.showToast(resultDb.message || 'Falha ao salvar escala', 'error');
+      // 2. Persistência da Escala Ativa no SQLite
+      let resultDb;
+      try {
+        resultDb = await api.put('/api/escala-ativa', payload);
+      } catch (err) {
+        // Resultado desconhecido ou falha na chamada de gravação ativa
+        const msg = err?.data?.message || err?.message || 'Erro de comunicação ao salvar escala ativa';
+        ui.showToast(`Não foi possível confirmar a gravação da escala ativa: ${msg}. Verifique antes de tentar novamente. Rascunho preservado.`, 'error');
         return;
       }
 
-      const resultOc = await api.post('/api/escala-tecnica', payload);
-      if (resultOc.success) {
-        draft.clearModuleDraft('livro');
+      if (!resultDb?.success) {
+        ui.showToast(resultDb?.message || 'Não foi possível confirmar o salvamento. Confira o registro antes de tentar novamente.', 'error');
+        return;
+      }
+
+      // 3. Persistência do Histórico da Escala Técnica no Oracle
+      let resultOc;
+      try {
+        resultOc = await api.post('/api/escala-tecnica', payload);
+      } catch (err) {
+        // PUT confirmado com histórico não confirmado
+        const msg = err?.data?.message || err?.message || 'Falha ao registrar histórico';
+        ui.showToast(`Escala ativa atualizada com sucesso, mas o histórico assistencial não foi confirmado: ${msg}. O rascunho foi mantido para conferência.`, 'warning');
+        return;
+      }
+
+      if (!resultOc?.success) {
+        // PUT confirmado com histórico não confirmado
+        ui.showToast(`Escala ativa salva no DB, mas houve falha no histórico assistencial: ${resultOc?.message || 'erro desconhecido'}. Rascunho mantido.`, 'warning');
+        return;
+      }
+
+      // Ambas as gravações foram confirmadas com sucesso
+      draft.clearModuleDraft('livro');
+
+      // 4. Atualização da visualização da tela
+      try {
+        await loadLivroAdministrativoByDate(dtPlantao);
         ui.showToast('Escala salva com sucesso', 'success');
-        await loadLivroAdministrativoByDate(dtPlantao);
-      } else {
-        ui.showToast(resultOc.message || 'Escala salva no DB mas falha no histórico', 'warning');
-        await loadLivroAdministrativoByDate(dtPlantao);
+      } catch (err) {
+        // Gravações concluídas com falha apenas na atualização da tela
+        console.error('[btn-livro-salvar] Falha ao recarregar tela após gravação:', err);
+        ui.showToast('Escala gravada com sucesso! Houve falha apenas na atualização da visualização. Recarregue a página se necessário.', 'warning');
       }
     } catch (err) {
-      ui.showToast('Erro ao salvar escala técnica', 'error');
+      console.error('[btn-livro-salvar] Erro inesperado:', err);
+      ui.showToast('Erro inesperado durante a operação de salvamento. O rascunho foi preservado.', 'error');
     } finally {
       btn.innerHTML = originalHtml;
       btn.disabled = false;

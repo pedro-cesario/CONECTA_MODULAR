@@ -37,6 +37,7 @@ function run(sql, params = []) {
   });
 }
 
+let relatoriosTasyDisponivel = false;
 let cache = {
   perfis: [],
   modulos: [],
@@ -46,6 +47,10 @@ let cache = {
   dashboardPA: null,
   systemConfig: {}
 };
+
+function setCacheForTest(newCache) {
+  cache = { ...cache, ...newCache };
+}
 
 async function ensureAccessSchema() {
   await run(`CREATE TABLE IF NOT EXISTS configuracoes_sistema (
@@ -381,6 +386,11 @@ async function ensureAccessSchema() {
     await run("INSERT OR IGNORE INTO config_migrations (id) VALUES ('2026_08_passagem_checkboxes_real_v2')");
   }
 
+  const colsPerfis = await all("PRAGMA table_info(perfis)");
+  if (colsPerfis && colsPerfis.length > 0 && !colsPerfis.some(c => c.name === 'config_recepcao_json')) {
+    await run("ALTER TABLE perfis ADD COLUMN config_recepcao_json TEXT DEFAULT '{}'");
+  }
+
   // Schema: Painéis de TV Conecta e Mapeamento de Guichês por Computador
   await run(`CREATE TABLE IF NOT EXISTS paineis_tv (
     id TEXT PRIMARY KEY,
@@ -461,7 +471,8 @@ async function ensureAccessSchema() {
       { id: 'rel_206', cd_relatorio: 206, nr_sequencia: 2750347, ds_titulo: '206 — HEAL - Comunicado de Alta Médica Voluntária - HTML5', icone: 'bi-file-earmark-text', badge: 'Internação Voluntária', ordem: 4 },
       { id: 'rel_643', cd_relatorio: 643, nr_sequencia: 2750843, ds_titulo: '643 — HEAL - Contrato de prestação de serviços hospitalar - HTML5', icone: 'bi-file-earmark-ruled', badge: 'Contrato Jurídico', ordem: 5 },
       { id: 'rel_717', cd_relatorio: 717, nr_sequencia: 2750452, ds_titulo: '717 — TERMO DE AUTORIZAÇÃO PARA REALIZAÇÃO DE EXAMES LABORATORIAIS', icone: 'bi-eyedropper', badge: 'Exames', ordem: 6 },
-      { id: 'rel_70126', cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento', ordem: 7 }
+      { id: 'rel_70126', cd_relatorio: 70126, nr_sequencia: 2750211, ds_titulo: '70126 — V.4.0 - TISS - Guia de Resumo de Internação', icone: 'bi-file-earmark-spreadsheet', badge: 'TISS / Faturamento', ordem: 7 },
+      { id: 'rel_70125', cd_relatorio: 70125, nr_sequencia: 2750685, ds_titulo: '70125 — V.4.0 - TISS - Guia SP/SADT', icone: 'bi-file-earmark-text', badge: 'TISS / Faturamento', ordem: 8 }
     ];
     for (const r of defaultRelatorios) {
       await run(
@@ -487,7 +498,11 @@ async function ensureAccessSchema() {
 async function load() {
   try {
     await ensureAccessSchema();
-    const perfis = await all('SELECT * FROM perfis WHERE ativo = 1');
+    let perfisRaw = await all('SELECT * FROM perfis WHERE ativo = 1');
+    const perfis = perfisRaw.map(p => ({
+      ...p,
+      config_recepcao: p.config_recepcao_json ? JSON.parse(p.config_recepcao_json) : { filasPermitidas: [], modoVisualizacao: 'SENHA' }
+    }));
     const modulos = await all('SELECT * FROM modulos');
     const perfilModulos = await all('SELECT * FROM perfil_modulos');
     const perfilPermissoes = await all('SELECT * FROM perfil_permissoes');
@@ -517,11 +532,21 @@ async function load() {
       maquinasGuiches: maquinasGuiches || [],
       relatoriosTasy: relatoriosTasy || []
     };
+    relatoriosTasyDisponivel = true;
     return true;
   } catch (err) {
+    relatoriosTasyDisponivel = false;
     console.error('[ConfigCache] Erro ao carregar cache:', err.message);
     return false;
   }
+}
+
+function getRelatoriosTasyState() {
+  if (!relatoriosTasyDisponivel || cache.relatoriosTasy === undefined) return 'UNAVAILABLE';
+  if (cache.relatoriosTasy.length === 0) return 'EMPTY';
+  const ativos = cache.relatoriosTasy.filter(r => r.ativo === 1);
+  if (ativos.length === 0) return 'ALL_DISABLED';
+  return 'AVAILABLE';
 }
 
 function getRelatoriosTasy(apenasAtivos = false) {
@@ -557,23 +582,23 @@ async function saveRelatorioTasy(dados) {
        updated_at = datetime('now')`,
     [id, cd, nrSeq, dados.ds_titulo, icone, badge, ativo, ordem]
   );
-  await load();
-  return { id, cd_relatorio: cd, nr_sequencia: nrSeq, ds_titulo: dados.ds_titulo, icone, badge, ativo, ordem };
+  const cacheReloaded = await load();
+  return { id, cd_relatorio: cd, nr_sequencia: nrSeq, ds_titulo: dados.ds_titulo, icone, badge, ativo, ordem, _cacheReloaded: cacheReloaded };
 }
 
 async function deleteRelatorioTasy(id) {
   if (!id) throw new Error('ID é obrigatório');
   await run('DELETE FROM relatorios_tasy WHERE id = ?', [id]);
-  await load();
-  return { success: true, id };
+  const cacheReloaded = await load();
+  return { success: true, id, _cacheReloaded: cacheReloaded };
 }
 
 async function toggleRelatorioTasy(id, ativo) {
   if (!id) throw new Error('ID é obrigatório');
   const val = ativo ? 1 : 0;
   await run("UPDATE relatorios_tasy SET ativo = ?, updated_at = datetime('now') WHERE id = ?", [val, id]);
-  await load();
-  return { success: true, id, ativo: val };
+  const cacheReloaded = await load();
+  return { success: true, id, ativo: val, _cacheReloaded: cacheReloaded };
 }
 
 function getPaineisTv() {
@@ -721,15 +746,6 @@ function getSetoresPermitidos(perfilId, moduloId = 'passagem') {
     .filter(Number.isInteger);
 }
 
-function perfilTemAcessoModulo(perfilId, moduloId) {
-  if (!perfilId || !moduloId) return false;
-  const pId = String(perfilId).trim().toLowerCase();
-  const mId = String(moduloId).trim().toLowerCase();
-  return cache.perfilModulos.some(pm => 
-    String(pm.perfil_id).trim().toLowerCase() === pId && 
-    String(pm.modulo_id).trim().toLowerCase() === mId
-  );
-}
 
 function perfilPodeVisualizarSetor(perfilId, cdSetor, moduloId = 'passagem') {
   const permitidos = getSetoresPermitidos(perfilId, moduloId);
@@ -741,6 +757,11 @@ function perfilPodeVisualizarSetor(perfilId, cdSetor, moduloId = 'passagem') {
 
 function getPerfilById(id) {
   return cache.perfis.find(p => p.id === id) || null;
+}
+
+function getPerfilIdTasy(id) {
+  const p = getPerfilById(id);
+  return p ? (p.dsPerfilTasy || p.grupoLdap) : null;
 }
 
 function getModuloById(id) {
@@ -889,9 +910,13 @@ async function setProfilePermissions(perfilId, permissions = {}) {
   await load();
 }
 
-async function setProfileAccess(perfilId, moduloIds = [], permissions = {}, setoresPorModulo = {}) {
+async function setProfileAccess(perfilId, moduloIds = [], permissions = {}, setoresPorModulo = {}, configRecepcao = null) {
   await run('BEGIN IMMEDIATE TRANSACTION');
   try {
+    if (configRecepcao) {
+      await run('UPDATE perfis SET config_recepcao_json = ? WHERE id = ?', [JSON.stringify(configRecepcao), perfilId]);
+    }
+    
     await run('DELETE FROM perfil_modulos WHERE perfil_id = ?', [perfilId]);
     await run('DELETE FROM perfil_permissoes WHERE perfil_id = ?', [perfilId]);
     await run('DELETE FROM perfil_modulo_setores WHERE perfil_id = ?', [perfilId]);
@@ -997,7 +1022,8 @@ function getCacheMetadata() {
     permissoesCount: cache.perfilModulos.length,
     perfilModulos: cache.perfilModulos,
     perfilPermissoes: cache.perfilPermissoes,
-    perfilModuloSetores: cache.perfilModuloSetores
+    perfilModuloSetores: cache.perfilModuloSetores,
+    perfis: cache.perfis
   };
 }
 
@@ -1145,6 +1171,7 @@ async function togglePassagemCheckbox(id, ativo) {
 }
 
 module.exports = {
+  setCacheForTest,
   load,
   loadConfig: load,
   getSystemConfig,
@@ -1153,6 +1180,7 @@ module.exports = {
   getCachedModulos,
   getCachedPerfilModulos,
   getPerfilById,
+  getPerfilIdTasy,
   getModuloById,
   getModulosByPerfil,
   getModuloIdsByPerfil,
@@ -1201,6 +1229,7 @@ module.exports = {
   getMaquinaGuiche,
   saveMaquinaGuiche,
   deleteMaquinaGuiche,
+  getRelatoriosTasyState,
   getRelatoriosTasy,
   saveRelatorioTasy,
   deleteRelatorioTasy,

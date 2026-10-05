@@ -237,6 +237,30 @@ async function gerarRelatorioPdf(cdRelatorio, nrAtendimento, customParams = {}, 
       NR_SEQ_PROTOCOLO: '-1',
       ...customParams
     };
+  } else if (cdRel === 70125) {
+    type = 'WATE';
+    const nrConta = await obterNumeroContaPaciente(atend);
+    reportParams = {
+      NR_INTERNO_CONTA: nrConta || '-1',
+      NR_ATEND_CONTA_TISS: atend,
+      NR_SEQ_PROTOCOLO: '-1',
+      IE_RODAPE: 'S',
+      IE_ORDEM: 'P',
+      IE_EMITE_SEG_PAGINA: 'S',
+      ...customParams
+    };
+  } else if (cdRel >= 70120 && cdRel <= 70135) {
+    type = 'WATE';
+    const nrConta = await obterNumeroContaPaciente(atend);
+    reportParams = {
+      NR_INTERNO_CONTA: nrConta || '-1',
+      NR_ATEND_CONTA_TISS: atend,
+      NR_SEQ_PROTOCOLO: '-1',
+      IE_RODAPE: 'S',
+      IE_ORDEM: 'P',
+      IE_EMITE_SEG_PAGINA: 'S',
+      ...customParams
+    };
   }
 
   // Executa com retry automático caso a sessão expire

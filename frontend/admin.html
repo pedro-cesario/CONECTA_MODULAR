@@ -2473,9 +2473,14 @@
       try {
         const result = await api.get(`${apiConfig.baseUrl}/admin/cache`);
         if (result.success) {
-          document.getElementById('cache-perfis-count').textContent = result.data.perfisCount;
-          document.getElementById('cache-modulos-count').textContent = result.data.modulosCount;
-          document.getElementById('cache-permissoes-count').textContent = result.data.permissoesCount;
+          const perfisCountEl = document.getElementById('cache-perfis-count');
+          if (perfisCountEl) perfisCountEl.textContent = result.data.perfisCount;
+          
+          const modulosCountEl = document.getElementById('cache-modulos-count');
+          if (modulosCountEl) modulosCountEl.textContent = result.data.modulosCount;
+          
+          const permissoesCountEl = document.getElementById('cache-permissoes-count');
+          if (permissoesCountEl) permissoesCountEl.textContent = result.data.permissoesCount;
         }
       } catch (err) {
         console.error('Erro ao carregar info do cache:', err);
@@ -2855,9 +2860,10 @@
         api.get(`${apiConfig.baseUrl}/admin/perfis`),
         api.get(`${apiConfig.baseUrl}/admin/modulos`),
         api.get(`${apiConfig.baseUrl}/admin/passagem/setores`),
-        api.get(`${apiConfig.baseUrl}/admin/passagem/checkboxes`)
+        api.get(`${apiConfig.baseUrl}/admin/passagem/checkboxes`),
+        api.get(`${apiConfig.baseUrl}/admin/dashboard-pa/filas`)
       ])
-        .then(([perfisResult, result, setoresResult, checkboxesResult]) => {
+        .then(([perfisResult, result, setoresResult, checkboxesResult, filasResult]) => {
           if (!result.success) throw new Error(result.message);
 
           if (checkboxesResult && checkboxesResult.success && Array.isArray(checkboxesResult.data) && checkboxesResult.data.length > 0) {
@@ -2882,6 +2888,8 @@
             seenSetorIds.add(sid);
             return true;
           });
+
+          const filasRecepcao = (filasResult && filasResult.success && Array.isArray(filasResult.data)) ? filasResult.data : [];
 
           if (tabsNav) tabsNav.innerHTML = '';
           if (content) content.innerHTML = '';
@@ -3013,6 +3021,22 @@
                     </label>
                   </div>
                 </div>
+
+                <div class="perm-subcard mt-3">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-diagram-3-fill"></i> Filas de Senhas Habilitadas
+                  </div>
+                  <div class="px-3 mb-2 text-muted small fw-bold">Selecione as filas de chamada vinculadas a este perfil:</div>
+                  <div class="perm-pills-container">
+                    ${filasRecepcao.length === 0 ? '<div class="px-3 py-2 text-muted small">Nenhuma fila de senha encontrada no TASY.</div>' : ''}
+                    ${filasRecepcao.map(fila => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-ps-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-ps-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}" value="${fila.NR_SEQUENCIA || fila.nr_sequencia}" data-ps-fila data-parent-mod="painel_senhas">
+                        <span>${escapeHtml(fila.DS_FILA || fila.ds_fila || 'Fila ' + (fila.NR_SEQUENCIA || fila.nr_sequencia))}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
               ` : ''}
 
               ${modulo.id === 'recepcao' ? `
@@ -3035,6 +3059,32 @@
                     `).join('')}
                   </div>
                 </div>
+
+                <div class="perm-subcard mt-3">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-list-ol"></i> Filas Atendidas e Visualização
+                  </div>
+                  <div class="mb-3 px-3">
+                    <label class="form-label text-muted small fw-bold">Modo de Exibição de Senha</label>
+                    <select class="form-select form-select-sm" id="perm-${perfilId}-recepcao-modo-visualizacao">
+                      <option value="SENHA">Somente Senha</option>
+                      <option value="SENHA_NOME">Senha + Nome do Paciente (Se houver atendimento)</option>
+                    </select>
+                  </div>
+                  <div class="mb-3 px-3 form-check form-switch ms-3">
+                    <input class="form-check-input" type="checkbox" id="perm-${perfilId}-recepcao-multiplos-atend">
+                    <label class="form-check-label text-muted small fw-bold mt-1" for="perm-${perfilId}-recepcao-multiplos-atend" style="cursor:pointer">Permitir múltiplos atendimentos abertos para o mesmo paciente</label>
+                  </div>
+                  <div class="px-3 mb-2 text-muted small fw-bold">Filas Habilitadas para Visualização</div>
+                  <div class="perm-pills-container">
+                    ${filasRecepcao.map(fila => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-recepcao-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-recepcao-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}" value="${fila.NR_SEQUENCIA || fila.nr_sequencia}" data-recepcao-fila data-parent-mod="recepcao">
+                        <span>${escapeHtml(fila.DS_FILA || fila.ds_fila || 'Fila ' + (fila.NR_SEQUENCIA || fila.nr_sequencia))}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
               ` : ''}
 
               ${modulo.id === 'livro' ? `
@@ -3047,6 +3097,44 @@
                       <label class="perm-pill-item" for="perm-${perfilId}-livro-setor-${setor.id}">
                         <input type="checkbox" class="form-check-input" id="perm-${perfilId}-livro-setor-${setor.id}" value="${setor.id}" data-livro-setor data-parent-mod="livro">
                         <span>${escapeHtml(setor.nome || ('Setor ' + setor.id))}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              ${modulo.id === 'dashboard_pa' ? `
+                <div class="perm-subcard">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-person-lines-fill"></i> Fluxo de Triagem e Recepção (P.A.)
+                  </div>
+                  <div class="perm-pills-container">
+                    <label class="perm-pill-item" for="perm-${perfilId}-pa-cadastrar">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-pa-cadastrar" value="cadastrar_pessoa_fisica" data-dashboard-pa-permissao data-parent-mod="dashboard_pa">
+                      <span>Buscar e Cadastrar Pacientes</span>
+                    </label>
+                    <label class="perm-pill-item" for="perm-${perfilId}-pa-abrir">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-pa-abrir" value="abrir_atendimento" data-dashboard-pa-permissao data-parent-mod="dashboard_pa">
+                      <span>Abertura Rápida de Atendimento</span>
+                    </label>
+                    <label class="perm-pill-item" for="perm-${perfilId}-pa-chamar">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-pa-chamar" value="chamar_senha" data-dashboard-pa-permissao data-parent-mod="dashboard_pa">
+                      <span>Chamar Senha do Painel</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="perm-subcard mt-3">
+                  <div class="perm-subcard-header">
+                    <i class="bi bi-diagram-3-fill"></i> Filas de Senhas / Triagem Habilitadas
+                  </div>
+                  <div class="px-3 mb-2 text-muted small fw-bold">Selecione as filas que este perfil poderá visualizar e acompanhar no Pronto Atendimento:</div>
+                  <div class="perm-pills-container">
+                    ${filasRecepcao.length === 0 ? '<div class="px-3 py-2 text-muted small">Nenhuma fila de senha encontrada no TASY.</div>' : ''}
+                    ${filasRecepcao.map(fila => `
+                      <label class="perm-pill-item" for="perm-${perfilId}-dpa-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}">
+                        <input type="checkbox" class="form-check-input" id="perm-${perfilId}-dpa-fila-${fila.NR_SEQUENCIA || fila.nr_sequencia}" value="${fila.NR_SEQUENCIA || fila.nr_sequencia}" data-dpa-fila data-parent-mod="dashboard_pa">
+                        <span>${escapeHtml(fila.DS_FILA || fila.ds_fila || 'Fila ' + (fila.NR_SEQUENCIA || fila.nr_sequencia))}</span>
                       </label>
                     `).join('')}
                   </div>
@@ -3082,6 +3170,10 @@
                     <label class="perm-pill-item" for="perm-${perfilId}-passagem-lancar-lote">
                       <input type="checkbox" class="form-check-input" id="perm-${perfilId}-passagem-lancar-lote" value="lancar_passagem_lote" data-passagem-checkbox data-parent-mod="passagem">
                       <span>Passagem em Lote (Múltiplos Setores)</span>
+                    </label>
+                    <label class="perm-pill-item" for="perm-${perfilId}-ver-passagens">
+                      <input type="checkbox" class="form-check-input" id="perm-${perfilId}-ver-passagens" value="ver_passagens_anteriores" data-passagem-checkbox data-parent-mod="passagem">
+                      <span>Visualizar Passagens Anteriores</span>
                     </label>
                   </div>
                 </div>
@@ -3185,7 +3277,8 @@
           };
           content.addEventListener('change', checkboxHandler);
 
-          loadPermissoesModulo(perfilId).then(() => {
+          const perfilObjAtual = (perfisResult && Array.isArray(perfisResult.data)) ? perfisResult.data.find(p => p.id === perfilId) : null;
+          loadPermissoesModulo(perfilId, perfilObjAtual).then(() => {
             updateAllTabBadges();
           });
 
@@ -3197,7 +3290,7 @@
         });
     }
 
-    async function loadPermissoesModulo(perfilId) {
+    async function loadPermissoesModulo(perfilId, perfilObjCaller = null) {
       try {
         const result = await api.get(`${apiConfig.baseUrl}/admin/cache`);
         if (result && result.success) {
@@ -3270,6 +3363,12 @@
           });
 
           // 11. Painel de Senhas
+          // 10. Dashboard P.A. (Triagem)
+          const dashboardPaChecks = document.querySelectorAll('input[data-dashboard-pa-permissao]');
+          dashboardPaChecks.forEach(checkbox => {
+            checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'dashboard_pa' && pp.permissao === checkbox.value);
+          });
+
           const painelSenhasChecks = document.querySelectorAll('input[data-painelsenhas-permissao]');
           painelSenhasChecks.forEach(checkbox => {
             checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'painel_senhas' && pp.permissao === checkbox.value);
@@ -3280,6 +3379,56 @@
           recepcaoChecks.forEach(checkbox => {
             checkbox.checked = perfilPermissoes.some(pp => pp.perfil_id === perfilId && pp.modulo_id === 'recepcao' && pp.permissao === checkbox.value);
           });
+
+          // Configuração customizada de Filas / Recepção
+          const perfisList = (result && result.data && Array.isArray(result.data.perfis)) ? result.data.perfis : [];
+          const perfilObj = perfisList.find(p => p.id === perfilId) || perfilObjCaller;
+          if (perfilObj) {
+            let configRecepcao = { filasPermitidas: [], modoVisualizacao: 'SENHA', permitirMultiplosAtendimentos: false };
+            try {
+              if (perfilObj.config_recepcao && typeof perfilObj.config_recepcao === 'object') {
+                configRecepcao = perfilObj.config_recepcao;
+              } else if (perfilObj.config_recepcao_json) {
+                configRecepcao = typeof perfilObj.config_recepcao_json === 'string'
+                  ? JSON.parse(perfilObj.config_recepcao_json)
+                  : perfilObj.config_recepcao_json;
+              }
+            } catch(e) {
+              console.warn('[Admin] Erro ao obter config_recepcao:', e);
+            }
+            
+            const modoSelect = document.getElementById(`perm-${perfilId}-recepcao-modo-visualizacao`);
+            if (modoSelect && configRecepcao.modoVisualizacao) modoSelect.value = configRecepcao.modoVisualizacao;
+
+            const multiplosCheck = document.getElementById(`perm-${perfilId}-recepcao-multiplos-atend`);
+            if (multiplosCheck) multiplosCheck.checked = configRecepcao.permitirMultiplosAtendimentos === true;
+
+            const filasPermitidas = Array.isArray(configRecepcao.filasPermitidas) ? configRecepcao.filasPermitidas.map(Number) : [];
+
+            const filasChecks = document.querySelectorAll('input[data-recepcao-fila]');
+            filasChecks.forEach(cb => {
+              cb.checked = filasPermitidas.includes(Number(cb.value));
+            });
+            const dpaFilasChecks = document.querySelectorAll('input[data-dpa-fila]');
+            dpaFilasChecks.forEach(cb => {
+              cb.checked = filasPermitidas.includes(Number(cb.value));
+            });
+            const psFilasChecks = document.querySelectorAll('input[data-ps-fila]');
+            psFilasChecks.forEach(cb => {
+              cb.checked = filasPermitidas.includes(Number(cb.value));
+            });
+
+            // Sincronizar checkboxes de filas entre abas
+            document.querySelectorAll('input[data-recepcao-fila], input[data-dpa-fila], input[data-ps-fila]').forEach(cb => {
+              cb.onchange = (e) => {
+                const val = e.target.value;
+                const isChecked = e.target.checked;
+                document.querySelectorAll(`input[value="${val}"][data-recepcao-fila], input[value="${val}"][data-dpa-fila], input[value="${val}"][data-ps-fila]`).forEach(other => {
+                  other.checked = isChecked;
+                });
+              };
+            });
+          }
 
           // 10. Modelo de Plantão / Período default
           const plantaoRadio = document.getElementById(`perm-${perfilId}-modelo-plantao`);
@@ -3332,6 +3481,10 @@
       if (regChecks.length > 0) {
         permissoes['registros'] = Array.from(regChecks).map(c => c.value);
       }
+      const dpaChecks = document.querySelectorAll('input[data-dashboard-pa-permissao]:checked');
+      if (dpaChecks.length > 0) {
+        permissoes['dashboard_pa'] = Array.from(dpaChecks).map(c => c.value);
+      }
       const pSenhasChecks = document.querySelectorAll('input[data-painelsenhas-permissao]:checked');
       if (pSenhasChecks.length > 0) {
         permissoes['painel_senhas'] = Array.from(pSenhasChecks).map(c => c.value);
@@ -3354,6 +3507,17 @@
         return;
       }
 
+      const filasRec = Array.from(document.querySelectorAll('input[data-recepcao-fila]:checked')).map(c => Number(c.value));
+      const filasDpa = Array.from(document.querySelectorAll('input[data-dpa-fila]:checked')).map(c => Number(c.value));
+      const filasPs = Array.from(document.querySelectorAll('input[data-ps-fila]:checked')).map(c => Number(c.value));
+      const filasPermitidas = Array.from(new Set([...filasRec, ...filasDpa, ...filasPs])).filter(Number.isInteger);
+      
+      const configRecepcao = {
+        filasPermitidas,
+        modoVisualizacao: document.getElementById(`perm-${currentPerfilPermissoes}-recepcao-modo-visualizacao`)?.value || 'SENHA',
+        permitirMultiplosAtendimentos: document.getElementById(`perm-${currentPerfilPermissoes}-recepcao-multiplos-atend`)?.checked || false
+      };
+
       try {
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Salvando...';
@@ -3362,7 +3526,8 @@
           perfilId: currentPerfilPermissoes,
           modulos,
           permissoes,
-          setoresPorModulo
+          setoresPorModulo,
+          configRecepcao
         });
 
         if (result.success) {
@@ -5173,8 +5338,12 @@
           const id = btn.dataset.id;
           const ativoAtual = btn.dataset.ativo === '1' || btn.dataset.ativo === 'true';
           try {
-            await api.put(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}/toggle`, { ativo: !ativoAtual });
-            showToast('Status do relatório atualizado', 'success');
+            const res = await api.put(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}/toggle`, { ativo: !ativoAtual });
+            if (res && res.partialSuccess) {
+              showToast(res.message, 'warning');
+            } else {
+              showToast('Status do relatório atualizado', 'success');
+            }
             await loadRelatoriosTasy();
           } catch (err) {
             showToast('Erro ao alterar status: ' + err.message, 'error');
@@ -5195,8 +5364,12 @@
           const id = btn.dataset.id;
           if (confirm('Deseja realmente excluir este relatório do catálogo da recepção?')) {
             try {
-              await api.delete(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}`);
-              showToast('Relatório excluído do catálogo', 'success');
+              const res = await api.delete(`${apiConfig.baseUrl}/admin/relatorios-tasy/${id}`);
+              if (res && res.partialSuccess) {
+                showToast(res.message, 'warning');
+              } else {
+                showToast('Relatório excluído do catálogo', 'success');
+              }
               await loadRelatoriosTasy();
             } catch (err) {
               showToast('Erro ao excluir: ' + err.message, 'error');
@@ -5254,7 +5427,7 @@
       const ordem = parseInt(document.getElementById('relatorio-tasy-ordem').value, 10) || 1;
 
       try {
-        await api.post(`${apiConfig.baseUrl}/admin/relatorios-tasy`, {
+        const res = await api.post(`${apiConfig.baseUrl}/admin/relatorios-tasy`, {
           id: id || undefined,
           cd_relatorio,
           nr_sequencia,
@@ -5264,7 +5437,11 @@
           ordem,
           ativo: 1
         });
-        showToast('Relatório salvo com sucesso no catálogo!', 'success');
+        if (res && res.partialSuccess) {
+          showToast(res.message, 'warning');
+        } else {
+          showToast('Relatório salvo com sucesso no catálogo!', 'success');
+        }
         document.getElementById('modal-relatorio-tasy').classList.remove('show');
         await loadRelatoriosTasy();
       } catch (err) {

@@ -2,6 +2,23 @@ const express = require('express');
 const router = express.Router();
 const ocorrenciaController = require('./ocorrenciaController');
 const { requireAuth, requirePermission } = require('../../core/middlewares/authMiddleware');
+const { validarModuloPermissao } = require('../../core/utils/acesso');
+
+function requireEscalaOuLivroEscrita(req, res, next) {
+  const usuario = req.session?.usuario;
+  if (!usuario) {
+    return res.status(401).json({ success: false, message: 'Sessão expirada. Faça login novamente.' });
+  }
+  const temLivro = validarModuloPermissao(usuario, 'livro');
+  const temEscalaEdit = validarModuloPermissao(usuario, 'escala', 'editar_publicar_escala');
+  if (temLivro || temEscalaEdit) {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'Acesso negado: seu perfil não possui autorização para a operação exigida.'
+  });
+}
 
 router.post('/lote/draft', requirePermission('passagem'), ocorrenciaController.salvarLoteDraft);
 router.get('/lote/draft', requirePermission('passagem'), ocorrenciaController.obterLoteDraft);
@@ -16,8 +33,8 @@ router.get('/livro-administrativo', requirePermission('livro'), ocorrenciaContro
 router.post('/escala-psicologia/publicar', requirePermission('escala', 'editar_publicar_escala'), ocorrenciaController.salvarEscalaPsicologia);
 router.get('/escala-psicologia/liberadas', requirePermission('escala'), ocorrenciaController.listarEscalasPsicologiaLiberadas);
 
-router.post('/escala-tecnica', requirePermission('escala', 'editar_publicar_escala'), ocorrenciaController.salvarEscalaTecnica);
-router.get('/escala-tecnica/todas', requirePermission('escala'), ocorrenciaController.listarTodasEscalasLiberadas);
-router.get('/escala-tecnica', requirePermission('escala'), ocorrenciaController.obterEscalaTecnica);
+router.post('/escala-tecnica', requireEscalaOuLivroEscrita, ocorrenciaController.salvarEscalaTecnica);
+router.get('/escala-tecnica/todas', requirePermission(['escala', 'livro']), ocorrenciaController.listarTodasEscalasLiberadas);
+router.get('/escala-tecnica', requirePermission(['escala', 'livro']), ocorrenciaController.obterEscalaTecnica);
 
 module.exports = router;
