@@ -78,40 +78,6 @@ app.use(helmet({
 }));
 app.use(cors(corsOptions));
 
-// Limiter com Redis Store
-const createRedisLimiterStore = (prefix) => new RateLimitRedisStore({
-  sendCommand: (...args) => redisClient.sendCommand(args),
-  prefix: prefix
-});
-
-const limiter = rateLimit({ 
-  windowMs: 15 * 60 * 1000, 
-  max: 600, // Padrão de 600
-  store: createRedisLimiterStore('rl:global:'),
-  keyGenerator: (req) => {
-    // Autenticados tem limite próprio de 600/15min, não autenticados limitados por IP (100)
-    if (req.session && req.session.userId) return `limit:auth:${req.session.userId}`;
-    return `limit:ip:${req.ip}`;
-  }
-});
-app.use('/api/', limiter);
-
-const loginLimiter = rateLimit({ 
-  windowMs: 15 * 60 * 1000, 
-  max: 20,
-  store: createRedisLimiterStore('rl:login:'),
-  keyGenerator: (req) => `login:${req.ip}:${req.body?.username || 'unknown'}`
-});
-app.use('/api/login', loginLimiter);
-
-const nativeSsoLimiter = rateLimit({ 
-  windowMs: 60 * 1000, 
-  max: 30,
-  store: createRedisLimiterStore('rl:sso:'),
-  keyGenerator: (req) => `sso:${req.ip}`
-});
-app.use('/api/native-sso', nativeSsoLimiter);
-
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(responseHandler);
@@ -145,6 +111,52 @@ app.use(session({
   },
   name: 'connect.sid'
 }));
+
+// Limiter com Redis Store (executado após session e body parser estarem disponíveis)
+const createRedisLimiterStore = (prefix) => new RateLimitRedisStore({
+  sendCommand: (...args) => redisClient.sendCommand(args),
+  prefix: prefix
+});
+
+const limiter = rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: parseInt(process.env.RATE_LIMIT_MAX || '3000', 10), // Generoso para polling hospitalar (TV, painel, filas)
+  store: createRedisLimiterStore('rl:global:'),
+  validate: { xForwardedForHeader: false },
+  skip: (req) => {
+    // Endpoints essenciais de healthcheck, version e SSE não consomem cota do rate limit
+    const p = req.path || '';
+    return p === '/version' || p === '/ping' || p === '/health' || p.startsWith('/painel/stream');
+  },
+  keyGenerator: (req) => {
+    // Autenticados têm cota própria por usuário; anônimos têm cota por IP
+    const user = req.session?.usuario?.nm_usuario;
+    if (user) return `limit:auth:${user}`;
+    return `limit:ip:${req.ip}`;
+  },
+  message: { success: false, message: 'Limite de requisições excedido. Aguarde alguns instantes.' }
+});
+app.use('/api/', limiter);
+
+const loginLimiter = rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 60,
+  store: createRedisLimiterStore('rl:login:'),
+  validate: { xForwardedForHeader: false },
+  keyGenerator: (req) => `login:${req.ip}:${req.body?.username || req.body?.nm_usuario || 'unknown'}`,
+  message: { success: false, message: 'Muitas tentativas de login. Aguarde alguns minutos.' }
+});
+app.use('/api/login', loginLimiter);
+
+const nativeSsoLimiter = rateLimit({ 
+  windowMs: 60 * 1000, 
+  max: 60,
+  store: createRedisLimiterStore('rl:sso:'),
+  validate: { xForwardedForHeader: false },
+  keyGenerator: (req) => `sso:${req.ip}`,
+  message: { success: false, message: 'Muitas tentativas de SSO. Aguarde um instante.' }
+});
+app.use('/api/native-sso', nativeSsoLimiter);
 
 const APP_VERSION = require('../package.json').version.replace(/\./g, '');
 
