@@ -110,9 +110,9 @@ async function criarEvolucaoTeste(req, res) {
 
     const sqlInsert = `
       INSERT INTO evolucao_paciente (
-        cd_evolucao, nr_atendimento, cd_medico, dt_evolucao, dt_liberacao, ds_evolucao, ie_evolucao_clinica, ie_situacao, ds_tipo_evolucao
+        cd_evolucao, nr_atendimento, cd_medico, dt_evolucao, dt_liberacao, ds_evolucao, ie_evolucao_clinica, ie_situacao
       ) VALUES (
-        EVOLUCAO_PACIENTE_SEQ.NEXTVAL, :nrAtendimento, :cdMedico, SYSDATE, SYSDATE, :texto, 'EC', 'A', 'Evolução Conecta'
+        EVOLUCAO_PACIENTE_SEQ.NEXTVAL, :nrAtendimento, :cdMedico, SYSDATE, SYSDATE, :texto, 'EC', 'A'
       )
     `;
 

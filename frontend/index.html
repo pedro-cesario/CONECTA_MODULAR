@@ -1877,6 +1877,38 @@
         <div class="loading-placeholder">Carregando escalas liberadas...</div>
       </div>
     </section>
+
+    <!-- TELA DE TESTE DE EVOLUÇÃO -->
+    <section id="sec-evolucao" class="app-container d-none p-4">
+      <div class="container-fluid max-w-1200 mx-auto mt-4">
+        <h2 class="mb-4"><i class="bi bi-file-earmark-medical me-2"></i>Nova Evolução (Teste)</h2>
+        
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-bold">Criar Evolução Clínica</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Número do Atendimento</label>
+              <input type="number" class="form-control w-25" id="inp-evo-atendimento" placeholder="Ex: 767500">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Texto da Evolução</label>
+              <textarea class="form-control" id="inp-evo-texto" rows="5" placeholder="Digite o texto da evolução aqui..."></textarea>
+            </div>
+            <button class="btn btn-primary" id="btn-evo-liberar">Liberar (Gravar no Tasy)</button>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Validação de Assinatura</div>
+          <div class="card-body">
+            <p class="text-muted">Após criar a evolução acima e assiná-la no TasyNative, valide aqui o status.</p>
+            <button class="btn btn-outline-success" id="btn-evo-validar"><i class="bi bi-patch-check"></i> Validar Assinatura do Tasy</button>
+          </div>
+        </div>
+        
+        <button class="btn btn-secondary mt-4" onclick="document.getElementById('nav-home').click();">Voltar ao Início</button>
+      </div>
+    </section>
   </div>
 
   <div class="toast-container" id="toast-container"></div>
@@ -2090,37 +2122,6 @@
       </div>
     </div>
 
-    <!-- TELA DE TESTE DE EVOLUÇÃO -->
-    <div id="screen-evolucao" class="screen p-4">
-      <div class="container-fluid max-w-1200 mx-auto mt-4">
-        <h2 class="mb-4"><i class="bi bi-file-earmark-medical me-2"></i>Nova Evolução (Teste)</h2>
-        
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-white fw-bold">Criar Evolução Clínica</div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label">Número do Atendimento</label>
-              <input type="number" class="form-control w-25" id="inp-evo-atendimento" placeholder="Ex: 767500">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Texto da Evolução</label>
-              <textarea class="form-control" id="inp-evo-texto" rows="5" placeholder="Digite o texto da evolução aqui..."></textarea>
-            </div>
-            <button class="btn btn-primary" id="btn-evo-liberar">Liberar (Gravar no Tasy)</button>
-          </div>
-        </div>
-
-        <div class="card shadow-sm">
-          <div class="card-header bg-white fw-bold">Validação de Assinatura</div>
-          <div class="card-body">
-            <p class="text-muted">Após criar a evolução acima e assiná-la no TasyNative, valide aqui o status.</p>
-            <button class="btn btn-outline-success" id="btn-evo-validar"><i class="bi bi-patch-check"></i> Validar Assinatura do Tasy</button>
-          </div>
-        </div>
-        
-        <button class="btn btn-secondary mt-4" onclick="document.getElementById('nav-home').click();">Voltar ao Início</button>
-      </div>
-    </div>
-
+    
 </body>
 </html>

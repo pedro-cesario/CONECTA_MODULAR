@@ -10,7 +10,7 @@ export function setupEvolucao() {
 
   if (btnAbrir) {
     btnAbrir.addEventListener('click', () => {
-      router.showScreen('evolucao');
+      router.activateWorkspace('evolucao', document.getElementById('sec-evolucao'));
     });
   }
 
