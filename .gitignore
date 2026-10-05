@@ -22,5 +22,6 @@ test_frontend.js
 printPerfis.js
 backend/test_db.js
 backend/test/test_mock.js
+.freebuff/
 
 

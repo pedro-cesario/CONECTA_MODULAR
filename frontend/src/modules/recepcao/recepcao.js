@@ -73,6 +73,8 @@ window.conectaCore.inutilizarSenha = inutilizarSenha;
 window.conectaCore.inativarGED = inativarGED;
   window.conectaCore.verificarDuplicidadeCpf = verificarDuplicidadeCpf;
   window.conectaCore.carregarSenhas = carregarSenhas;
+  window.conectaCore.carregarSenhasTriagem = carregarSenhasTriagem;
+  window.conectaCore.renderizarBoardSenhasTriagem = renderizarBoardSenhasTriagem;
 
   bindRecepcaoEvents();
   await detectarEConfigurarGuiche();
@@ -284,7 +286,7 @@ export function trocarAbaRecepcao(aba) {
 
 export async function carregarFilas() {
   try {
-    const res = await api.get('/api/recepcao/filas');
+    const res = await api.get('/api/recepcao/filas?modulo=recepcao');
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.filasDisponiveis = res.data;
       recepcaoState.modoVisualizacao = res.modo_visualizacao || 'SENHA';
@@ -300,9 +302,8 @@ export async function carregarFilas() {
 
 export async function carregarSenhas(showFeedback = false) {
   const container = document.getElementById('recepcao-senhas-grid');
-  const containerTriagem = document.getElementById('triagem-senhas-grid');
   try {
-    const res = await api.get(`/api/recepcao/senhas`);
+    const res = await api.get(`/api/recepcao/senhas?modulo=recepcao`);
     if (res && res.success && Array.isArray(res.data)) {
       recepcaoState.senhasFila = res.data;
       renderizarBoardSenhas();
@@ -313,7 +314,7 @@ export async function carregarSenhas(showFeedback = false) {
       renderizarBoardSenhas([]);
     }
   } catch (err) {
-    console.error('[Recepção/Triagem] Erro ao carregar senhas:', err);
+    console.error('[Recepção] Erro ao carregar senhas:', err);
     if (container && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
       container.innerHTML = `
         <div class="col-12 p-5 text-center text-muted">
@@ -322,14 +323,33 @@ export async function carregarSenhas(showFeedback = false) {
           <p class="small text-muted">Novas senhas emitidas no totem aparecerão automaticamente aqui.</p>
         </div>`;
     }
-    if (containerTriagem && (!recepcaoState.senhasFila || recepcaoState.senhasFila.length === 0)) {
+  }
+}
+
+export async function carregarSenhasTriagem(showFeedback = false) {
+  const containerTriagem = document.getElementById('triagem-senhas-grid');
+  if (!containerTriagem) return;
+  try {
+    const res = await api.get(`/api/recepcao/senhas?modulo=dashboard_pa`);
+    if (res && res.success && Array.isArray(res.data)) {
+      recepcaoState.senhasFilaTriagem = res.data;
+      renderizarBoardSenhasTriagem(res.data);
+      if (showFeedback) {
+        ui.showToast('Fila de triagem P.A. atualizada!', 'info');
+      }
+    } else {
+      renderizarBoardSenhasTriagem([]);
+    }
+  } catch (err) {
+    console.error('[Triagem PA] Erro ao carregar senhas:', err);
+    if (containerTriagem && (!recepcaoState.senhasFilaTriagem || recepcaoState.senhasFilaTriagem.length === 0)) {
       const isForbidden = err?.status === 403;
       containerTriagem.innerHTML = `
         <div class="col-12 p-4 text-center text-muted">
           <i class="bi bi-${isForbidden ? 'shield-lock text-warning' : 'exclamation-circle text-danger'} fs-2 d-block mb-2"></i>
           <h6 class="fw-bold ${isForbidden ? 'text-warning' : 'text-danger'}">${isForbidden ? 'Fila não habilitada para este perfil' : 'Erro ao carregar fila'}</h6>
           <p class="small text-muted">${isForbidden ? 'Habilite as filas de triagem deste perfil no Conecta Admin.' : (err?.message || 'Verifique sua conexão.')}</p>
-          <button class="btn btn-sm btn-outline-primary mt-2" type="button" onclick="window.conectaCore.carregarSenhas(true)">
+          <button class="btn btn-sm btn-outline-primary mt-2" type="button" onclick="window.conectaCore.carregarSenhasTriagem(true)">
             <i class="bi bi-arrow-clockwise me-1"></i> Tentar Novamente
           </button>
         </div>`;
@@ -337,13 +357,96 @@ export async function carregarSenhas(showFeedback = false) {
   }
 }
 
-function renderizarBoardSenhas(listaFiltrada = null) {
+export function renderizarBoardSenhasTriagem(listaFiltrada = null) {
   const containerTriagem = document.getElementById('triagem-senhas-grid');
+  if (!containerTriagem) return;
+
+  const lista = listaFiltrada !== null ? listaFiltrada : (recepcaoState.senhasFilaTriagem || []);
+
+  if (lista.length === 0) {
+    containerTriagem.innerHTML = `
+      <div class="text-center text-muted mt-5 p-4">
+        <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
+        <h6 class="fw-bold text-dark">Nenhuma senha aguardando no momento</h6>
+        <p class="small text-muted mb-3">Todas as senhas desta fila foram atendidas ou não há novas emissões no totem.</p>
+        <button class="btn btn-sm btn-outline-primary shadow-sm" type="button" onclick="window.conectaCore.carregarSenhasTriagem(true)">
+          <i class="bi bi-arrow-clockwise me-1"></i> Atualizar Fila
+        </button>
+      </div>`;
+    return;
+  }
+
+  const senhasPorFila = {};
+  lista.forEach(s => {
+    const filaId = s.NR_SEQ_FILA_SENHA ?? s.nr_seq_fila_senha ?? 0;
+    const dsFila = s.DS_FILA ?? s.ds_fila ?? 'Triagem P.A.';
+    if (!senhasPorFila[filaId]) {
+      senhasPorFila[filaId] = { id: filaId, nome: dsFila, senhas: [] };
+    }
+    senhasPorFila[filaId].senhas.push(s);
+  });
+
+  const filasComSenhas = Object.values(senhasPorFila);
+  const triagemHtml = filasComSenhas.map(fila => {
+    return `
+      <div class="d-flex flex-column" style="flex: 1 1 0%; min-width: 320px;">
+        <div class="text-white p-2 rounded-top mb-2 fw-bold d-flex justify-content-between align-items-center shadow-sm" style="background-color: var(--primary);">
+          <span><i class="bi bi-diagram-3 me-2"></i>${escapeHtml(fila.nome)}</span>
+          <span class="badge bg-white rounded-pill" style="color: var(--primary);">${fila.senhas.length}</span>
+        </div>
+        <div class="d-flex flex-column gap-2 w-100" style="max-height: 70vh; overflow-y: auto; padding-right: 4px;">
+          ${fila.senhas.map(s => {
+            const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
+            const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
+            const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
+            const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
+            const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
+            const nomePaciente = s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? null;
+            const initials = numLimpo || 'S';
+            const badgeClass = minEspera > 15 ? 'bg-warning text-dark' : 'bg-primary-subtle text-primary';
+            return `
+              <div class="d-flex flex-wrap align-items-center justify-content-between rounded shadow-sm position-relative overflow-hidden w-100" style="border: 1px solid var(--slate-200); background-color: #ffffff; padding: 0.65rem; gap: 0.5rem;">
+                <div style="width: 4px; height: 100%; background-color: var(--primary); position: absolute; left: 0; top: 0;"></div>
+                <div class="d-flex align-items-center flex-grow-1 ms-2" style="min-width: 180px; max-width: 100%;">
+                  <div class="text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="background-color: var(--primary); width: 38px; height: 38px; font-size: 0.95rem; border-radius: 8px;">
+                    ${initials}
+                  </div>
+                  <div class="ms-2 d-flex flex-column flex-grow-1" style="min-width: 0;">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="fw-bold" style="font-size: 1.05rem; color: var(--slate-800);">${escapeHtml(cdFormatado)}</span>
+                      <span class="badge ${badgeClass} shadow-sm border" style="font-size: 0.65rem; border-color: rgba(0,0,0,0.05) !important;">
+                        <i class="bi bi-clock me-1"></i>${minEspera} min
+                      </span>
+                    </div>
+                    <div class="text-truncate text-muted mt-1" style="font-size: 0.75rem;" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
+                      ${nomePaciente ? escapeHtml(nomePaciente) : '<i class="bi bi-person-dash me-1"></i>Aguardando identificação'}
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-1 ms-auto flex-shrink-0">
+                  <button class="btn btn-sm btn-outline-primary fw-bold d-flex align-items-center justify-content-center" style="border-width: 1.5px; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar na TV">
+                    <i class="bi bi-megaphone-fill me-1"></i> Chamar
+                  </button>
+                  <button class="btn btn-sm fw-bold d-flex align-items-center justify-content-center text-white" style="background-color: var(--stable-green, #15803D); border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}')" title="Atender e Identificar">
+                    <i class="bi bi-person-check-fill me-1"></i> Atender
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+  containerTriagem.innerHTML = '<div class="d-flex w-100 gap-3" style="overflow-x: auto; padding-bottom: 8px;">' + triagemHtml + '</div>';
+}
+
+function renderizarBoardSenhas(listaFiltrada = null) {
   const container = document.getElementById('recepcao-senhas-grid');
   const countBadge = document.getElementById('recepcao-queue-count');
   const tabBadge = document.getElementById('tab-badge-espera');
   const kpiTotal = document.getElementById('kpi-total-espera');
-  if (!container && !containerTriagem) return;
+  if (!container) return;
 
   const lista = listaFiltrada !== null ? listaFiltrada : (recepcaoState.senhasFila || []);
 
@@ -352,30 +455,17 @@ function renderizarBoardSenhas(listaFiltrada = null) {
   if (kpiTotal) kpiTotal.textContent = (recepcaoState.senhasFila || []).length;
 
   if (lista.length === 0) {
-    if (container) {
-      container.className = 'w-100';
-      container.style = '';
-      container.innerHTML = `
-        <div class="col-12 p-5 text-center text-muted w-100" style="grid-column: 1 / -1;">
-          <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
-          <h5 class="fw-bold">Nenhuma senha aguardando atendimento</h5>
-          <p class="small text-muted mb-3">O guichê está livre. Clique em "Próxima Senha" ou "Avulso" para iniciar.</p>
-          <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.abrirModalAtendimento()">
-            <i class="bi bi-person-plus"></i> Abrir Atendimento Avulso
-          </button>
-        </div>`;
-    }
-    if (containerTriagem) {
-      containerTriagem.innerHTML = `
-        <div class="text-center text-muted mt-5 p-4">
-          <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
-          <h6 class="fw-bold text-dark">Nenhuma senha aguardando no momento</h6>
-          <p class="small text-muted mb-3">Todas as senhas desta fila foram atendidas ou não há novas emissões no totem.</p>
-          <button class="btn btn-sm btn-outline-primary shadow-sm" type="button" onclick="window.conectaCore.carregarSenhas(true)">
-            <i class="bi bi-arrow-clockwise me-1"></i> Atualizar Fila
-          </button>
-        </div>`;
-    }
+    container.className = 'w-100';
+    container.style = '';
+    container.innerHTML = `
+      <div class="col-12 p-5 text-center text-muted w-100" style="grid-column: 1 / -1;">
+        <i class="bi bi-inbox fs-1 d-block mb-2 text-primary opacity-50"></i>
+        <h5 class="fw-bold">Nenhuma senha aguardando atendimento</h5>
+        <p class="small text-muted mb-3">O guichê está livre. Clique em "Próxima Senha" ou "Avulso" para iniciar.</p>
+        <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.abrirModalAtendimento()">
+          <i class="bi bi-person-plus"></i> Abrir Atendimento Avulso
+        </button>
+      </div>`;
     return;
   }
 
@@ -390,66 +480,8 @@ function renderizarBoardSenhas(listaFiltrada = null) {
     senhasPorFila[filaId].senhas.push(s);
   });
 
-  const modos = recepcaoState.modoVisualizacao || 'SENHA';
-  const mostrarNome = modos === 'SENHA_NOME';
-
   // Gerar grid flexível
   const filasComSenhas = Object.values(senhasPorFila);
-
-  if (containerTriagem) {
-    const triagemHtml = filasComSenhas.map(fila => {
-      return `
-        <div class="d-flex flex-column" style="flex: 1 1 0%; min-width: 320px;">
-          <div class="text-white p-2 rounded-top mb-2 fw-bold d-flex justify-content-between align-items-center shadow-sm" style="background-color: var(--primary);">
-            <span><i class="bi bi-diagram-3 me-2"></i>${escapeHtml(fila.nome)}</span>
-            <span class="badge bg-white rounded-pill" style="color: var(--primary);">${fila.senhas.length}</span>
-          </div>
-          <div class="d-flex flex-column gap-2 w-100" style="max-height: 70vh; overflow-y: auto; padding-right: 4px;">
-            ${fila.senhas.map(s => {
-              const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
-              const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
-              const numLimpo = String(cdSenha || '').replace(/^[^\d]*/i, '').trim();
-              const cdFormatado = numLimpo ? `P ${numLimpo}` : (cdSenha || '---');
-              const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
-              const nomePaciente = s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? null;
-              const initials = numLimpo || 'S';
-              const badgeClass = minEspera > 15 ? 'bg-warning text-dark' : 'bg-primary-subtle text-primary';
-              return `
-                <div class="d-flex flex-wrap align-items-center justify-content-between rounded shadow-sm position-relative overflow-hidden w-100" style="border: 1px solid var(--slate-200); background-color: #ffffff; padding: 0.65rem; gap: 0.5rem;">
-                  <div style="width: 4px; height: 100%; background-color: var(--primary); position: absolute; left: 0; top: 0;"></div>
-                  <div class="d-flex align-items-center flex-grow-1 ms-2" style="min-width: 180px; max-width: 100%;">
-                    <div class="text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="background-color: var(--primary); width: 38px; height: 38px; font-size: 0.95rem; border-radius: 8px;">
-                      ${initials}
-                    </div>
-                    <div class="ms-2 d-flex flex-column flex-grow-1" style="min-width: 0;">
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="fw-bold" style="font-size: 1.05rem; color: var(--slate-800);">${escapeHtml(cdFormatado)}</span>
-                        <span class="badge ${badgeClass} shadow-sm border" style="font-size: 0.65rem; border-color: rgba(0,0,0,0.05) !important;">
-                          <i class="bi bi-clock me-1"></i>${minEspera} min
-                        </span>
-                      </div>
-                      <div class="text-truncate text-muted mt-1" style="font-size: 0.75rem;" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
-                        ${nomePaciente ? escapeHtml(nomePaciente) : '<i class="bi bi-person-dash me-1"></i>Aguardando identificação'}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center gap-1 ms-auto flex-shrink-0">
-                    <button class="btn btn-sm btn-outline-primary fw-bold d-flex align-items-center justify-content-center" style="border-width: 1.5px; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar na TV">
-                      <i class="bi bi-megaphone-fill me-1"></i> Chamar
-                    </button>
-                    <button class="btn btn-sm fw-bold d-flex align-items-center justify-content-center text-white" style="background-color: var(--stable-green, #15803D); border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}')" title="Atender e Identificar">
-                      <i class="bi bi-person-check-fill me-1"></i> Atender
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }).join('');
-    containerTriagem.innerHTML = '<div class="d-flex w-100 gap-3" style="overflow-x: auto; padding-bottom: 8px;">' + triagemHtml + '</div>';
-  }
 
   if (container) {
     container.className = 'recepcao-filas-board';
@@ -1666,6 +1698,8 @@ window.conectaCore.trocarAbaRecepcao = trocarAbaRecepcao;
 window.conectaCore.abrirDocumentosAtendimento = abrirDocumentosAtendimento;
 window.conectaCore.inativarGED = inativarGED;
 window.conectaCore.carregarSenhas = carregarSenhas;
+window.conectaCore.carregarSenhasTriagem = carregarSenhasTriagem;
+window.conectaCore.renderizarBoardSenhasTriagem = renderizarBoardSenhasTriagem;
 
 // ============================================================================
 // 10. CANCELAMENTO DE ATENDIMENTO NATIVO TASY

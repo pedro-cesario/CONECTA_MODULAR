@@ -3404,6 +3404,8 @@
             if (multiplosCheck) multiplosCheck.checked = configRecepcao.permitirMultiplosAtendimentos === true;
 
             const filasPermitidas = Array.isArray(configRecepcao.filasPermitidas) ? configRecepcao.filasPermitidas.map(Number) : [];
+            const filasDpa = Array.isArray(configRecepcao.filasDpa) ? configRecepcao.filasDpa.map(Number) : [];
+            const filasPainel = Array.isArray(configRecepcao.filasPainel) ? configRecepcao.filasPainel.map(Number) : [];
 
             const filasChecks = document.querySelectorAll('input[data-recepcao-fila]');
             filasChecks.forEach(cb => {
@@ -3411,22 +3413,11 @@
             });
             const dpaFilasChecks = document.querySelectorAll('input[data-dpa-fila]');
             dpaFilasChecks.forEach(cb => {
-              cb.checked = filasPermitidas.includes(Number(cb.value));
+              cb.checked = filasDpa.includes(Number(cb.value));
             });
             const psFilasChecks = document.querySelectorAll('input[data-ps-fila]');
             psFilasChecks.forEach(cb => {
-              cb.checked = filasPermitidas.includes(Number(cb.value));
-            });
-
-            // Sincronizar checkboxes de filas entre abas
-            document.querySelectorAll('input[data-recepcao-fila], input[data-dpa-fila], input[data-ps-fila]').forEach(cb => {
-              cb.onchange = (e) => {
-                const val = e.target.value;
-                const isChecked = e.target.checked;
-                document.querySelectorAll(`input[value="${val}"][data-recepcao-fila], input[value="${val}"][data-dpa-fila], input[value="${val}"][data-ps-fila]`).forEach(other => {
-                  other.checked = isChecked;
-                });
-              };
+              cb.checked = filasPainel.includes(Number(cb.value));
             });
           }
 
@@ -3507,13 +3498,14 @@
         return;
       }
 
-      const filasRec = Array.from(document.querySelectorAll('input[data-recepcao-fila]:checked')).map(c => Number(c.value));
-      const filasDpa = Array.from(document.querySelectorAll('input[data-dpa-fila]:checked')).map(c => Number(c.value));
-      const filasPs = Array.from(document.querySelectorAll('input[data-ps-fila]:checked')).map(c => Number(c.value));
-      const filasPermitidas = Array.from(new Set([...filasRec, ...filasDpa, ...filasPs])).filter(Number.isInteger);
+      const filasRec = Array.from(document.querySelectorAll('input[data-recepcao-fila]:checked')).map(c => Number(c.value)).filter(Number.isInteger);
+      const filasDpa = Array.from(document.querySelectorAll('input[data-dpa-fila]:checked')).map(c => Number(c.value)).filter(Number.isInteger);
+      const filasPs = Array.from(document.querySelectorAll('input[data-ps-fila]:checked')).map(c => Number(c.value)).filter(Number.isInteger);
       
       const configRecepcao = {
-        filasPermitidas,
+        filasPermitidas: filasRec,
+        filasDpa: filasDpa,
+        filasPainel: filasPs,
         modoVisualizacao: document.getElementById(`perm-${currentPerfilPermissoes}-recepcao-modo-visualizacao`)?.value || 'SENHA',
         permitirMultiplosAtendimentos: document.getElementById(`perm-${currentPerfilPermissoes}-recepcao-multiplos-atend`)?.checked || false
       };

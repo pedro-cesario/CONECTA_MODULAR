@@ -9,7 +9,7 @@
   gap: 1.25rem;
   width: 100%;
   margin: 0 auto;
-  padding: 1.25rem 2rem 3.5rem 2rem;
+  padding: 1.25rem 1.5rem 3.5rem 1.5rem;
   overflow-y: auto;
   flex: 1 1 0%;
   min-height: 0;
@@ -24,20 +24,21 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background: #ffffff;
   border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: var(--radius-lg, 12px);
-  padding: 0.65rem 1.25rem;
+  padding: 0.45rem 0.85rem;
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
-  overflow-x: auto;
+  overflow: hidden;
   white-space: nowrap;
+  width: 100%;
 }
 
 .recepcao-tab-pills {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
 }
@@ -45,13 +46,13 @@
 .recepcao-tab-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.1rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
   background: #ffffff;
   border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: var(--radius-md, 8px);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--slate-700, #334155);
   cursor: pointer;
@@ -73,8 +74,8 @@
 }
 
 .recepcao-tab-pill .badge {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 999px;
   background: #64748b;
   color: #ffffff;
@@ -88,7 +89,7 @@
 .recepcao-action-buttons {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
   white-space: nowrap;

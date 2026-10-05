@@ -1,6 +1,6 @@
 import { api } from '../../core/api.js';
 import { state, MODULOS_CONFIG, modeTransitionSeq } from '../../core/state.js';
-import { carregarSenhas } from '../recepcao/recepcao.js';
+import { carregarSenhasTriagem } from '../recepcao/recepcao.js';
 import * as utils from '../../core/utils.js';
 import * as ui from '../../core/ui.js';
 import * as router from '../../core/router.js';
@@ -1385,7 +1385,7 @@ export function stopDashboardRefresh() {
 
   export async function enterDashboardInternacaoMode() {
     initTriagemSenhasPA();
-    carregarSenhas(false);
+    carregarSenhasTriagem(false);
     // renderTriagemPermissions is handled inside initTriagemSenhasPA
 
     if (!canAccessDashboardInternacao()) {
@@ -1496,7 +1496,7 @@ export function initTriagemSenhasPA() {
 
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
-      carregarSenhas(true);
+      carregarSenhasTriagem(true);
     });
   }
 
@@ -1711,7 +1711,7 @@ async function abrirAtendimentoTriagem(cdPessoaFisica) {
       if (btnRefresh) btnRefresh.click();
       
       // Forçar refresh das senhas
-      carregarSenhas(false);
+      carregarSenhasTriagem(false);
     } else {
       ui.showToast(resAtend.message || 'Erro ao abrir triagem', 'error');
     }

@@ -8,35 +8,53 @@ const logger = require('../../core/utils/logger');
  * Módulo de Recepção & Acolhimento — Camada de Serviço
  */
 
-async function listarFilasSenhas(perfilAtivo) {
+async function listarFilasSenhas(perfilAtivo, modulo = 'recepcao') {
   const todasFilas = await recepcaoRepository.listarFilasSenhas();
-  let filasPermitidas = [];
+  let filasPermitidas = null;
   let modo_visualizacao = 'SENHA';
 
   if (perfilAtivo) {
     const perfil = configCache.getPerfilById(perfilAtivo);
     if (perfil && perfil.config_recepcao) {
-      filasPermitidas = perfil.config_recepcao.filasPermitidas || [];
+      if (modulo === 'dashboard_pa' && perfil.config_recepcao.filasDpa !== undefined) {
+        filasPermitidas = perfil.config_recepcao.filasDpa;
+      } else if (modulo === 'painel_senhas' && perfil.config_recepcao.filasPainel !== undefined) {
+        filasPermitidas = perfil.config_recepcao.filasPainel;
+      } else if (modulo === 'recepcao' && perfil.config_recepcao.filasPermitidas !== undefined) {
+        filasPermitidas = perfil.config_recepcao.filasPermitidas;
+      }
       modo_visualizacao = perfil.config_recepcao.modoVisualizacao || 'SENHA';
     }
   }
 
-  const data = filasPermitidas.length > 0
-    ? todasFilas.filter(f => filasPermitidas.includes(f.NR_SEQUENCIA || f.nr_sequencia))
+  const data = Array.isArray(filasPermitidas)
+    ? (filasPermitidas.length > 0 ? todasFilas.filter(f => filasPermitidas.includes(f.NR_SEQUENCIA || f.nr_sequencia)) : [])
     : todasFilas;
 
   return { data, modo_visualizacao };
 }
 
-async function listarSenhasEspera(nrSeqFila, perfilAtivo) {
+async function listarSenhasEspera(nrSeqFila, perfilAtivo, modulo = 'recepcao') {
   let senhas = await recepcaoRepository.listarSenhasEspera(nrSeqFila);
 
   if (perfilAtivo) {
     const perfil = configCache.getPerfilById(perfilAtivo);
-    if (perfil && perfil.config_recepcao && Array.isArray(perfil.config_recepcao.filasPermitidas)) {
-      const permitidas = perfil.config_recepcao.filasPermitidas;
-      if (permitidas.length > 0) {
-        senhas = senhas.filter(s => permitidas.includes(s.nr_seq_fila_senha || s.NR_SEQ_FILA_SENHA));
+    if (perfil && perfil.config_recepcao) {
+      let permitidas = null;
+      if (modulo === 'dashboard_pa' && perfil.config_recepcao.filasDpa !== undefined) {
+        permitidas = perfil.config_recepcao.filasDpa;
+      } else if (modulo === 'painel_senhas' && perfil.config_recepcao.filasPainel !== undefined) {
+        permitidas = perfil.config_recepcao.filasPainel;
+      } else if (modulo === 'recepcao' && perfil.config_recepcao.filasPermitidas !== undefined) {
+        permitidas = perfil.config_recepcao.filasPermitidas;
+      }
+
+      if (Array.isArray(permitidas)) {
+        if (permitidas.length > 0) {
+          senhas = senhas.filter(s => permitidas.includes(s.nr_seq_fila_senha || s.NR_SEQ_FILA_SENHA));
+        } else {
+          senhas = [];
+        }
       }
     }
   }

@@ -55,4 +55,68 @@ describe('Recepção & Acolhimento — Unit Tests', () => {
     });
   });
 
+  describe('Isolamento de Filas por Módulo (Recepção vs Pronto Atendimento vs Painel)', () => {
+    const configCache = require('../src/core/config/configCache');
+    const recepcaoRepository = require('../src/modules/recepcao/recepcaoRepository');
+
+    let origGetPerfil;
+    let origListarFilas;
+    let origListarSenhas;
+
+    it('deve filtrar filas e senhas estritamente pelo campo correspondente ao módulo solicitado', async () => {
+      origGetPerfil = configCache.getPerfilById;
+      origListarFilas = recepcaoRepository.listarFilasSenhas;
+      origListarSenhas = recepcaoRepository.listarSenhasEspera;
+
+      try {
+        configCache.getPerfilById = () => ({
+          config_recepcao: {
+            filasPermitidas: [1, 2],
+            filasDpa: [3, 4],
+            filasPainel: [5]
+          }
+        });
+
+        recepcaoRepository.listarFilasSenhas = async () => [
+          { NR_SEQUENCIA: 1, DS_FILA: 'Recepção Normal' },
+          { NR_SEQUENCIA: 2, DS_FILA: 'Recepção Pref' },
+          { NR_SEQUENCIA: 3, DS_FILA: 'Triagem P.A.' },
+          { NR_SEQUENCIA: 4, DS_FILA: 'Emergência P.A.' },
+          { NR_SEQUENCIA: 5, DS_FILA: 'Painel TV' }
+        ];
+
+        recepcaoRepository.listarSenhasEspera = async () => [
+          { NR_SEQUENCIA: 101, nr_seq_fila_senha: 1, CD_SENHA_GERADA: 'R01' },
+          { NR_SEQUENCIA: 102, nr_seq_fila_senha: 3, CD_SENHA_GERADA: 'T01' },
+          { NR_SEQUENCIA: 103, nr_seq_fila_senha: 5, CD_SENHA_GERADA: 'P01' }
+        ];
+
+        // Recepção: só deve ver filas 1 e 2, e senha 101
+        const resRec = await recepcaoService.listarFilasSenhas('perfil_teste', 'recepcao');
+        assert.deepStrictEqual(resRec.data.map(f => f.NR_SEQUENCIA), [1, 2]);
+
+        const senhasRec = await recepcaoService.listarSenhasEspera(null, 'perfil_teste', 'recepcao');
+        assert.deepStrictEqual(senhasRec.map(s => s.NR_SEQUENCIA), [101]);
+
+        // Pronto Atendimento (DPA): só deve ver filas 3 e 4, e senha 102
+        const resDpa = await recepcaoService.listarFilasSenhas('perfil_teste', 'dashboard_pa');
+        assert.deepStrictEqual(resDpa.data.map(f => f.NR_SEQUENCIA), [3, 4]);
+
+        const senhasDpa = await recepcaoService.listarSenhasEspera(null, 'perfil_teste', 'dashboard_pa');
+        assert.deepStrictEqual(senhasDpa.map(s => s.NR_SEQUENCIA), [102]);
+
+        // Painel de Senhas: só deve ver fila 5, e senha 103
+        const resPainel = await recepcaoService.listarFilasSenhas('perfil_teste', 'painel_senhas');
+        assert.deepStrictEqual(resPainel.data.map(f => f.NR_SEQUENCIA), [5]);
+
+        const senhasPainel = await recepcaoService.listarSenhasEspera(null, 'perfil_teste', 'painel_senhas');
+        assert.deepStrictEqual(senhasPainel.map(s => s.NR_SEQUENCIA), [103]);
+      } finally {
+        configCache.getPerfilById = origGetPerfil;
+        recepcaoRepository.listarFilasSenhas = origListarFilas;
+        recepcaoRepository.listarSenhasEspera = origListarSenhas;
+      }
+    });
+  });
+
 });
