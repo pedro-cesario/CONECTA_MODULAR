@@ -108,11 +108,21 @@ async function criarEvolucaoTeste(req, res) {
 
     conn = await getConnection();
 
+    // 1. Pegar o CD_PESSOA_FISICA do paciente (obrigatório na evolucao_paciente)
+    const sqlPaciente = `SELECT cd_pessoa_fisica FROM atendimento_paciente WHERE nr_atendimento = :nrAtendimento`;
+    const resPaciente = await conn.execute(sqlPaciente, { nrAtendimento });
+    if (!resPaciente.rows || resPaciente.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Atendimento não encontrado no Tasy' });
+    }
+    const cdPessoaFisicaPaciente = resPaciente.rows[0].CD_PESSOA_FISICA || resPaciente.rows[0].cd_pessoa_fisica;
+
     const sqlInsert = `
       INSERT INTO evolucao_paciente (
-        cd_evolucao, nr_atendimento, cd_medico, dt_evolucao, dt_liberacao, ds_evolucao, ie_evolucao_clinica, ie_situacao, nm_usuario
+        cd_evolucao, nr_atendimento, cd_medico, dt_evolucao, dt_liberacao, ds_evolucao, 
+        ie_evolucao_clinica, ie_situacao, nm_usuario, ie_tipo_evolucao, cd_pessoa_fisica, dt_atualizacao
       ) VALUES (
-        EVOLUCAO_PACIENTE_SEQ.NEXTVAL, :nrAtendimento, :cdMedico, SYSDATE, SYSDATE, :texto, 'EC', 'A', :nmUsuario
+        EVOLUCAO_PACIENTE_SEQ.NEXTVAL, :nrAtendimento, :cdMedico, SYSDATE, SYSDATE, :texto, 
+        'EC', 'A', :nmUsuario, '1', :cdPessoaFisicaPaciente, SYSDATE
       )
     `;
 
@@ -121,6 +131,7 @@ async function criarEvolucaoTeste(req, res) {
       cdMedico,
       texto: texto || 'Evolução Clínica de Teste - Conecta',
       nmUsuario: usuario?.nm_usuario || 'CONECTA',
+      cdPessoaFisicaPaciente
     }, { autoCommit: true });
 
     return res.json({ success: true, message: 'Evolução criada com sucesso!' });
