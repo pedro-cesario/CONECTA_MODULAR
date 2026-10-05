@@ -826,6 +826,7 @@ export function bindCheckboxEvents(container) {
       updateFooter();
       draft.markModuleDraftDirty('passagem');
     });
+  });
 }
 
 export function renderCheckboxesIntercorrencia(atendimento) {
