@@ -1,5 +1,6 @@
 import { api } from '../../core/api.js';
 import * as ui from '../../core/ui.js';
+import * as router from '../../core/router.js';
 
 export function setupEvolucao() {
   const btnAbrir = document.getElementById('btn-abrir-evolucao');
@@ -9,8 +10,7 @@ export function setupEvolucao() {
 
   if (btnAbrir) {
     btnAbrir.addEventListener('click', () => {
-      document.querySelectorAll('.screen').forEach(s => s.classList.add('d-none'));
-      screenEvolucao.classList.remove('d-none');
+      router.showScreen('evolucao');
     });
   }
 
