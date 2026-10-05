@@ -28,7 +28,7 @@ async function listarFilasSenhas(perfilAtivo, modulo = 'recepcao') {
   }
 
   const data = Array.isArray(filasPermitidas)
-    ? (filasPermitidas.length > 0 ? todasFilas.filter(f => filasPermitidas.includes(f.NR_SEQUENCIA || f.nr_sequencia)) : [])
+    ? (filasPermitidas.length > 0 ? todasFilas.filter(f => filasPermitidas.map(Number).includes(Number(f.NR_SEQUENCIA ?? f.nr_sequencia))) : [])
     : todasFilas;
 
   return { data, modo_visualizacao };
@@ -51,7 +51,8 @@ async function listarSenhasEspera(nrSeqFila, perfilAtivo, modulo = 'recepcao') {
 
       if (Array.isArray(permitidas)) {
         if (permitidas.length > 0) {
-          senhas = senhas.filter(s => permitidas.includes(s.nr_seq_fila_senha || s.NR_SEQ_FILA_SENHA));
+          const permitidasNums = permitidas.map(Number);
+          senhas = senhas.filter(s => permitidasNums.includes(Number(s.nr_seq_fila_senha ?? s.NR_SEQ_FILA_SENHA)));
         } else {
           senhas = [];
         }

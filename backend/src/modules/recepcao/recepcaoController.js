@@ -1,4 +1,5 @@
 const recepcaoService = require('./recepcaoService');
+const { getPerfilAtivo } = require('../../core/utils/acesso');
 
 /**
  * Módulo de Recepção & Acolhimento — Controller HTTP
@@ -6,7 +7,7 @@ const recepcaoService = require('./recepcaoService');
 
 async function listarFilasSenhas(req, res, next) {
   try {
-    const perfilAtivo = req.session?.usuario?.perfilAtivo;
+    const perfilAtivo = getPerfilAtivo(req.session?.usuario) || req.session?.usuario?.perfilAtivo;
     const modulo = req.query.modulo || 'recepcao';
     const { data, modo_visualizacao } = await recepcaoService.listarFilasSenhas(perfilAtivo, modulo);
     res.json({ success: true, data, modo_visualizacao });
@@ -18,7 +19,7 @@ async function listarFilasSenhas(req, res, next) {
 async function listarSenhasEspera(req, res, next) {
   try {
     const { fila, modulo } = req.query;
-    const perfilAtivo = req.session?.usuario?.perfilAtivo;
+    const perfilAtivo = getPerfilAtivo(req.session?.usuario) || req.session?.usuario?.perfilAtivo;
     const moduloFinal = modulo || 'recepcao';
     const data = await recepcaoService.listarSenhasEspera(fila, perfilAtivo, moduloFinal);
     res.json({ success: true, data });

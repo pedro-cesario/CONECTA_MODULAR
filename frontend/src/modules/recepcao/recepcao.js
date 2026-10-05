@@ -260,6 +260,12 @@ function bindRecepcaoEvents() {
 export function trocarAbaRecepcao(aba) {
   recepcaoState.abaAtiva = aba;
 
+  // A troca de aba nunca deve movimentar a barra lateralmente.
+  const workspaceRecepcao = document.getElementById('workspace-recepcao');
+  if (workspaceRecepcao && workspaceRecepcao.scrollLeft) {
+    workspaceRecepcao.scrollLeft = 0;
+  }
+
   const btnSenhas = document.getElementById('tab-btn-senhas');
   const btnHistorico = document.getElementById('tab-btn-historico');
   const paneSenhas = document.getElementById('pane-recepcao-senhas');

@@ -11,6 +11,10 @@
   margin: 0 auto;
   padding: 1.25rem 1.5rem 3.5rem 1.5rem;
   overflow-y: auto;
+  /* O conteúdo largo (filas, tabela) já possui scroll interno: o workspace
+     em si nunca rola na horizontal, o que evita deslocar a barra de abas. */
+  overflow-x: hidden; /* fallback p/ navegadores sem suporte a clip */
+  overflow-x: clip;
   flex: 1 1 0%;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
@@ -33,6 +37,7 @@
   overflow: hidden;
   white-space: nowrap;
   width: 100%;
+  min-width: 0;
 }
 
 .recepcao-tab-pills {
@@ -41,6 +46,7 @@
   gap: 0.35rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .recepcao-tab-pill {
@@ -79,6 +85,10 @@
   border-radius: 999px;
   background: #64748b;
   color: #ffffff;
+  /* Largura estável: a contagem muda ao trocar de aba sem empurrar os demais itens */
+  min-width: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .recepcao-tab-pill.active .badge {
@@ -92,6 +102,8 @@
   gap: 0.35rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
+  justify-content: flex-end;
+  min-width: 0;
   white-space: nowrap;
 }
 
