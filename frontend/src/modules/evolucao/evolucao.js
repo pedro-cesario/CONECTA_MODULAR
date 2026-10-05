@@ -25,12 +25,7 @@ export function setupEvolucao() {
       }
 
       try {
-        const res = await api.request('/api/evolucao/criar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nrAtendimento, texto })
-        });
-        const data = await res.json();
+        const data = await api.post('/api/evolucao/criar', { nrAtendimento, texto });
 
         if (data.success) {
           ui.showToast('Evolução criada! Agora libere a assinatura no Tasy.', 'success');
