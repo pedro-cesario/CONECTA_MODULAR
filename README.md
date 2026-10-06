@@ -398,7 +398,7 @@ Se você estiver dando manutenção neste módulo, compreenda a arquitetura de a
    ```
 
 3. **Injeção do Payload via TasyNative:**
-   O frontend emite um `window.opener.postMessage` do tipo `HEIMDALL_SIGN` contendo o payload serializado exatamente como a classe de DTO Java `br.com.philips.tasy.dto.shared.signature.WSignaturePreparedPayload` do Tasy faria. 
+   O frontend emite um `postMessage` (via `window.opener`, `window.parent` ou `window.top`) do tipo `HEIMDALL_SIGN` contendo o payload serializado exatamente como a classe de DTO Java `br.com.philips.tasy.dto.shared.signature.WSignaturePreparedPayload` do Tasy faria. 
 
 4. **Retorno da Assinatura e Banco de Dados (Oracle):**
    O Heimdall devolve o arquivo criptográfico P7S/CAdES (aprox. 20KB) no campo `result.entity.data`.
@@ -417,36 +417,31 @@ Se você estiver dando manutenção neste módulo, compreenda a arquitetura de a
 
 O script local que roda por cima do TasyNative na máquina Windows do usuário funciona como um **espião / proxy bridge** entre o Conecta Modular e a API nativa do Heimdall injetada no Tasy.
 
-O código injetado no Tasy Native **deve** ser extamente o seguinte (sem loops de tentativas, sem modificação de payload, apenas um forward direto):
+Para evitar falhas de sessão, loops de recarregamento e crashes com o `TasyTabManager` e `TasySessionPersistence`, o código **deve** ser injetado cirurgicamente no arquivo de preloader `lib/renderer/preloaders/window-with-api.js` contido dentro do `app.asar`.
+
+**Adicione o bloco a seguir após a criação do `contextBridge`:**
 
 ```javascript
-// Listener injetado no contexto do TasyNative
-window.addEventListener('message', async (e) => {
-    if (e.data && e.data.type === 'HEIMDALL_SIGN') {
-        try {
-            console.log("Proxy TasyNative: Repassando requisição para Heimdall...");
-            // É mandatório utilizar essa versão da api do TasyNative para que o token seja injetado via PINLess
-            const sigModule = window.heimdall.module({ name: '@philips-emr/tasy-native-signature-module', version: '^1.0.0-beta.0' });
-            
-            const result = await sigModule.run('SIGN', { 
-                signaturePreparedPayload: e.data.payload 
-            });
-
-            e.source.postMessage({
-                type: 'HEIMDALL_SIGN_RESULT',
-                success: true,
-                result: result
-            }, '*');
-
-        } catch (err) {
-            console.error("Proxy TasyNative: Falha na assinatura:", err);
-            e.source.postMessage({
-                type: 'HEIMDALL_SIGN_RESULT',
-                success: false,
-                error: err.message || JSON.stringify(err)
-            }, '*');
-        }
+// --- HEIMDALL PROXY PARA CONECTA MODULAR (MODO SEGURO) ---
+try {
+  electron_1.webFrame.executeJavaScript(`
+    if (!window.__heimdallProxyInitialized) {
+      window.__heimdallProxyInitialized = true;
+      window.addEventListener('message', async (e) => {
+          if (e.data && e.data.type === 'HEIMDALL_SIGN') {
+              try {
+                  console.log("Proxy TasyNative: Repassando requisição para Heimdall...");
+                  const sigModule = window.heimdall.module({ name: '@philips-emr/tasy-native-signature-module', version: '*' });
+                  const result = await sigModule.run('SIGN', e.data.payload);
+                  e.source.postMessage({ type: 'HEIMDALL_SIGN_RESULT', success: true, result }, '*');
+              } catch (err) {
+                  console.error("Proxy TasyNative: Falha na assinatura:", err);
+                  e.source.postMessage({ type: 'HEIMDALL_SIGN_RESULT', success: false, error: err.message || err.toString() }, '*');
+              }
+          }
+      });
     }
-});
+  `).catch(() => {});
+} catch (e) {}
 ```
 Se essa ponte for feita corretamente, o fluxo completo de assinatura funcionará de forma orgânica, gerando auditoria idêntica ao uso do desktop nativo.
