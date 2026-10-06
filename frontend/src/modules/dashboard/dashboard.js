@@ -1904,24 +1904,24 @@ function atualizarStepperTriagem() {
     { idx: 7, label: 'Priorização' }
   ];
 
-  let html = '<nav class="modal-stepper" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom: 5px;">';
+  let html = '<nav class="modal-stepper" aria-label="Etapas da Triagem">';
   steps.forEach((s, i) => {
     const isCompleted = currentTriagemStep > s.idx;
     const isActive = currentTriagemStep === s.idx;
     let cls = 'modal-step-item';
     if (isActive) cls += ' active';
-    if (isCompleted) cls += ' completed text-success';
+    if (isCompleted) cls += ' completed';
     
     html += `
-      <button class="${cls}" data-step="${s.idx}" type="button" disabled style="min-width: max-content; padding: 0 10px;">
-        <span class="modal-step-badge ${isCompleted ? 'bg-success border-success' : ''}">
+      <button class="${cls}" data-step="${s.idx}" type="button" disabled>
+        <span class="modal-step-badge">
           ${isCompleted ? '<i class="bi bi-check"></i>' : (s.idx + 1)}
         </span>
-        <span style="white-space: nowrap;">${s.label}</span>
+        <span>${s.label}</span>
       </button>
     `;
     if (i < steps.length - 1) {
-      html += '<span class="modal-step-divider" style="min-width: 20px;"></span>';
+      html += '<span class="modal-step-divider"></span>';
     }
   });
   html += '</nav>';
@@ -1936,11 +1936,11 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
     document.getElementById('triagem-modal-step-busca').classList.add('d-none');
     document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
 
-    // Insere o container do stepper se não existir (apenas uma vez no modal body)
+    // Insere o container do stepper se não existir (antes do modal body)
     let stepperCont = document.getElementById('triagem-stepper-container');
     if (!stepperCont) {
        const modalBody = document.querySelector('#modal-triagem-identificacao .modal-body');
-       modalBody.insertAdjacentHTML('afterbegin', '<div id="triagem-stepper-container" class="px-3 pt-3 pb-1 bg-white border-bottom"></div>');
+       modalBody.insertAdjacentHTML('beforebegin', '<div id="triagem-stepper-container"></div>');
     }
     currentTriagemStep = 0;
     atualizarStepperTriagem();

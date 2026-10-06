@@ -2013,19 +2013,21 @@
 
     <!-- Modal Triagem: Identificação e Abertura -->
     <div class="modal fade" id="modal-triagem-identificacao" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-          <div class="modal-header text-white border-0 d-flex justify-content-between align-items-center" style="background: var(--slate-800);">
-            <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-              <i class="bi bi-person-bounding-box text-warning"></i> Identificação do Paciente
-            </h5>
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          <div class="modal-header modal-recepcao-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-              <span class="badge bg-warning text-dark fs-6" id="triagem-modal-senha-badge">Senha ---</span>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+              <h5 class="modal-recepcao-title">
+                <i class="bi bi-person-bounding-box"></i> Triagem P.A.
+              </h5>
+              <span class="modal-recepcao-senha-badge" id="triagem-modal-senha-badge">
+                <i class="bi bi-ticket-perforated-fill text-warning me-1"></i> Senha: <strong>---</strong>
+              </span>
             </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
           
-          <div class="modal-body p-0 bg-light">
+          <div class="modal-body p-0">
             <!-- Passo 1: Busca -->
             <div id="triagem-modal-step-busca" class="p-4">
               <p class="text-muted fw-bold mb-3"><i class="bi bi-search me-1"></i> Busque o paciente no TASY ou cadastre um novo:</p>
