@@ -1720,20 +1720,34 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
 
     // Renderiza campos dinamicamente
     elements.forEach(el => {
-       if (!el.DS_LABEL && !el.DS_ELEMENTO) return; // ignora elementos sem nome/label
-       const label = el.DS_LABEL || el.DS_ELEMENTO;
+       const label = el.DS_LABEL || el.DS_LABEL_TELA || el.NM_ELEMENTO;
+       if (!label) return; // ignora elementos sem identificação
+
        const isRequired = el.IE_OBRIGATORIO === 'S';
        const isReadonly = el.IE_READONLY === 'S';
        const tamanho = el.QT_TAMANHO || 200;
-       const isTextarea = tamanho > 100; // heurística simples
+       const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
+       
+       let fieldHtml = '';
+       if (el.IE_COMPONENTE === 'me') {
+          // Macro elemento ou componente com fluxo próprio (ex: Sinais Vitais, Glasgow, Alergias)
+          fieldHtml = `
+            <div class="input-group">
+               <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
+               <textarea class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" rows="3" placeholder="Componente: ${utils.escapeHtml(label)} - Fluxo Nativo Tasy" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
+               <button class="btn btn-outline-secondary" type="button" onclick="ui.showToast('Fluxo de ${utils.escapeHtml(label)} em desenvolvimento', 'info')"><i class="bi bi-box-arrow-up-right"></i></button>
+            </div>
+          `;
+       } else if (isTextarea) {
+          fieldHtml = `<textarea class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" rows="3" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>`;
+       } else {
+          fieldHtml = `<input type="text" class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}">`;
+       }
 
        html += `
          <div class="col-md-12 mb-2">
            <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
-           ${isTextarea 
-              ? `<textarea class="form-control" name="elem_${el.NR_SEQUENCIA}" rows="3" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>`
-              : `<input type="text" class="form-control" name="elem_${el.NR_SEQUENCIA}" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}">`
-           }
+           ${fieldHtml}
          </div>
        `;
     });

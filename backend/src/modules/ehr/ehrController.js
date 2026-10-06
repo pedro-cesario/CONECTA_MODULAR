@@ -21,11 +21,13 @@ async function getTemplateStructure(req, res) {
       }
       template = tempRes.rows[0];
 
-      // Pega conteúdo do template ordenado
+      // Pega conteúdo do template ordenado junto com os dados do EHR_ELEMENTO
       const elemRes = await conn.execute(`
-        SELECT * FROM EHR_TEMPLATE_CONTEUDO 
-        WHERE NR_SEQ_TEMPLATE = :id AND IE_SITUACAO = 'A'
-        ORDER BY NR_SEQ_APRES ASC
+        SELECT c.*, e.NM_ELEMENTO, e.DS_LABEL_TELA, e.IE_COMPONENTE 
+        FROM EHR_TEMPLATE_CONTEUDO c
+        LEFT JOIN EHR_ELEMENTO e ON e.NR_SEQUENCIA = c.NR_SEQ_ELEMENTO
+        WHERE c.NR_SEQ_TEMPLATE = :id AND c.IE_SITUACAO = 'A'
+        ORDER BY c.NR_SEQ_APRES ASC
       `, [nrSeqTemplate]);
       
       elements = elemRes.rows;
