@@ -1673,36 +1673,119 @@ window.conectaCore.abrirAtendimentoExistenteTriagem = async function(cdPessoaFis
   ui.setLoading(btn, false);
 };
 
-window.conectaCore.prepararConfirmacaoTriagem = function(base64Data) {
+window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
   try {
     const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
+    const container = document.getElementById('triagem-confirm-details');
     
-    // Mostra detalhes
-    document.getElementById('triagem-confirm-details').innerHTML = `
-      <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-fill"></i> ${utils.escapeHtml(paciente.nome)}</h5>
-      <ul class="list-unstyled mb-0">
-        <li class="mb-2"><strong>Cód. TASY:</strong> ${utils.escapeHtml(paciente.cdPf)}</li>
-        <li class="mb-2"><strong>CPF:</strong> ${paciente.cpf ? utils.escapeHtml(paciente.cpf) : '<span class="text-muted">Não informado</span>'}</li>
-        <li><strong>Nascimento:</strong> ${paciente.nasc ? utils.escapeHtml(paciente.nasc) : '<span class="text-muted">Não informado</span>'}</li>
-      </ul>
+    // Mostra loading inicial
+    container.innerHTML = `
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 fw-bold text-muted small">Carregando Formulário de Triagem (EHR)...</p>
+      </div>
     `;
     
     // Troca os steps
     document.getElementById('triagem-modal-step-busca').classList.add('d-none');
     document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
-    
+
     // Prepara botão de confirmar
     const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
     if (btnConfirmar) {
       btnConfirmar.classList.remove('d-none');
       btnConfirmar.setAttribute('data-cdpf', paciente.cdPf);
+      btnConfirmar.disabled = true; // Desabilita até carregar
     }
-  } catch (err) {
-    console.error('Erro ao preparar confirmação:', err);
-    ui.showToast('Erro ao ler os dados do paciente.', 'error');
+
+    // Busca o template configurado no backend
+    const res = await api.get('/api/ehr/template/triagem');
+    if (!res.success || !res.data) {
+       throw new Error(res.message || 'Template não encontrado.');
+    }
+
+    const { template, elements } = res.data;
+
+    let html = `
+      <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-fill"></i> ${utils.escapeHtml(paciente.nome)}</h5>
+      <div class="d-flex flex-wrap gap-3 mb-4 text-muted small">
+        <div><strong>Cód. TASY:</strong> ${utils.escapeHtml(paciente.cdPf)}</div>
+        <div><strong>CPF:</strong> ${paciente.cpf ? utils.escapeHtml(paciente.cpf) : 'Não informado'}</div>
+        <div><strong>Nascimento:</strong> ${paciente.nasc ? utils.escapeHtml(paciente.nasc) : 'Não informado'}</div>
+      </div>
+      <hr>
+      <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-file-medical"></i> ${utils.escapeHtml(template.DS_TEMPLATE || 'Formulário Clínico')}</h6>
+      <form id="form-ehr-triagem" class="row g-3">
+    `;
+
+    // Renderiza campos dinamicamente
+    elements.forEach(el => {
+       if (!el.DS_LABEL && !el.DS_ELEMENTO) return; // ignora elementos sem nome/label
+       const label = el.DS_LABEL || el.DS_ELEMENTO;
+       const isRequired = el.IE_OBRIGATORIO === 'S';
+       const isReadonly = el.IE_READONLY === 'S';
+       const tamanho = el.QT_TAMANHO || 200;
+       const isTextarea = tamanho > 100; // heurística simples
+
+       html += `
+         <div class="col-md-12 mb-2">
+           <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
+           ${isTextarea 
+              ? `<textarea class="form-control" name="elem_${el.NR_SEQUENCIA}" rows="3" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>`
+              : `<input type="text" class="form-control" name="elem_${el.NR_SEQUENCIA}" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}">`
+           }
+         </div>
+       `;
+    });
+
+    html += `</form>`;
+    container.innerHTML = html;
+
+    if (btnConfirmar) {
+      btnConfirmar.disabled = false;
+      // Re-associa o evento para validar o form do EHR antes de seguir
+      btnConfirmar.onclick = async (e) => {
+         e.preventDefault();
+         const ehrForm = document.getElementById('form-ehr-triagem');
+         if (ehrForm && !ehrForm.checkValidity()) {
+            ehrForm.reportValidity();
+            return;
+         }
+         
+         // Aqui coletaremos os dados e enviaremos pro backend criar o atendimento + registro EHR
+         const formData = new FormData(ehrForm);
+         const payload = Object.fromEntries(formData.entries());
+
+         ui.setLoading(btnConfirmar, true);
+         // Adaptação: em vez de apenas abrir o atendimento, chama a nova rota do EHR
+         try {
+           const result = await api.post('/api/ehr/registro', {
+              cd_pessoa_fisica: paciente.cdPf,
+              nr_seq_template: template.NR_SEQUENCIA,
+              campos: payload
+           });
+           
+           if (result.success) {
+              ui.showToast('Triagem salva e evolução gerada com sucesso!', 'success');
+              // Fecha o modal e atualiza dashboard
+              const modalEl = document.getElementById('modal-triagem-identificacao');
+              if (modalEl) {
+                 const modal = bootstrap.Modal.getInstance(modalEl);
+                 if (modal) modal.hide();
+              }
+              if (typeof carregarDashboard === 'function') carregarDashboard();
+           } else {
+              ui.showToast(result.message || 'Erro ao salvar EHR', 'error');
+           }
+         } catch(err) {
+            ui.showToast(err.message, 'error');
+         } finally {
+            ui.setLoading(btnConfirmar, false);
+         }
+      };
   }
 };
-
+};
 async function salvarENovoAtendimentoTriagem() {
   const btn = document.getElementById('btn-triagem-salvar-paciente');
   const form = document.getElementById('form-triagem-novo-paciente');

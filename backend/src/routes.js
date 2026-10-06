@@ -75,4 +75,7 @@ router.use('/painel', painelRoutes);
 const evolucaoRoutes = require('./modules/evolucao/routes');
 router.use('/evolucao', evolucaoRoutes);
 
+const ehrRoutes = require('./modules/ehr/ehrRoutes');
+router.use('/ehr', ehrRoutes);
+
 module.exports = router;

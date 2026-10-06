@@ -1829,6 +1829,10 @@
                       <label for="config-app-version" class="form-label small fw-bold">Versão do Sistema</label>
                       <input type="text" id="config-app-version" class="form-control" placeholder="Ex: 2.0">
                     </div>
+                    <div class="mb-3">
+                      <label for="config-triagem-template-id" class="form-label small fw-bold">ID do EHR Template (Triagem)</label>
+                      <input type="number" id="config-triagem-template-id" class="form-control" placeholder="Ex: 100051">
+                    </div>
                     <div class="mb-4">
                       <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="config-show-test-bar">
@@ -3644,6 +3648,9 @@
           if (document.getElementById('config-app-version')) {
             document.getElementById('config-app-version').value = result.data.app_version || '2.0';
           }
+          if (document.getElementById('config-triagem-template-id')) {
+            document.getElementById('config-triagem-template-id').value = result.data.triagem_template_id || '100051';
+          }
           if (document.getElementById('config-show-test-bar')) {
             document.getElementById('config-show-test-bar').checked = result.data.show_test_bar === 'true';
           }
@@ -3713,6 +3720,7 @@
       const tv_historico_limite = document.getElementById('config-tv-historico-limite')?.value?.trim() || '7';
       const cache_setores_preaquecidos = document.getElementById('config-cache-setores')?.value?.trim() || '68, 28, 34, 59, 83';
       const app_version = document.getElementById('config-app-version')?.value || '2.0';
+      const triagem_template_id = document.getElementById('config-triagem-template-id')?.value || '100051';
       const show_test_bar = document.getElementById('config-show-test-bar')?.checked ? 'true' : 'false';
       
       try {
@@ -3721,6 +3729,7 @@
           tv_historico_limite,
           cache_setores_preaquecidos,
           app_version,
+          triagem_template_id,
           show_test_bar
         });
         if (result.success) {
