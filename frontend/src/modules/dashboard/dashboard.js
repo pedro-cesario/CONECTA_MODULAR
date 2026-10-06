@@ -1673,6 +1673,10 @@ window.conectaCore.abrirAtendimentoExistenteTriagem = async function(cdPessoaFis
   ui.setLoading(btn, false);
 };
 
+window.conectaCore.showFluxoToast = function(label) {
+  ui.showToast(`Fluxo de ${label} em desenvolvimento`, 'info');
+};
+
 window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
   try {
     const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
@@ -1735,7 +1739,7 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
             <div class="input-group">
                <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
                <textarea class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" rows="3" placeholder="Componente: ${utils.escapeHtml(label)} - Fluxo Nativo Tasy" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
-               <button class="btn btn-outline-secondary" type="button" onclick="ui.showToast('Fluxo de ${utils.escapeHtml(label)} em desenvolvimento', 'info')"><i class="bi bi-box-arrow-up-right"></i></button>
+               <button class="btn btn-outline-secondary" type="button" onclick="window.conectaCore.showFluxoToast('${utils.escapeHtml(label)}')"><i class="bi bi-box-arrow-up-right"></i></button>
             </div>
           `;
        } else if (isTextarea) {
