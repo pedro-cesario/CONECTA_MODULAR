@@ -1674,7 +1674,7 @@ window.conectaCore.abrirAtendimentoExistenteTriagem = async function(cdPessoaFis
 };
 
 window.conectaCore.showFluxoToast = function(label) {
-  ui.showToast(`Fluxo de ${label} em desenvolvimento`, 'info');
+  alert(`Fluxo de ${label} em desenvolvimento (Em breve abrirá a tela nativa).`);
 };
 
 window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
