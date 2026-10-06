@@ -444,7 +444,7 @@ async function obterPessoaCompleta(cdPessoaFisica) {
     const pessoa = result.rows[0];
 
     const openAtend = await conn.execute(
-      `SELECT nr_atendimento, cd_estabelecimento, cd_procedencia, cd_convenio, cd_categoria, ie_tipo_atendimento, dt_entrada
+      `SELECT nr_atendimento, cd_estabelecimento, cd_procedencia, ie_tipo_atendimento, dt_entrada
        FROM atendimento_paciente 
        WHERE cd_pessoa_fisica = :cd AND ie_status_atendimento = 'E' AND dt_alta IS NULL
        ORDER BY nr_atendimento DESC`,
