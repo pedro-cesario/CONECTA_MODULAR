@@ -1673,11 +1673,212 @@ window.conectaCore.abrirAtendimentoExistenteTriagem = async function(cdPessoaFis
   ui.setLoading(btn, false);
 };
 
-window.conectaCore.showFluxoToast = function(label) {
-  alert(`Fluxo de ${label} em desenvolvimento (Em breve abrirá a tela nativa).`);
+window.conectaCore.abrirFluxoNativo = function(label, idComponente) {
+  const modalId = label.toLowerCase().includes('sinais vitais') ? 'modal-fluxo-sv' :
+                  label.toLowerCase().includes('glasgow') ? 'modal-fluxo-glasgow' :
+                  label.toLowerCase().includes('alergias') ? 'modal-fluxo-alergias' : null;
+  
+  if (!modalId) {
+     ui.showToast('Fluxo nativo não encontrado para: ' + label, 'warning');
+     return;
+  }
+  
+  const modalEl = document.getElementById(modalId);
+  if (modalEl) {
+     // Store the component ID so we know where to save the data
+     modalEl.setAttribute('data-target-id', idComponente);
+     
+     // Limpar form do modal
+     const form = modalEl.querySelector('form');
+     if (form) form.reset();
+
+     // Se já houver dados no hidden, preenche o form
+     const hiddenVal = document.getElementById('fluxo_' + idComponente)?.value;
+     if (hiddenVal && form) {
+        try {
+           const dados = JSON.parse(hiddenVal);
+           for (const key in dados) {
+              const input = form.querySelector(`[name="${key}"]`);
+              if (input) {
+                 if (input.type === 'checkbox' || input.type === 'radio') {
+                     if (input.type === 'radio') {
+                        const radio = form.querySelector(`[name="${key}"][value="${dados[key]}"]`);
+                        if (radio) radio.checked = true;
+                     } else {
+                        input.checked = !!dados[key];
+                     }
+                 } else {
+                     input.value = dados[key];
+                 }
+              }
+           }
+        } catch(e) {}
+     }
+     
+     const m = new bootstrap.Modal(modalEl);
+     m.show();
+  }
 };
 
+window.conectaCore.salvarFluxoNativo = function(modalId) {
+  const modalEl = document.getElementById(modalId);
+  const targetId = modalEl.getAttribute('data-target-id');
+  const form = modalEl.querySelector('form');
+  if (!form || !targetId) return;
+  
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+  
+  document.getElementById('fluxo_' + targetId).value = JSON.stringify(payload);
+  document.getElementById('display_' + targetId).value = 'Preenchido (Clique para editar)';
+  
+  const m = bootstrap.Modal.getInstance(modalEl);
+  if (m) m.hide();
+};
+
+function ensureFluxoModals() {
+  if (document.getElementById('modal-fluxo-sv')) return;
+  
+  const modalsHtml = `
+    <!-- Sinais Vitais -->
+    <div class="modal fade" id="modal-fluxo-sv" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Sinais Vitais (PEP)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="form-fluxo-sv">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">PA Sistólica (mmHg)</label>
+                  <input type="number" class="form-control" name="QT_PA_SISTOLICA">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">PA Diastólica (mmHg)</label>
+                  <input type="number" class="form-control" name="QT_PA_DIASTOLICA">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Freq. Cardíaca (bpm)</label>
+                  <input type="number" class="form-control" name="QT_FREQUENCIA_CARD">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Freq. Respiratória (rpm)</label>
+                  <input type="number" class="form-control" name="QT_FREQUENCIA_RESP">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Temp. (°C)</label>
+                  <input type="number" step="0.1" class="form-control" name="QT_TEMPERATURA">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Peso (Kg)</label>
+                  <input type="number" step="0.1" class="form-control" name="QT_PESO">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">SpO2 (%)</label>
+                  <input type="number" class="form-control" name="QT_SAT_O2">
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="window.conectaCore.salvarFluxoNativo('modal-fluxo-sv')">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Glasgow -->
+    <div class="modal fade" id="modal-fluxo-glasgow" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Escala de Coma de Glasgow</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="form-fluxo-glasgow">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Abertura Ocular</label>
+                <select class="form-select" name="IE_ABERTURA_OCULAR">
+                  <option value="">Selecione...</option>
+                  <option value="4">4 - Espontânea</option>
+                  <option value="3">3 - À voz</option>
+                  <option value="2">2 - À dor</option>
+                  <option value="1">1 - Nenhuma</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Resposta Verbal</label>
+                <select class="form-select" name="IE_RESPOSTA_VERBAL">
+                  <option value="">Selecione...</option>
+                  <option value="5">5 - Orientada</option>
+                  <option value="4">4 - Confusa</option>
+                  <option value="3">3 - Palavras inapropriadas</option>
+                  <option value="2">2 - Sons incompreensíveis</option>
+                  <option value="1">1 - Nenhuma</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Resposta Motora</label>
+                <select class="form-select" name="IE_RESPOSTA_MOTORA">
+                  <option value="">Selecione...</option>
+                  <option value="6">6 - Obedece a comandos</option>
+                  <option value="5">5 - Localiza a dor</option>
+                  <option value="4">4 - Flexão normal (Retirada)</option>
+                  <option value="3">3 - Flexão anormal (Decorticação)</option>
+                  <option value="2">2 - Extensão (Descerebração)</option>
+                  <option value="1">1 - Nenhuma</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="window.conectaCore.salvarFluxoNativo('modal-fluxo-glasgow')">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alergias -->
+    <div class="modal fade" id="modal-fluxo-alergias" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Alergias (PEP)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="form-fluxo-alergias">
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="IE_NEGA_ALERGIAS" id="cbNegaAlergias" value="S">
+                <label class="form-check-label fw-bold" for="cbNegaAlergias">
+                  Nega alergias conhecidas
+                </label>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Observação / Descrição da Alergia</label>
+                <textarea class="form-control" name="DS_OBSERVACAO" rows="3" placeholder="Ex: Dipirona, Penicilina, Frutos do mar..."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="window.conectaCore.salvarFluxoNativo('modal-fluxo-alergias')">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalsHtml);
+}
+
+
 window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
+  ensureFluxoModals();
   try {
     const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
     const container = document.getElementById('triagem-confirm-details');
@@ -1753,8 +1954,10 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
                <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
                <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
-                  <textarea class="form-control" name="elem_${el.NR_SEQUENCIA}" rows="3" placeholder="Componente: ${utils.escapeHtml(label)} - Digite aqui provisoriamente enquanto o fluxo nativo é desenvolvido" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
-                  <button class="btn btn-outline-secondary" type="button" onclick="window.conectaCore.showFluxoToast('${utils.escapeHtml(label)}')"><i class="bi bi-box-arrow-up-right"></i></button>
+                  <input type="text" class="form-control bg-white" name="elem_${el.NR_SEQUENCIA}_display" id="display_${el.NR_SEQUENCIA}" placeholder="Clique no botão para preencher: ${utils.escapeHtml(label)}" readonly ${isRequired ? 'required' : ''}>
+                  <input type="hidden" name="fluxo_${el.NR_SEQUENCIA}" id="fluxo_${el.NR_SEQUENCIA}" value="">
+                  <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="${utils.escapeHtml(label)}">
+                  <button class="btn btn-outline-secondary" type="button" onclick="window.conectaCore.abrirFluxoNativo('${utils.escapeHtml(label)}', ${el.NR_SEQUENCIA})"><i class="bi bi-box-arrow-up-right"></i></button>
                </div>
             </div>
           `;

@@ -42,7 +42,7 @@ export function setupEvolucao() {
 
         if (heimdallObj && data.xmlCanonico && data.cpfMedico) {
             try {
-                const sigModule = heimdallObj.module({ name: '@philips-emr/tasy-native-signature-module', version: '*' });
+                const sigModule = heimdallObj.module({ name: '@philips-emr/tasy-native-signature-module', semver: '*' });
                 const result = await sigModule.run('SIGN', {
                     signaturePreparedPayload: {
                         id: data.cpfMedico,
