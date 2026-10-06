@@ -1495,14 +1495,6 @@ export function initTriagemSenhasPA() {
   const btnSalvarNovo = document.getElementById('btn-triagem-salvar-paciente');
   const btnBackBuscaConf = document.getElementById('btn-triagem-back-busca-conf');
   const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
-    
-    // Inject a back button dynamically if it doesn't exist
-    let btnVoltar = document.getElementById('btn-triagem-voltar-step');
-    if (!btnVoltar) {
-        btnConfirmar.insertAdjacentHTML('beforebegin', '<button type="button" class="btn btn-secondary me-2 d-none" id="btn-triagem-voltar-step"><i class="bi bi-arrow-left me-1"></i> Voltar</button>');
-        btnVoltar = document.getElementById('btn-triagem-voltar-step');
-    }
-
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
       carregarSenhasTriagem(true);
@@ -2145,13 +2137,22 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
 
     // Atualizar os botões de ação para Navegação
     const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
+    const btnVoltar = document.getElementById('btn-triagem-voltar-step');
+    const btnCancelar = document.getElementById('btn-triagem-cancelar');
+    
+    if (btnCancelar) btnCancelar.classList.add('d-none'); // Hide the generic Cancelar
+
     if (btnConfirmar) {
       btnConfirmar.innerHTML = 'Próximo <i class="bi bi-arrow-right ms-1"></i>';
       
       const attBotoes = () => {
          if (btnVoltar) {
-            if (currentTriagemStep > 1) btnVoltar.classList.remove('d-none');
-            else btnVoltar.classList.add('d-none');
+            btnVoltar.classList.remove('d-none');
+            if (currentTriagemStep === 1) {
+                btnVoltar.innerHTML = '<i class="bi bi-x-circle text-danger"></i> Cancelar Atendimento';
+            } else {
+                btnVoltar.innerHTML = '<i class="bi bi-arrow-left"></i> Voltar Passo';
+            }
          }
          if (currentTriagemStep === 7) {
             btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Finalizar Triagem';
@@ -2163,7 +2164,7 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
       };
 
       if (btnVoltar) {
-          btnVoltar.onclick = (e) => {
+          btnVoltar.onclick = async (e) => {
              e.preventDefault();
              if (currentTriagemStep > 1) {
                 document.getElementById(`ehr-step-${currentTriagemStep}`).classList.add('d-none');
@@ -2171,9 +2172,37 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
                 document.getElementById(`ehr-step-${currentTriagemStep}`).classList.remove('d-none');
                 atualizarStepperTriagem();
                 attBotoes();
+             } else if (currentTriagemStep === 1) {
+                // Cancelar atendimento e voltar pra busca
+                if (!confirm('Deseja realmente cancelar este atendimento e voltar para a busca?')) return;
+                
+                try {
+                  ui.setLoading(btnVoltar, true);
+                  await api.post(`/api/recepcao/atendimentos/${paciente.nr_atendimento}/cancelar`);
+                  ui.showToast('Atendimento cancelado.', 'info');
+                  
+                  // Reset modal state
+                  const modalBody = document.querySelector('#modal-triagem-identificacao .modal-body');
+                  const stepperCont = document.getElementById('triagem-stepper-container');
+                  if (stepperCont) stepperCont.remove();
+                  
+                  document.getElementById('triagem-confirm-details').innerHTML = '';
+                  document.getElementById('triagem-modal-step-confirmacao').classList.add('d-none');
+                  document.getElementById('triagem-modal-step-busca').classList.remove('d-none');
+                  
+                  if (btnCancelar) btnCancelar.classList.remove('d-none');
+                  btnVoltar.classList.add('d-none');
+                  btnConfirmar.classList.add('d-none');
+                } catch(err) {
+                  ui.showToast('Erro ao cancelar atendimento', 'error');
+                } finally {
+                  ui.setLoading(btnVoltar, false);
+                }
              }
           };
       }
+      
+      attBotoes(); // run it initially
       btnConfirmar.onclick = async (e) => {
          e.preventDefault();
          const ehrForm = document.getElementById('form-ehr-triagem');
