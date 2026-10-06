@@ -1591,6 +1591,7 @@ async function buscarPacienteTriagem(termo) {
         const cpf = p.NR_CPF || '';
         const nasc = p.DT_NASC_FMT || (p.DT_NASCIMENTO ? utils.formatDateToBr(p.DT_NASCIMENTO) : '');
         const cdPf = p.CD_PESSOA_FISICA || '';
+        const mae = p.NM_MAE || '';
 
         return `
         <div class="card border-0 shadow-sm border mb-2">
@@ -1603,7 +1604,7 @@ async function buscarPacienteTriagem(termo) {
               </div>
             </div>
             ${permAbrir ? `
-              <button class="btn btn-sm btn-outline-success fw-bold" onclick="window.conectaCore.prepararConfirmacaoTriagem('${btoa(encodeURIComponent(JSON.stringify({nome, cpf, nasc, cdPf})))}')">
+              <button class="btn btn-sm btn-outline-success fw-bold" onclick="window.conectaCore.prepararConfirmacaoTriagem('${btoa(encodeURIComponent(JSON.stringify({nome, cpf, nasc, cdPf, mae})))}')">
                 <i class="bi bi-check-circle me-1"></i> Selecionar
               </button>
             ` : `
@@ -1878,29 +1879,72 @@ function ensureFluxoModals() {
 
 
 window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
-  ensureFluxoModals();
   try {
     const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
+    const container = document.getElementById('triagem-confirm-details');
+    
+    document.getElementById('triagem-modal-step-busca').classList.add('d-none');
+    document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
+
+    container.innerHTML = `
+      <div class="text-center mb-4">
+        <h5 class="fw-bold text-primary">Deseja iniciar a triagem do paciente abaixo?</h5>
+        <p class="text-muted small mb-0">Valide os dados do paciente antes de prosseguir.</p>
+      </div>
+      <div class="card bg-white border shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted mb-0">Nome Completo</label>
+              <div class="fw-bold fs-5 text-dark">${utils.escapeHtml(paciente.nome)}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-muted mb-0">Data de Nascimento</label>
+              <div class="fw-bold text-dark">${utils.escapeHtml(paciente.nasc) || 'Não informado'}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-muted mb-0">CPF</label>
+              <div class="fw-bold text-dark">${utils.escapeHtml(paciente.cpf) || 'Não informado'}</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted mb-0">Nome da Mãe</label>
+              <div class="fw-bold text-dark">${utils.escapeHtml(paciente.mae) || 'Não informado'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
+    if (btnConfirmar) {
+      btnConfirmar.classList.remove('d-none');
+      btnConfirmar.disabled = false;
+      btnConfirmar.innerHTML = '<i class="bi bi-file-medical me-1"></i> Iniciar Triagem';
+      btnConfirmar.onclick = () => window.conectaCore.carregarTemplateEHR(paciente);
+    }
+  } catch (err) {
+    console.error(err);
+    ui.showToast('Erro ao preparar confirmação', 'error');
+  }
+};
+
+window.conectaCore.carregarTemplateEHR = async function(paciente) {
+  ensureFluxoModals();
+  try {
     const container = document.getElementById('triagem-confirm-details');
     
     // Mostra loading inicial
     container.innerHTML = `
       <div class="text-center py-4">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 fw-bold text-muted small">Carregando Formulário de Triagem (EHR)...</p>
+        <p class="mt-2 fw-bold text-muted small">Carregando Template Triagem P.A...</p>
       </div>
     `;
     
-    // Troca os steps
-    document.getElementById('triagem-modal-step-busca').classList.add('d-none');
-    document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
-
-    // Prepara botão de confirmar
     const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
     if (btnConfirmar) {
-      btnConfirmar.classList.remove('d-none');
-      btnConfirmar.setAttribute('data-cdpf', paciente.cdPf);
-      btnConfirmar.disabled = true; // Desabilita até carregar
+      btnConfirmar.disabled = true; 
+      btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Salvar Triagem';
     }
 
     // Busca o template configurado no backend
@@ -1913,13 +1957,8 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
 
     let html = `
       <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-fill"></i> ${utils.escapeHtml(paciente.nome)}</h5>
-      <div class="d-flex flex-wrap gap-3 mb-4 text-muted small">
-        <div><strong>Cód. TASY:</strong> ${utils.escapeHtml(paciente.cdPf)}</div>
-        <div><strong>CPF:</strong> ${paciente.cpf ? utils.escapeHtml(paciente.cpf) : 'Não informado'}</div>
-        <div><strong>Nascimento:</strong> ${paciente.nasc ? utils.escapeHtml(paciente.nasc) : 'Não informado'}</div>
-      </div>
       <hr>
-      <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-file-medical"></i> ${utils.escapeHtml(template.DS_TEMPLATE || 'Formulário Clínico')}</h6>
+      <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-file-medical"></i> ${utils.escapeHtml(template.DS_TEMPLATE || 'Triagem P.A.')}</h6>
       <form id="form-ehr-triagem" class="row g-3">
     `;
 
@@ -1928,27 +1967,22 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
        const label = el.DS_LABEL || el.DS_LABEL_TELA || el.NM_ELEMENTO;
        if (!label) return; // ignora elementos sem identificação
 
-       // Se for apenas um label agrupador (sem elemento vinculado)
-       if (!el.NR_SEQ_ELEMENTO) {
-          html += `
-             <div class="col-md-12 mt-4 mb-2 border-bottom pb-1">
-               <h6 class="fw-bold text-primary mb-0"><i class="bi bi-caret-right-fill"></i> ${utils.escapeHtml(label)}</h6>
-             </div>
-          `;
-          return;
+       if (el.NR_SEQ_ELEMENTO === null || label === el.DS_LABEL) {
+          if (!el.IE_COMPONENTE && !el.NR_SEQ_TIPO_DADO) {
+            html += `<div class="col-12 mt-3 mb-2 border-bottom"><h6 class="text-primary mb-1">${utils.escapeHtml(label)}</h6></div>`;
+            return;
+          }
        }
 
        const isRequired = el.IE_OBRIGATORIO === 'S';
-       // Para a POC na web, removemos o readonly dos fluxos nativos para permitir digitação manual provisória
        const isTasyEntity = el.NR_SEQ_TIPO_DADO === 14;
        const isReadonly = el.IE_READONLY === 'S' && !isTasyEntity;
        const tamanho = el.QT_TAMANHO || 200;
-       const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
        const isCheckbox = el.IE_COMPONENTE === 'cb';
+       const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
        
        let fieldHtml = '';
        if (isTasyEntity) {
-          // Componente com fluxo próprio (DV_TASY) (ex: Sinais Vitais, Glasgow, Alergias)
           fieldHtml = `
             <div class="col-md-12 mb-2">
                <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
@@ -1994,7 +2028,6 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
 
     if (btnConfirmar) {
       btnConfirmar.disabled = false;
-      // Re-associa o evento para validar o form do EHR antes de seguir
       btnConfirmar.onclick = async (e) => {
          e.preventDefault();
          const ehrForm = document.getElementById('form-ehr-triagem');
@@ -2003,12 +2036,10 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
             return;
          }
          
-         // Aqui coletaremos os dados e enviaremos pro backend criar o atendimento + registro EHR
          const formData = new FormData(ehrForm);
          const payload = Object.fromEntries(formData.entries());
 
          ui.setLoading(btnConfirmar, true);
-         // Adaptação: em vez de apenas abrir o atendimento, chama a nova rota do EHR
          try {
            const result = await api.post('/api/ehr/registro', {
               cd_pessoa_fisica: paciente.cdPf,
@@ -2018,7 +2049,6 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
            
            if (result.success) {
               ui.showToast('Triagem salva e evolução gerada com sucesso!', 'success');
-              // Fecha o modal e atualiza dashboard
               const modalEl = document.getElementById('modal-triagem-identificacao');
               if (modalEl) {
                  const modal = bootstrap.Modal.getInstance(modalEl);
@@ -2040,6 +2070,7 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
     ui.showToast("Erro ao carregar o template clínico.", "error");
   }
 };
+
 
 async function salvarENovoAtendimentoTriagem() {
   const btn = document.getElementById('btn-triagem-salvar-paciente');
