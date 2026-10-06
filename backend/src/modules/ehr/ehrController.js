@@ -145,21 +145,22 @@ async function saveEHRRegistro(req, res) {
               } 
               else if (f.tipo.toLowerCase().includes('glasgow')) {
                   const g = f.data;
-                  const total = (Number(g.IE_ABERTURA_OCULAR)||0) + (Number(g.IE_RESPOSTA_VERBAL)||0) + (Number(g.IE_RESPOSTA_MOTORA)||0);
+                  const total = (Number(g.IE_ABERTURA_OCULAR)||0) + (Number(g.IE_RESPOSTA_VERBAL)||0) + (Number(g.IE_RESPOSTA_MOTORA)||0) + (Number(g.IE_REATIVIDADE_PUPILAR)||0);
                   await conn.execute(`
                       INSERT INTO ATEND_ESCALA_INDICE (
                          NR_SEQUENCIA, NR_ATENDIMENTO, CD_PESSOA_FISICA, DT_AVALIACAO, DT_LIBERACAO, 
-                         NM_USUARIO, QT_GLASGOW, IE_RESPOSTA_MOTORA, IE_RESPOSTA_VERBAL, IE_ABERTURA_OCULAR, 
+                         NM_USUARIO, QT_GLASGOW, IE_RESPOSTA_MOTORA, IE_RESPOSTA_VERBAL, IE_ABERTURA_OCULAR, IE_REATIVIDADE_PUPILAR,
                          IE_SITUACAO, CD_SETOR_ATENDIMENTO
                       ) VALUES (
-                         ATEND_ESCALA_INDICE_SEQ.NEXTVAL, :atend, '259406', SYSDATE, SYSDATE,
-                         :usr, :tot, :rm, :rv, :ao, 'A', 28
+                         ATEND_ESCALA_INDICE_SEQ.NEXTVAL, :atend, :pf, SYSDATE, SYSDATE,
+                         :usr, :tot, :rm, :rv, :ao, :pup, 'A', 28
                       )
                   `, {
-                      atend: nrAtendimento, usr: usuario, tot: total,
+                      atend: nrAtendimento, pf: cd_pessoa_fisica, usr: usuario, tot: total,
                       rm: g.IE_RESPOSTA_MOTORA ? Number(g.IE_RESPOSTA_MOTORA) : null,
                       rv: g.IE_RESPOSTA_VERBAL ? Number(g.IE_RESPOSTA_VERBAL) : null,
-                      ao: g.IE_ABERTURA_OCULAR ? Number(g.IE_ABERTURA_OCULAR) : null
+                      ao: g.IE_ABERTURA_OCULAR ? Number(g.IE_ABERTURA_OCULAR) : null,
+                      pup: g.IE_REATIVIDADE_PUPILAR ? Number(g.IE_REATIVIDADE_PUPILAR) : null
                   }, { autoCommit: true });
               }
               else if (f.tipo.toLowerCase().includes('alergias')) {
@@ -167,15 +168,16 @@ async function saveEHRRegistro(req, res) {
                   await conn.execute(`
                       INSERT INTO PACIENTE_ALERGIA (
                          NR_SEQUENCIA, CD_PESSOA_FISICA, NR_ATENDIMENTO, DT_REGISTRO, DT_LIBERACAO, 
-                         NM_USUARIO, NM_USUARIO_LIBERACAO, IE_NEGA_ALERGIAS, DS_OBSERVACAO
+                         NM_USUARIO, NM_USUARIO_LIBERACAO, IE_NEGA_ALERGIAS, DS_OBSERVACAO, NR_SEQ_FICHA_TECNICA
                       ) VALUES (
                          PACIENTE_ALERGIA_SEQ.NEXTVAL, :pf, :atend, SYSDATE, SYSDATE,
-                         :usr, :usr, :nega, :obs
+                         :usr, :usr, :nega, :obs, :ftech
                       )
                   `, {
                       pf: cd_pessoa_fisica, atend: nrAtendimento, usr: usuario,
                       nega: a.IE_NEGA_ALERGIAS === 'S' ? 'S' : 'N',
-                      obs: a.DS_OBSERVACAO || null
+                      obs: a.DS_OBSERVACAO || null,
+                      ftech: a.NR_SEQ_FICHA_TECNICA ? Number(a.NR_SEQ_FICHA_TECNICA) : null
                   }, { autoCommit: true });
               }
           }

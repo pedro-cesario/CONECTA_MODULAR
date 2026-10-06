@@ -2094,11 +2094,22 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
                   <select class="form-select" name="GL_IE_RESPOSTA_VERBAL"><option value="">Selecione...</option><option value="5">5 - Orientada</option><option value="4">4 - Confusa</option><option value="3">3 - Palavras inapropriadas</option><option value="2">2 - Sons incompreensíveis</option><option value="1">1 - Nenhuma</option></select></div>
                   <div class="col-12 mb-2"><label class="form-label small fw-bold">Resposta Motora</label>
                   <select class="form-select" name="GL_IE_RESPOSTA_MOTORA"><option value="">Selecione...</option><option value="6">6 - Obedece a comandos</option><option value="5">5 - Localiza a dor</option><option value="4">4 - Flexão normal (Retirada)</option><option value="3">3 - Flexão anormal (Decorticação)</option><option value="2">2 - Extensão (Descerebração)</option><option value="1">1 - Nenhuma</option></select></div>
+                  <div class="col-12 mb-2"><label class="form-label small fw-bold">Reatividade Pupilar</label>
+                  <select class="form-select" name="GL_IE_REATIVIDADE_PUPILAR"><option value="">Selecione...</option><option value="0">0 - Inexistente</option><option value="-1">-1 - Parcial (uma pupila reage)</option><option value="-2">-2 - Nenhuma pupila reage</option></select></div>
                 `;
              } else if (lbl.toLowerCase().includes('alergias')) {
                 html += `
                   <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="Alergias (PEP)">
                   <div class="col-12"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="AL_IE_NEGA_ALERGIAS" id="cbAlergia" value="S"><label class="form-check-label fw-bold" for="cbAlergia">Nega alergias conhecidas</label></div></div>
+                  
+                  <div class="col-12 mb-2">
+                     <label class="form-label small fw-bold">Princípio Ativo / Ficha Técnica (TASY)</label>
+                     <div class="input-group">
+                       <input type="number" class="form-control" name="AL_NR_SEQ_FICHA_TECNICA" placeholder="Código (Ex: 1234)">
+                       <button class="btn btn-outline-secondary" type="button" onclick="ui.showToast('Busca de Ficha Técnica em desenvolvimento...', 'info')"><i class="bi bi-search"></i> Buscar</button>
+                     </div>
+                  </div>
+                  
                   <div class="col-12"><label class="form-label small fw-bold">Observação / Descrição da Alergia</label><textarea class="form-control" name="AL_DS_OBSERVACAO" rows="3" placeholder="Ex: Dipirona, Penicilina..."></textarea></div>
                 `;
              }
