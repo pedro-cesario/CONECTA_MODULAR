@@ -65,7 +65,7 @@ async function saveEHRRegistro(req, res) {
        if (template.IE_GERAR_EVOLUCAO === 'S') {
           // Busca os rótulos
           const elemRes = await conn.execute(`
-            SELECT c.NR_SEQ_ELEMENTO, NVL(c.DS_LABEL, NVL(e.DS_LABEL_TELA, e.NM_ELEMENTO)) AS LABEL
+            SELECT c.NR_SEQUENCIA, c.NR_SEQ_ELEMENTO, NVL(c.DS_LABEL, NVL(e.DS_LABEL_TELA, e.NM_ELEMENTO)) AS LABEL
             FROM EHR_TEMPLATE_CONTEUDO c
             LEFT JOIN EHR_ELEMENTO e ON e.NR_SEQUENCIA = c.NR_SEQ_ELEMENTO
             WHERE c.NR_SEQ_TEMPLATE = :id AND c.IE_SITUACAO = 'A'
@@ -73,7 +73,7 @@ async function saveEHRRegistro(req, res) {
           
           let dsEvolucao = `==== ${template.DS_TEMPLATE || 'REGISTRO EHR'} ====\n`;
           const labelsMap = {};
-          elemRes.rows.forEach(r => { labelsMap['elem_' + r.NR_SEQ_ELEMENTO] = r.LABEL; });
+          elemRes.rows.forEach(r => { labelsMap['elem_' + r.NR_SEQUENCIA] = r.LABEL; });
 
           for (const key of Object.keys(campos)) {
              if (campos[key] && campos[key].trim() !== '') {
