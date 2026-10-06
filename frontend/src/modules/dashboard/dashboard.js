@@ -1728,10 +1728,11 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
        if (!label) return; // ignora elementos sem identificação
 
        const isRequired = el.IE_OBRIGATORIO === 'S';
-       const isReadonly = el.IE_READONLY === 'S';
+       // Para a POC na web, removemos o readonly dos fluxos nativos para permitir digitação manual provisória
+       const isTasyEntity = el.NR_SEQ_TIPO_DADO === 14;
+       const isReadonly = el.IE_READONLY === 'S' && !isTasyEntity;
        const tamanho = el.QT_TAMANHO || 200;
        const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
-       const isTasyEntity = el.NR_SEQ_TIPO_DADO === 14;
        
        let fieldHtml = '';
        if (isTasyEntity) {
@@ -1739,7 +1740,7 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
           fieldHtml = `
             <div class="input-group">
                <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
-               <textarea class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" rows="3" placeholder="Componente: ${utils.escapeHtml(label)} - Fluxo Nativo Tasy" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
+               <textarea class="form-control" name="elem_${el.NR_SEQ_ELEMENTO}" rows="3" placeholder="Componente: ${utils.escapeHtml(label)} - Digite aqui provisoriamente enquanto o fluxo nativo é desenvolvido" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
                <button class="btn btn-outline-secondary" type="button" onclick="window.conectaCore.showFluxoToast('${utils.escapeHtml(label)}')"><i class="bi bi-box-arrow-up-right"></i></button>
             </div>
           `;
