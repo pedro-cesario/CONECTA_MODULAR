@@ -56,7 +56,7 @@ export function setupEvolucao() {
                 console.error("Erro na assinatura Heimdall direta:", sigErr);
                 ui.showToast('Evolução criada, mas o processo de assinatura digital falhou.', 'warning');
             }
-        } else if (window.opener && data.xmlCanonico && data.cpfMedico) {
+        } else if ((window.opener || window.parent || window.top) && data.xmlCanonico && data.cpfMedico) {
             ui.showToast('Solicitando assinatura digital ao Tasy...', 'info');
             
             const cdEvolucaoNum = Number(data.cd_evolucao);
@@ -120,7 +120,8 @@ export function setupEvolucao() {
             
             window.addEventListener('message', onMessage);
             
-            window.opener.postMessage({
+            const targetWindow = window.opener || window.parent || window.top;
+            targetWindow.postMessage({
                 type: 'HEIMDALL_SIGN',
                 payload: payload
             }, '*');
