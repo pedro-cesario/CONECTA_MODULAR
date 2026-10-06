@@ -1783,9 +1783,13 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
             ui.setLoading(btnConfirmar, false);
          }
       };
+    }
+  } catch (err) {
+    console.error("Erro ao carregar formulário da Triagem:", err);
+    ui.showToast("Erro ao carregar o template clínico.", "error");
   }
 };
-};
+
 async function salvarENovoAtendimentoTriagem() {
   const btn = document.getElementById('btn-triagem-salvar-paciente');
   const form = document.getElementById('form-triagem-novo-paciente');
