@@ -1495,6 +1495,13 @@ export function initTriagemSenhasPA() {
   const btnSalvarNovo = document.getElementById('btn-triagem-salvar-paciente');
   const btnBackBuscaConf = document.getElementById('btn-triagem-back-busca-conf');
   const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
+    
+    // Inject a back button dynamically if it doesn't exist
+    let btnVoltar = document.getElementById('btn-triagem-voltar-step');
+    if (!btnVoltar) {
+        btnConfirmar.insertAdjacentHTML('beforebegin', '<button type="button" class="btn btn-secondary me-2 d-none" id="btn-triagem-voltar-step"><i class="bi bi-arrow-left me-1"></i> Voltar</button>');
+        btnVoltar = document.getElementById('btn-triagem-voltar-step');
+    }
 
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
@@ -1878,6 +1885,49 @@ function ensureFluxoModals() {
 }
 
 
+
+let currentTriagemStep = 0;
+let triagemScreens = [];
+
+function atualizarStepperTriagem() {
+  const container = document.getElementById('triagem-stepper-container');
+  if (!container) return;
+  
+  const steps = [
+    { idx: 0, label: 'Identificação' },
+    { idx: 1, label: 'Queixa' },
+    { idx: 2, label: 'Alergias' },
+    { idx: 3, label: 'Sinais Vitais' },
+    { idx: 4, label: 'Histórico' },
+    { idx: 5, label: 'Sintomas Gripais' },
+    { idx: 6, label: 'Glasgow' },
+    { idx: 7, label: 'Priorização' }
+  ];
+
+  let html = '<nav class="modal-stepper" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom: 5px;">';
+  steps.forEach((s, i) => {
+    const isCompleted = currentTriagemStep > s.idx;
+    const isActive = currentTriagemStep === s.idx;
+    let cls = 'modal-step-item';
+    if (isActive) cls += ' active';
+    if (isCompleted) cls += ' completed text-success';
+    
+    html += `
+      <button class="${cls}" data-step="${s.idx}" type="button" disabled style="min-width: max-content; padding: 0 10px;">
+        <span class="modal-step-badge ${isCompleted ? 'bg-success border-success' : ''}">
+          ${isCompleted ? '<i class="bi bi-check"></i>' : (s.idx + 1)}
+        </span>
+        <span style="white-space: nowrap;">${s.label}</span>
+      </button>
+    `;
+    if (i < steps.length - 1) {
+      html += '<span class="modal-step-divider" style="min-width: 20px;"></span>';
+    }
+  });
+  html += '</nav>';
+  container.innerHTML = html;
+}
+
 window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
   try {
     const paciente = JSON.parse(decodeURIComponent(atob(base64Data)));
@@ -1886,13 +1936,25 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
     document.getElementById('triagem-modal-step-busca').classList.add('d-none');
     document.getElementById('triagem-modal-step-confirmacao').classList.remove('d-none');
 
+    // Insere o container do stepper se não existir (apenas uma vez no modal body)
+    let stepperCont = document.getElementById('triagem-stepper-container');
+    if (!stepperCont) {
+       const modalBody = document.querySelector('#modal-triagem-identificacao .modal-body');
+       modalBody.insertAdjacentHTML('afterbegin', '<div id="triagem-stepper-container" class="px-3 pt-3 pb-1 bg-white border-bottom"></div>');
+    }
+    currentTriagemStep = 0;
+    atualizarStepperTriagem();
+
     container.innerHTML = `
       <div class="text-center mb-4">
         <h5 class="fw-bold text-primary">Deseja iniciar a triagem do paciente abaixo?</h5>
         <p class="text-muted small mb-0">Valide os dados do paciente antes de prosseguir.</p>
       </div>
       <div class="card bg-white border shadow-sm mb-3">
-        <div class="card-body">
+        <div class="card-body position-relative">
+          <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-2" onclick="alert('Correção de dados no TASY em breve')" title="Corrigir Dados">
+            <i class="bi bi-pencil"></i>
+          </button>
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label small fw-bold text-muted mb-0">Nome Completo</label>
@@ -1919,8 +1981,37 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
     if (btnConfirmar) {
       btnConfirmar.classList.remove('d-none');
       btnConfirmar.disabled = false;
-      btnConfirmar.innerHTML = '<i class="bi bi-file-medical me-1"></i> Iniciar Triagem';
-      btnConfirmar.onclick = () => window.conectaCore.carregarTemplateEHR(paciente);
+      btnConfirmar.innerHTML = 'Avançar e Iniciar Triagem <i class="bi bi-arrow-right ms-1"></i>';
+      btnConfirmar.onclick = async () => {
+         ui.setLoading(btnConfirmar, true);
+         // Abre atendimento PRIMEIRO
+         try {
+             const maquina = state.usuario?.nm_computador || 'NOTE-CESARIO';
+             const resAtend = await api.post('/api/recepcao/atendimentos', {
+                cd_pessoa_fisica: paciente.cdPf,
+                cd_estabelecimento: 1,
+                cd_setor_atendimento: 39, // P.A. Geral
+                cd_procedencia: 1, // Recepcao Front
+                ie_tipo_atendimento: 1, // Ambulatorial / PA
+                ie_clinica: 1, 
+                cd_motivo_atendimento: 1, 
+                nr_seq_pac_senha_fila: senhaAtivaTriagem?.nrSeq || null,
+                ds_maquina: maquina
+             });
+             
+             if (resAtend.success && resAtend.data) {
+                ui.showToast(`Atendimento ${resAtend.data.nr_atendimento} gerado com sucesso!`, 'success');
+                paciente.nr_atendimento = resAtend.data.nr_atendimento; // Guarda o numero gerado
+                await window.conectaCore.carregarTemplateEHR(paciente);
+             } else {
+                ui.showToast(resAtend.message || 'Erro ao abrir atendimento', 'error');
+             }
+         } catch(e) {
+             ui.showToast(e.message, 'error');
+         } finally {
+             ui.setLoading(btnConfirmar, false);
+         }
+      };
     }
   } catch (err) {
     console.error(err);
@@ -1929,108 +2020,176 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
 };
 
 window.conectaCore.carregarTemplateEHR = async function(paciente) {
-  ensureFluxoModals();
   try {
     const container = document.getElementById('triagem-confirm-details');
-    
-    // Mostra loading inicial
-    container.innerHTML = `
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 fw-bold text-muted small">Carregando Template Triagem P.A...</p>
-      </div>
-    `;
-    
-    const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
-    if (btnConfirmar) {
-      btnConfirmar.disabled = true; 
-      btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Salvar Triagem';
-    }
+    container.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
 
-    // Busca o template configurado no backend
     const res = await api.get('/api/ehr/template/triagem');
-    if (!res.success || !res.data) {
-       throw new Error(res.message || 'Template não encontrado.');
-    }
+    if (!res.success || !res.data) throw new Error(res.message || 'Template não encontrado.');
 
     const { template, elements } = res.data;
 
-    let html = `
-      <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-fill"></i> ${utils.escapeHtml(paciente.nome)}</h5>
-      <hr>
-      <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-file-medical"></i> ${utils.escapeHtml(template.DS_TEMPLATE || 'Triagem P.A.')}</h6>
-      <form id="form-ehr-triagem" class="row g-3">
-    `;
+    // Distribuir elementos nas 7 telas
+    const telas = [
+      { id: 1, titulo: 'Queixa Principal', elements: [] },
+      { id: 2, titulo: 'Alergias (PEP)', elements: [] },
+      { id: 3, titulo: 'Sinais Vitais (PEP)', elements: [] },
+      { id: 4, titulo: 'Histórico, Estado Geral e Comportamento', elements: [] },
+      { id: 5, titulo: 'Sintomas Gripais', elements: [] },
+      { id: 6, titulo: 'Escala de Coma de Glasgow', elements: [] },
+      { id: 7, titulo: 'Avaliação e Priorização', elements: [] }
+    ];
 
-    // Renderiza campos dinamicamente
+    let tIndex = 0;
     elements.forEach(el => {
-       const label = el.DS_LABEL || el.DS_LABEL_TELA || el.NM_ELEMENTO;
-       if (!label) return; // ignora elementos sem identificação
-
-       if (el.NR_SEQ_ELEMENTO === null || label === el.DS_LABEL) {
-          if (!el.IE_COMPONENTE && !el.NR_SEQ_TIPO_DADO) {
-            html += `<div class="col-12 mt-3 mb-2 border-bottom"><h6 class="text-primary mb-1">${utils.escapeHtml(label)}</h6></div>`;
-            return;
-          }
-       }
-
-       const isRequired = el.IE_OBRIGATORIO === 'S';
-       const isTasyEntity = el.NR_SEQ_TIPO_DADO === 14;
-       const isReadonly = el.IE_READONLY === 'S' && !isTasyEntity;
-       const tamanho = el.QT_TAMANHO || 200;
-       const isCheckbox = el.IE_COMPONENTE === 'cb';
-       const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
+       const label = (el.DS_LABEL || el.DS_LABEL_TELA || el.NM_ELEMENTO || '').toLowerCase();
+       if (label.includes('alergias')) tIndex = 1;
+       else if (label.includes('sinais vitais')) tIndex = 2;
+       else if (label.includes('histórico de saúde')) tIndex = 3;
+       else if (label.includes('sintomas gripais')) tIndex = 4;
+       else if (label.includes('escala de coma')) tIndex = 5;
+       else if (label.includes('avaliação e priorização')) tIndex = 6;
        
-       let fieldHtml = '';
-       if (isTasyEntity) {
-          fieldHtml = `
-            <div class="col-md-12 mb-2">
-               <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
-               <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
-                  <input type="text" class="form-control bg-white" name="elem_${el.NR_SEQUENCIA}_display" id="display_${el.NR_SEQUENCIA}" placeholder="Clique no botão para preencher: ${utils.escapeHtml(label)}" readonly ${isRequired ? 'required' : ''}>
-                  <input type="hidden" name="fluxo_${el.NR_SEQUENCIA}" id="fluxo_${el.NR_SEQUENCIA}" value="">
-                  <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="${utils.escapeHtml(label)}">
-                  <button class="btn btn-outline-secondary" type="button" onclick="window.conectaCore.abrirFluxoNativo('${utils.escapeHtml(label)}', ${el.NR_SEQUENCIA})"><i class="bi bi-box-arrow-up-right"></i></button>
-               </div>
-            </div>
-          `;
-       } else if (isCheckbox) {
-          fieldHtml = `
-            <div class="col-md-3 col-sm-4 col-6 mb-2">
-               <div class="form-check form-switch mt-1">
-                  <input class="form-check-input" type="checkbox" name="elem_${el.NR_SEQUENCIA}" value="Sim" id="cb_${el.NR_SEQUENCIA}" ${isReadonly ? 'disabled' : ''}>
-                  <label class="form-check-label small" for="cb_${el.NR_SEQUENCIA}">${utils.escapeHtml(label)}</label>
-               </div>
-            </div>
-          `;
-       } else if (isTextarea) {
-          fieldHtml = `
-            <div class="col-md-12 mb-2">
-               <label class="form-label small fw-bold ${isRequired ? 'text-danger' : ''}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
-               <textarea class="form-control" name="elem_${el.NR_SEQUENCIA}" rows="3" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}"></textarea>
-            </div>
-          `;
-       } else {
-          fieldHtml = `
-            <div class="col-md-6 col-lg-4 mb-2">
-               <label class="form-label small fw-bold text-truncate w-100 ${isRequired ? 'text-danger' : ''}" title="${utils.escapeHtml(label)}">${utils.escapeHtml(label)} ${isRequired ? '*' : ''}</label>
-               <input type="text" class="form-control" name="elem_${el.NR_SEQUENCIA}" ${isRequired ? 'required' : ''} ${isReadonly ? 'readonly' : ''} maxlength="${tamanho}">
-            </div>
-          `;
-       }
-
-       html += fieldHtml;
+       telas[tIndex].elements.push(el);
     });
 
+    let html = `
+      <div class="d-flex justify-content-between mb-2">
+        <h6 class="fw-bold text-secondary mb-0"><i class="bi bi-file-medical"></i> ${utils.escapeHtml(template.DS_TEMPLATE || 'Triagem P.A.')}</h6>
+        <div class="text-muted small">Atend: <strong>${paciente.nr_atendimento}</strong></div>
+      </div>
+      <form id="form-ehr-triagem">
+    `;
+
+    telas.forEach((tela, index) => {
+       html += `<div id="ehr-step-${index + 1}" class="ehr-wizard-step ${index === 0 ? '' : 'd-none'}">`;
+       html += `<h5 class="text-primary mb-3">${tela.titulo}</h5><div class="row g-3">`;
+
+       tela.elements.forEach(el => {
+          const lbl = el.DS_LABEL || el.DS_LABEL_TELA || el.NM_ELEMENTO;
+          if (!lbl) return;
+
+          // Se for header e não for o primeiro do grupo, exibe
+          if (el.NR_SEQ_ELEMENTO === null || lbl === el.DS_LABEL) {
+             if (!el.IE_COMPONENTE && !el.NR_SEQ_TIPO_DADO) {
+                html += `<div class="col-12 mt-3 border-bottom"><h6 class="text-primary mb-1">${utils.escapeHtml(lbl)}</h6></div>`;
+                return;
+             }
+          }
+
+          const req = el.IE_OBRIGATORIO === 'S' ? 'required' : '';
+          const ro = el.IE_READONLY === 'S' && el.NR_SEQ_TIPO_DADO !== 14 ? 'readonly disabled' : '';
+          
+          if (el.NR_SEQ_TIPO_DADO === 14) {
+             // Fluxos nativos INLINE
+             if (lbl.toLowerCase().includes('sinais vitais')) {
+                html += `
+                  <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="Sinais Vitais (PEP)">
+                  <div class="col-md-6"><label class="form-label small fw-bold">PA Sistólica (mmHg)</label><input type="number" class="form-control" name="SV_QT_PA_SISTOLICA"></div>
+                  <div class="col-md-6"><label class="form-label small fw-bold">PA Diastólica (mmHg)</label><input type="number" class="form-control" name="SV_QT_PA_DIASTOLICA"></div>
+                  <div class="col-md-6"><label class="form-label small fw-bold">Freq. Cardíaca (bpm)</label><input type="number" class="form-control" name="SV_QT_FREQUENCIA_CARD"></div>
+                  <div class="col-md-6"><label class="form-label small fw-bold">Freq. Respiratória (rpm)</label><input type="number" class="form-control" name="SV_QT_FREQUENCIA_RESP"></div>
+                  <div class="col-md-4"><label class="form-label small fw-bold">Temp. (°C)</label><input type="number" step="0.1" class="form-control" name="SV_QT_TEMPERATURA"></div>
+                  <div class="col-md-4"><label class="form-label small fw-bold">Peso (Kg)</label><input type="number" step="0.1" class="form-control" name="SV_QT_PESO"></div>
+                  <div class="col-md-4"><label class="form-label small fw-bold">SpO2 (%)</label><input type="number" class="form-control" name="SV_QT_SAT_O2"></div>
+                `;
+             } else if (lbl.toLowerCase().includes('glasgow')) {
+                html += `
+                  <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="Escala de Coma de Glasgow">
+                  <div class="col-12 mb-2"><label class="form-label small fw-bold">Abertura Ocular</label>
+                  <select class="form-select" name="GL_IE_ABERTURA_OCULAR"><option value="">Selecione...</option><option value="4">4 - Espontânea</option><option value="3">3 - À voz</option><option value="2">2 - À dor</option><option value="1">1 - Nenhuma</option></select></div>
+                  <div class="col-12 mb-2"><label class="form-label small fw-bold">Resposta Verbal</label>
+                  <select class="form-select" name="GL_IE_RESPOSTA_VERBAL"><option value="">Selecione...</option><option value="5">5 - Orientada</option><option value="4">4 - Confusa</option><option value="3">3 - Palavras inapropriadas</option><option value="2">2 - Sons incompreensíveis</option><option value="1">1 - Nenhuma</option></select></div>
+                  <div class="col-12 mb-2"><label class="form-label small fw-bold">Resposta Motora</label>
+                  <select class="form-select" name="GL_IE_RESPOSTA_MOTORA"><option value="">Selecione...</option><option value="6">6 - Obedece a comandos</option><option value="5">5 - Localiza a dor</option><option value="4">4 - Flexão normal (Retirada)</option><option value="3">3 - Flexão anormal (Decorticação)</option><option value="2">2 - Extensão (Descerebração)</option><option value="1">1 - Nenhuma</option></select></div>
+                `;
+             } else if (lbl.toLowerCase().includes('alergias')) {
+                html += `
+                  <input type="hidden" name="fluxo_tipo_${el.NR_SEQUENCIA}" value="Alergias (PEP)">
+                  <div class="col-12"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="AL_IE_NEGA_ALERGIAS" id="cbAlergia" value="S"><label class="form-check-label fw-bold" for="cbAlergia">Nega alergias conhecidas</label></div></div>
+                  <div class="col-12"><label class="form-label small fw-bold">Observação / Descrição da Alergia</label><textarea class="form-control" name="AL_DS_OBSERVACAO" rows="3" placeholder="Ex: Dipirona, Penicilina..."></textarea></div>
+                `;
+             }
+          } else if (el.IE_COMPONENTE === 'cb') {
+             html += `
+               <div class="col-md-3 col-sm-4 col-6 mb-2">
+                 <div class="form-check form-switch mt-1">
+                   <input class="form-check-input" type="checkbox" name="elem_${el.NR_SEQUENCIA}" value="Sim" id="cb_${el.NR_SEQUENCIA}" ${ro}>
+                   <label class="form-check-label small" for="cb_${el.NR_SEQUENCIA}">${utils.escapeHtml(lbl)}</label>
+                 </div>
+               </div>
+             `;
+          } else if (el.IE_COMPONENTE === 'me' || (el.QT_TAMANHO && el.QT_TAMANHO > 100)) {
+             html += `
+               <div class="col-md-12 mb-2">
+                 <label class="form-label small fw-bold">${utils.escapeHtml(lbl)} ${req ? '*' : ''}</label>
+                 <textarea class="form-control" name="elem_${el.NR_SEQUENCIA}" rows="3" ${req} ${ro}></textarea>
+               </div>
+             `;
+          } else {
+             html += `
+               <div class="col-md-6 col-lg-4 mb-2">
+                 <label class="form-label small fw-bold text-truncate w-100" title="${utils.escapeHtml(lbl)}">${utils.escapeHtml(lbl)} ${req ? '*' : ''}</label>
+                 <input type="text" class="form-control" name="elem_${el.NR_SEQUENCIA}" ${req} ${ro}>
+               </div>
+             `;
+          }
+       });
+       html += `</div></div>`;
+    });
     html += `</form>`;
     container.innerHTML = html;
 
+    currentTriagemStep = 1; 
+    atualizarStepperTriagem();
+
+    // Atualizar os botões de ação para Navegação
+    const btnConfirmar = document.getElementById('btn-triagem-confirmar-inicio');
     if (btnConfirmar) {
-      btnConfirmar.disabled = false;
+      btnConfirmar.innerHTML = 'Próximo <i class="bi bi-arrow-right ms-1"></i>';
+      
+      const attBotoes = () => {
+         if (btnVoltar) {
+            if (currentTriagemStep > 1) btnVoltar.classList.remove('d-none');
+            else btnVoltar.classList.add('d-none');
+         }
+         if (currentTriagemStep === 7) {
+            btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Finalizar Triagem';
+            btnConfirmar.className = 'btn btn-primary fw-bold px-4';
+         } else {
+            btnConfirmar.innerHTML = 'Próximo <i class="bi bi-arrow-right ms-1"></i>';
+            btnConfirmar.className = 'btn btn-success fw-bold px-4';
+         }
+      };
+
+      if (btnVoltar) {
+          btnVoltar.onclick = (e) => {
+             e.preventDefault();
+             if (currentTriagemStep > 1) {
+                document.getElementById(`ehr-step-${currentTriagemStep}`).classList.add('d-none');
+                currentTriagemStep--;
+                document.getElementById(`ehr-step-${currentTriagemStep}`).classList.remove('d-none');
+                atualizarStepperTriagem();
+                attBotoes();
+             }
+          };
+      }
       btnConfirmar.onclick = async (e) => {
          e.preventDefault();
          const ehrForm = document.getElementById('form-ehr-triagem');
+         
+         // Se não for o último passo, avança
+         if (currentTriagemStep < 7) {
+            document.getElementById(`ehr-step-${currentTriagemStep}`).classList.add('d-none');
+            currentTriagemStep++;
+            document.getElementById(`ehr-step-${currentTriagemStep}`).classList.remove('d-none');
+            atualizarStepperTriagem();
+            
+            attBotoes();
+            return;
+         }
+
+         // É o último passo, salvar TUDO
          if (ehrForm && !ehrForm.checkValidity()) {
             ehrForm.reportValidity();
             return;
@@ -2039,10 +2198,25 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
          const formData = new FormData(ehrForm);
          const payload = Object.fromEntries(formData.entries());
 
+         // Agrupar os fluxos inline no formato que o backend espera (string JSON)
+         const svData = {}, glData = {}, alData = {};
+         for (const [k, v] of Object.entries(payload)) {
+             if (k.startsWith('SV_')) svData[k.replace('SV_', '')] = v;
+             if (k.startsWith('GL_')) glData[k.replace('GL_', '')] = v;
+             if (k.startsWith('AL_')) alData[k.replace('AL_', '')] = v;
+         }
+         
+         // Localizar as chaves dos fluxos no payload
+         const seqs = { sv: 288950, gl: 288932, al: 288985 };
+         payload[`fluxo_${seqs.sv}`] = JSON.stringify(svData);
+         payload[`fluxo_${seqs.gl}`] = JSON.stringify(glData);
+         payload[`fluxo_${seqs.al}`] = JSON.stringify(alData);
+
          ui.setLoading(btnConfirmar, true);
          try {
            const result = await api.post('/api/ehr/registro', {
               cd_pessoa_fisica: paciente.cdPf,
+              nr_atendimento: paciente.nr_atendimento,
               nr_seq_template: template.NR_SEQUENCIA,
               campos: payload
            });
@@ -2050,10 +2224,11 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
            if (result.success) {
               ui.showToast('Triagem salva e evolução gerada com sucesso!', 'success');
               const modalEl = document.getElementById('modal-triagem-identificacao');
-              if (modalEl) {
-                 const modal = bootstrap.Modal.getInstance(modalEl);
-                 if (modal) modal.hide();
-              }
+              if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+              
+              const btnRefresh = document.getElementById('btn-dashboard-internacao-refresh');
+              if (btnRefresh) btnRefresh.click();
+              
               if (typeof carregarDashboard === 'function') carregarDashboard();
            } else {
               ui.showToast(result.message || 'Erro ao salvar EHR', 'error');
@@ -2065,6 +2240,12 @@ window.conectaCore.carregarTemplateEHR = async function(paciente) {
          }
       };
     }
+  } catch (err) {
+    console.error("Erro ao carregar template:", err);
+    ui.showToast(err.message, "error");
+  }
+};
+
   } catch (err) {
     console.error("Erro ao carregar formulário da Triagem:", err);
     ui.showToast("Erro ao carregar o template clínico.", "error");
