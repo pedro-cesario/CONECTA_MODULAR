@@ -1731,10 +1731,11 @@ window.conectaCore.prepararConfirmacaoTriagem = async function(base64Data) {
        const isReadonly = el.IE_READONLY === 'S';
        const tamanho = el.QT_TAMANHO || 200;
        const isTextarea = tamanho > 100 || el.IE_COMPONENTE === 'me'; 
+       const isTasyEntity = el.NR_SEQ_TIPO_DADO === 14;
        
        let fieldHtml = '';
-       if (el.IE_COMPONENTE === 'me') {
-          // Macro elemento ou componente com fluxo próprio (ex: Sinais Vitais, Glasgow, Alergias)
+       if (isTasyEntity) {
+          // Componente com fluxo próprio (DV_TASY) (ex: Sinais Vitais, Glasgow, Alergias)
           fieldHtml = `
             <div class="input-group">
                <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>

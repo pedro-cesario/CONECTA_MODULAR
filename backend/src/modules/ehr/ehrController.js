@@ -23,7 +23,7 @@ async function getTemplateStructure(req, res) {
 
       // Pega conteúdo do template ordenado junto com os dados do EHR_ELEMENTO
       const elemRes = await conn.execute(`
-        SELECT c.*, e.NM_ELEMENTO, e.DS_LABEL_TELA, e.IE_COMPONENTE 
+        SELECT c.*, e.NM_ELEMENTO, e.DS_LABEL_TELA, e.IE_COMPONENTE, e.NR_SEQ_TIPO_DADO 
         FROM EHR_TEMPLATE_CONTEUDO c
         LEFT JOIN EHR_ELEMENTO e ON e.NR_SEQUENCIA = c.NR_SEQ_ELEMENTO
         WHERE c.NR_SEQ_TEMPLATE = :id AND c.IE_SITUACAO = 'A'
