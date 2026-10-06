@@ -96,10 +96,10 @@ async function saveEHRRegistro(req, res) {
              const sqlIns = `
                 INSERT INTO EVOLUCAO_PACIENTE (
                    CD_EVOLUCAO, NR_ATENDIMENTO, CD_MEDICO, DT_EVOLUCAO, DT_LIBERACAO, 
-                   DS_EVOLUCAO, NM_USUARIO, IE_STATUS_EVOLUCAO, IE_EVOLUCAO_CLINICA
+                   DS_EVOLUCAO, NM_USUARIO, IE_TIPO_EVOLUCAO, IE_EVOLUCAO_CLINICA
                 ) VALUES (
                    EVOLUCAO_PACIENTE_SEQ.NEXTVAL, :nrAtendimento, NULL, SYSDATE, SYSDATE, 
-                   :dsEvolucao, :usuario, 1, :ieEvo
+                   :dsEvolucao, :usuario, '1', :ieEvo
                 )
              `;
              await conn.execute(sqlIns, {
