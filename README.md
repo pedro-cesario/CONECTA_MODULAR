@@ -371,3 +371,82 @@ END;
 
 ## 📄 Licença
 Sistema interno exclusivo do Hospital Espírita André Luiz (HEAL). Todos os direitos reservados.
+
+
+---
+
+## 🔐 Assinatura Digital ICP-Brasil (Heimdall Vault ID) no Conecta Modular
+
+O módulo de Evolução Clínica do Conecta Modular possui uma integração **nativa** com a Assinatura Digital do Tasy (Heimdall Vault ID), simulando completamente o comportamento da classe Java `WSignature` e se aproveitando da extensão do TasyNative instalada na máquina do usuário.
+
+### 📝 Orientação para Outras LLMs e Desenvolvedores
+
+Se você estiver dando manutenção neste módulo, compreenda a arquitetura de assinatura:
+
+1. **Geração do XML Canônico:**
+   O backend (`evolucaoController.js`) monta o XML Canônico do atendimento consultando os dados no Oracle. Ele gera o Hash MD5 (`DS_HASH_ASSINATURA`) a partir do XML gerado.
+
+2. **Envelope do Vault ID (Frontend):**
+   O Vault ID não aceita o XML Canônico puro no payload. O frontend (`evolucao.js`) codifica o XML Canônico em Base64 e o empacota na seguinte estrutura obrigatória:
+   ```xml
+   <XML>
+   <SIG_FORMAT>ATTACHED</SIG_FORMAT>
+   <USER_CPF>12345678900</USER_CPF>
+   <SIG_POLICY>CMS</SIG_POLICY>
+   <DOC>[base64 do XML Canônico]</DOC>
+   </XML>
+   ```
+
+3. **Injeção do Payload via TasyNative:**
+   O frontend emite um `window.opener.postMessage` do tipo `HEIMDALL_SIGN` contendo o payload serializado exatamente como a classe de DTO Java `br.com.philips.tasy.dto.shared.signature.WSignaturePreparedPayload` do Tasy faria. 
+
+4. **Retorno da Assinatura e Banco de Dados (Oracle):**
+   O Heimdall devolve o arquivo criptográfico P7S/CAdES (aprox. 20KB) no campo `result.entity.data`.
+   Ao repassar isso para `/api/evolucao/assinar`, o backend **NÃO PODE** gravar esse arquivo gigante usando a procedure `TASY_GRAVAR_ASSINATURA_DIGITAL` no campo `DS_ASSINATURA_P`, pois a tabela `TASY_ASSINATURA_DIGITAL` limita a coluna a `VARCHAR2(100)` e causaria `ORA-12899`. 
+   
+   **A Solução de Arquitetura:**
+   * O arquivo CAdES P7S real fica armazenado remotamente no Vault ID da Philips.
+   * A procedure `TASY_GRAVAR_ASSINATURA_DIGITAL` é invocada passando apenas a string curta `'HEIMDALL'` na variável `DS_ASSINATURA_P` para efetivar a transação.
+   * Imediatamente após a procedure, nós mimetizamos o comportamento nativo inserindo manualmente as 4 etapas de auditoria na tabela `tasy_assinat_dig_log`:
+      - **GXML:** Guarda o XML Canônico legível.
+      - **Envio:** Guarda o envelope `<XML>` preparado.
+      - **Retorno:** Guarda o gigantesco CAdES P7S em Base64 dentro da coluna `LONG` (`DS_XML`). É aqui que a assinatura criptográfica de fato reside no banco do Tasy.
+      - **Validado:** Confirma o sucesso.
+
+### 🛠️ O que tem que ser feito no TasyNative (Extensão/Proxy do Usuário)
+
+O script local que roda por cima do TasyNative na máquina Windows do usuário funciona como um **espião / proxy bridge** entre o Conecta Modular e a API nativa do Heimdall injetada no Tasy.
+
+O código injetado no Tasy Native **deve** ser extamente o seguinte (sem loops de tentativas, sem modificação de payload, apenas um forward direto):
+
+```javascript
+// Listener injetado no contexto do TasyNative
+window.addEventListener('message', async (e) => {
+    if (e.data && e.data.type === 'HEIMDALL_SIGN') {
+        try {
+            console.log("Proxy TasyNative: Repassando requisição para Heimdall...");
+            // É mandatório utilizar essa versão da api do TasyNative para que o token seja injetado via PINLess
+            const sigModule = window.heimdall.module({ name: '@philips-emr/tasy-native-signature-module', version: '^1.0.0-beta.0' });
+            
+            const result = await sigModule.run('SIGN', { 
+                signaturePreparedPayload: e.data.payload 
+            });
+
+            e.source.postMessage({
+                type: 'HEIMDALL_SIGN_RESULT',
+                success: true,
+                result: result
+            }, '*');
+
+        } catch (err) {
+            console.error("Proxy TasyNative: Falha na assinatura:", err);
+            e.source.postMessage({
+                type: 'HEIMDALL_SIGN_RESULT',
+                success: false,
+                error: err.message || JSON.stringify(err)
+            }, '*');
+        }
+    }
+});
+```
+Se essa ponte for feita corretamente, o fluxo completo de assinatura funcionará de forma orgânica, gerando auditoria idêntica ao uso do desktop nativo.
