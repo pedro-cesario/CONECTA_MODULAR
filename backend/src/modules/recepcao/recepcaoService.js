@@ -4,6 +4,11 @@ const configCache = require('../../core/config/configCache');
 const painelEventsService = require('../painel/painelEventsService');
 const logger = require('../../core/utils/logger');
 
+const PacienteService = require('../core/paciente/PacienteService');
+const FilaService = require('../core/fila/FilaService');
+const AtendimentoService = require('../core/atendimento/AtendimentoService');
+
+
 /**
  * Módulo de Recepção & Acolhimento — Camada de Serviço
  */
@@ -71,7 +76,8 @@ async function chamarProximaSenha(nrSeqFila, dsMaquina, nmUsuario) {
     throw err;
   }
   const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
-  const painelId = mapping?.painel_id || 'recepcao_principal';
+  const defaultPainel = ((dsMaquina || '').toUpperCase().includes('P.A.') || (dsMaquina || '').toUpperCase().includes('TRIAGEM')) ? 'triagem_pa' : 'recepcao_principal';
+  const painelId = mapping?.painel_id || defaultPainel;
 
   const result = await recepcaoRepository.chamarProximaSenha(nrSeqFila, guicheFinal, nmUsuario);
   if (!result) {
@@ -108,7 +114,8 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
     throw err;
   }
   const guicheFinal = mapping?.ds_guiche || dsMaquina || 'Guichê 01';
-  const painelId = mapping?.painel_id || 'recepcao_principal';
+  const defaultPainel = ((dsMaquina || '').toUpperCase().includes('P.A.') || (dsMaquina || '').toUpperCase().includes('TRIAGEM')) ? 'triagem_pa' : 'recepcao_principal';
+  const painelId = mapping?.painel_id || defaultPainel;
 
   const result = await recepcaoRepository.rechamarSenha(nrSeqSenha, guicheFinal, nmUsuario);
 
@@ -130,10 +137,7 @@ async function rechamarSenha(nrSeqSenha, dsMaquina, nmUsuario) {
 }
 
 async function buscarPessoas(termo) {
-  if (!termo || String(termo).trim().length < 2) {
-    return [];
-  }
-  return recepcaoRepository.buscarPessoas(termo);
+  return PacienteService.buscarPessoas(termo);
 }
 
 async function obterPessoaCompleta(cdPessoaFisica) {
@@ -152,17 +156,7 @@ async function obterPessoaCompleta(cdPessoaFisica) {
 }
 
 async function salvarPessoa(dados, nmUsuario) {
-  if (!dados.nm_pessoa_fisica || !String(dados.nm_pessoa_fisica).trim()) {
-    const err = new Error('Nome completo da pessoa é obrigatório');
-    err.status = 400;
-    throw err;
-  }
-  if (!dados.dt_nascimento) {
-    const err = new Error('Data de nascimento é obrigatória');
-    err.status = 400;
-    throw err;
-  }
-  return recepcaoRepository.salvarPessoaFisica(dados, nmUsuario);
+  return PacienteService.salvarPessoa(dados, nmUsuario);
 }
 
 async function listarConvenios() {
@@ -193,7 +187,47 @@ async function abrirAtendimento(dados, nmUsuario) {
     err.status = 400;
     throw err;
   }
-  return recepcaoRepository.abrirAtendimento(dados, nmUsuario);
+  
+  const sysConfig = configCache.getSystemConfig() || {};
+  const payload = {
+    cdPessoaFisica: dados.cd_pessoa_fisica,
+    cdSetorAtendimento: dados.cd_setor_atendimento || sysConfig.recepcao_cd_setor_padrao || 39,
+    cdConvenio: dados.cd_convenio || sysConfig.recepcao_cd_convenio_padrao || 3,
+    cdCategoria: dados.cd_categoria || sysConfig.recepcao_cd_categoria_padrao || '1',
+    cdPlanoConvenio: dados.cd_plano_convenio,
+    cdUsuarioConvenio: dados.cd_usuario_convenio,
+    cdProcedencia: dados.cd_procedencia || sysConfig.recepcao_cd_procedencia || 1,
+    cdEstabelecimento: dados.cd_estabelecimento || sysConfig.recepcao_cd_estabelecimento || 1,
+    ieTipoAtendimento: dados.ie_tipo_atendimento || sysConfig.recepcao_ie_tipo_atendimento || 3,
+    cdMedicoResp: dados.cd_medico_resp || sysConfig.recepcao_cd_med_resp || '408120',
+    nrSeqClassificacao: dados.nr_seq_classificacao || sysConfig.recepcao_classificacao_padrao || 2,
+    nrSeqPacSenhaFila: dados.nr_seq_pac_senha_fila || null,
+    // O lançamento automático pertence à abertura efetivada pela Recepção.
+    gerar_lancamento_automatico: true
+  };
+  
+  const res = await AtendimentoService.abrirAtendimento(payload, nmUsuario);
+  
+  if (dados.nr_seq_pac_senha_fila) {
+     const db = require('../../core/database/index.js');
+     const conn = await db.getConnection();
+     try {
+       await conn.execute(
+        `UPDATE paciente_senha_fila 
+         SET dt_inicio_atendimento = SYSDATE, 
+             dt_fim_atendimento = SYSDATE, 
+             nm_usuario_fim_atend = :nmUsuario 
+         WHERE nr_sequencia = :senhaId`,
+        { nmUsuario, senhaId: parseInt(dados.nr_seq_pac_senha_fila, 10) },
+        { autoCommit: true }
+       );
+     } finally {
+       if (conn) {
+         try { await conn.close(); } catch (err) {}
+       }
+     }
+  }
+  return res;
 }
 
 async function listarRelatoriosAtendimento() {
@@ -299,7 +333,7 @@ async function listarAtendimentosHoje() {
 }
 
 async function verificarDuplicidadePaciente(params) {
-  return recepcaoRepository.verificarDuplicidadePaciente(params);
+  return PacienteService.verificarDuplicidade(params);
 }
 
 async function inutilizarSenha(nrSequencia, motivoId, nmUsuario, maquina) {

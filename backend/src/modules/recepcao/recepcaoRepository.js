@@ -60,6 +60,8 @@ async function listarSenhasEspera(nrSeqFila) {
            ELSE 'Normal'
          END AS ds_prioridade,
          psf.dt_chamada,
+         (SELECT MAX(ap.nr_atendimento) FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ap.dt_cancelamento IS NULL) AS nr_atendimento,
+         (SELECT MAX(ap.dt_inicio_atendimento) FROM atendimento_paciente ap WHERE ap.nr_seq_pac_senha_fila = psf.nr_sequencia AND ap.dt_cancelamento IS NULL) AS dt_inicio_triagem,
          TO_CHAR(psf.dt_chamada, 'HH24:MI:SS') AS hr_chamada,
           psf.ds_maquina_chamada,
           psf.qt_chamadas,
@@ -890,6 +892,7 @@ async function abrirAtendimento(dados, nmUsuario) {
          :proc
        FROM unidade_atendimento ua
        WHERE ua.cd_setor_atendimento = :setor
+         AND ua.ie_situacao = 'A'
          AND ROWNUM = 1`,
       {
         atend: nrAtendimento,

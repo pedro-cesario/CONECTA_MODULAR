@@ -982,6 +982,9 @@
             <button class="admin-sub-pill" data-subpane="subpane-studio">
               <i class="bi bi-palette-fill"></i> Conecta Studio
             </button>
+            <button class="admin-sub-pill" data-subpane="subpane-triagem-pa">
+              <i class="bi bi-heart-pulse-fill"></i> Pronto Atendimento / Triagem
+            </button>
           </div>
 
           <div class="admin-sub-pane active" id="subpane-checkboxes">
@@ -1228,8 +1231,129 @@
               </div>
             </div>
           </div>
-        </div>
 
+          <!-- SUB-ABA 6: PRONTO ATENDIMENTO / TRIAGEM P.A. -->
+          <div class="admin-sub-pane" id="subpane-triagem-pa">
+            <div class="admin-card">
+              <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div class="admin-card-title">
+                  <i class="bi bi-heart-pulse-fill text-primary"></i> Configurações: Pronto Atendimento & Triagem
+                </div>
+              </div>
+              <div class="admin-card-body">
+                <p class="text-muted small">Parâmetros operacionais consumidos diretamente pelo fluxo de Triagem P.A. Campos com <span class="text-danger">*</span> são obrigatórios e são validados no TASY antes de salvar.</p>
+
+                <h6 class="fw-bold mt-3 mb-2 border-bottom pb-2">1. Geral & Atendimento TASY</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-2">
+                    <label for="config-triagem-estab" class="form-label small fw-bold">Estabelecimento <span class="text-danger">*</span></label>
+                    <input type="number" id="config-triagem-estab" class="form-control" placeholder="1" required min="1">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="config-triagem-setor" class="form-label small fw-bold">Setor Padrão <span class="text-danger">*</span></label>
+                    <input type="number" id="config-triagem-setor" class="form-control" placeholder="39" required min="1">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="config-triagem-procedencia" class="form-label small fw-bold">Procedência <span class="text-danger">*</span></label>
+                    <input type="number" id="config-triagem-procedencia" class="form-control" placeholder="1" required min="1">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="config-triagem-clinica" class="form-label small fw-bold">Clínica <span class="text-danger">*</span></label>
+                    <select id="config-triagem-clinica" class="form-select" required disabled>
+                      <option value="">Selecione primeiro o tipo...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="config-triagem-tipo-atend" class="form-label small fw-bold">Tipo Atendimento <span class="text-danger">*</span></label>
+                    <select id="config-triagem-tipo-atend" class="form-select" required disabled>
+                      <option value="">Carregando tipos TASY...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="config-triagem-motivo" class="form-label small fw-bold">Motivo Atend. <span class="text-danger">*</span></label>
+                    <select id="config-triagem-motivo" class="form-select" required disabled>
+                      <option value="">Carregando motivos TASY...</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-2 border-bottom pb-2">2. Filas (Recepção -> Triagem -> Consultório)</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label for="config-triagem-fila-origem" class="form-label small fw-bold">Fila Origem (Chamada P.A.) <span class="text-danger">*</span></label>
+                    <select id="config-triagem-fila-origem" class="form-select" required disabled>
+                      <option value="">Carregando filas TASY...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-triagem-fila-destino" class="form-label small fw-bold">Fila Destino (Médico) <span class="text-danger">*</span></label>
+                    <select id="config-triagem-fila-destino" class="form-select" required disabled>
+                      <option value="">Carregando filas TASY...</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-2 border-bottom pb-2">3. Identificação Alternativa</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label for="config-triagem-classif-nao-identificado" class="form-label small fw-bold">ID Classif: Não Identificado (Desacordado)</label>
+                    <input type="number" id="config-triagem-classif-nao-identificado" class="form-control" placeholder="10">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="config-triagem-classif-sem-doc" class="form-label small fw-bold">ID Classif: Sem Documento</label>
+                    <input type="number" id="config-triagem-classif-sem-doc" class="form-control" placeholder="11">
+                  </div>
+                </div>
+
+
+                <h6 class="fw-bold mt-4 mb-2 border-bottom pb-2">5. Campos Clínicos / Formulário (JSON)</h6>
+                <div class="row g-3 mb-4">
+                  <div class="col-12">
+                    <label for="config-triagem-campos-clinicos" class="form-label small fw-bold">Configuração de Histórico, Estado Geral e Comportamento (Array JSON)</label>
+                    <textarea id="config-triagem-campos-clinicos" class="form-control text-monospace" rows="10" style="font-family: monospace; font-size: 0.85rem;" placeholder='{"historico": [{"id": "Diabetes", "descricao": "Diabetes"}, {"id": "Nega Comorbidades", "descricao": "Nega Comorbidades", "exclusivo": true}], "estadoGeral": [...], "comportamento": [...]}'></textarea>
+                    <div class="form-text">Estrutura JSON obrigatória contendo arrays para <code>historico</code>, <code>estadoGeral</code> e <code>comportamento</code>. Edite com cuidado.</div>
+                  </div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-2 border-bottom pb-2">4. Classificação de Risco (Cores / Escala)</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label for="config-triagem-cor-vermelho" class="form-label small fw-bold">ID Cor Vermelho</label>
+                    <input type="number" id="config-triagem-cor-vermelho" class="form-control" placeholder="1">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-triagem-cor-amarelo" class="form-label small fw-bold">ID Cor Amarelo</label>
+                    <input type="number" id="config-triagem-cor-amarelo" class="form-control" placeholder="2">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-triagem-cor-verde" class="form-label small fw-bold">ID Cor Verde</label>
+                    <input type="number" id="config-triagem-cor-verde" class="form-control" placeholder="3">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="config-triagem-cor-azul" class="form-label small fw-bold">ID Cor Azul</label>
+                    <input type="number" id="config-triagem-cor-azul" class="form-control" placeholder="4">
+                  </div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-2 border-bottom pb-2">5. Descarte / Evasão / Inutilização</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="config-triagem-motivo-inutilizacao" class="form-label small fw-bold">ID Motivo Inutilização de Senha</label>
+                    <input type="number" id="config-triagem-motivo-inutilizacao" class="form-control" placeholder="5">
+                  </div>
+                </div>
+
+                <div class="text-end mt-4">
+                  <button class="btn btn-primary fw-bold" id="btn-save-config-triagem-pa" type="button">
+                    <i class="bi bi-check2-circle"></i> Salvar Parâmetros P.A.
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- PILAR 3: SEGURANÇA & LGPD -->
         <div class="tab-pane" id="pillar-seguranca" role="tabpanel" aria-labelledby="pillar-seguranca-tab">
           <div class="admin-header-card">
@@ -3629,10 +3753,78 @@
       }
     }
 
+    async function loadOpcoesTriagemPA() {
+      try {
+        const result = await api.get(`${apiConfig.baseUrl}/admin/triagem-pa/opcoes`);
+        if (!result.success || !result.data) return;
+
+        const preencherSelect = (id, itens, valor, descricao, placeholder) => {
+          const select = document.getElementById(id);
+          if (!select) return;
+          select.innerHTML = '';
+          const empty = document.createElement('option');
+          empty.value = '';
+          empty.textContent = placeholder;
+          select.appendChild(empty);
+          itens.forEach(item => {
+            const option = document.createElement('option');
+            option.value = String(item[valor]);
+            option.textContent = `${item[valor]} — ${item[descricao]}`;
+            select.appendChild(option);
+          });
+          select.disabled = false;
+        };
+
+        preencherSelect('config-triagem-motivo', result.data.motivos || [], 'VL_DOMINIO', 'DS_VALOR_DOMINIO', 'Selecione o motivo...');
+        preencherSelect('config-triagem-fila-origem', result.data.filas || [], 'NR_SEQUENCIA', 'DS_FILA', 'Selecione a fila de origem...');
+        preencherSelect('config-triagem-fila-destino', result.data.filas || [], 'NR_SEQUENCIA', 'DS_FILA', 'Selecione a fila de destino...');
+
+        const tipoSelect = document.getElementById('config-triagem-tipo-atend');
+        const clinicaSelect = document.getElementById('config-triagem-clinica');
+        const combinacoes = result.data.combinacoesClinicaTipo || [];
+        if (tipoSelect && clinicaSelect) {
+          tipoSelect.innerHTML = '<option value="">Selecione o tipo...</option>';
+          [...new Set(combinacoes.map(item => String(item.IE_TIPO_ATENDIMENTO)))].forEach(tipo => {
+            const option = document.createElement('option');
+            option.value = tipo;
+            option.textContent = `Tipo ${tipo}`;
+            tipoSelect.appendChild(option);
+          });
+          tipoSelect.disabled = false;
+
+          const atualizarClinicas = () => {
+            const valorAtual = clinicaSelect.value;
+            const itens = combinacoes.filter(item => String(item.IE_TIPO_ATENDIMENTO) === String(tipoSelect.value));
+            clinicaSelect.innerHTML = '<option value="">Selecione a clínica...</option>';
+            itens.forEach(item => {
+              const option = document.createElement('option');
+              option.value = String(item.IE_CLINICA);
+              option.textContent = `${item.IE_CLINICA} — ${item.DS_CLINICA}`;
+              clinicaSelect.appendChild(option);
+            });
+            clinicaSelect.disabled = itens.length === 0;
+            if ([...clinicaSelect.options].some(option => option.value === valorAtual)) {
+              clinicaSelect.value = valorAtual;
+            }
+          };
+          tipoSelect.addEventListener('change', atualizarClinicas);
+          tipoSelect._atualizarClinicas = atualizarClinicas;
+        }
+      } catch (err) {
+        console.error('Erro ao carregar opções TASY da Triagem P.A.', err);
+        ['config-triagem-motivo', 'config-triagem-fila-origem', 'config-triagem-fila-destino'].forEach(id => {
+          const select = document.getElementById(id);
+          if (!select) return;
+          select.innerHTML = '<option value="">Não foi possível carregar opções TASY</option>';
+        });
+      }
+    }
+
     async function loadConfigSistema() {
       try {
         loadAgendasEct();
         loadProcedimentosEct();
+        await loadOpcoesTriagemPA();
         
         const result = await api.get(`${apiConfig.baseUrl}/admin/system/config`);
         if (result.success && result.data) {
@@ -3645,9 +3837,54 @@
           if (document.getElementById('config-cache-setores')) {
             document.getElementById('config-cache-setores').value = result.data.cache_setores_preaquecidos || '68, 28, 34, 59, 83';
           }
+          
+          try {
+            escalaState.precedencia = result.data.triagem_precedencia ? JSON.parse(result.data.triagem_precedencia) : ["VERMELHO", "AMARELO", "VERDE", "AZUL"];
+            escalaState.auto = result.data.triagem_regras_automaticas ? JSON.parse(result.data.triagem_regras_automaticas) : [];
+            escalaState.manuais = result.data.triagem_regras_manuais ? JSON.parse(result.data.triagem_regras_manuais) : [];
+            if(escalaState.auto.length === 0) {
+              // Defaults provided by backend if empty
+              escalaState.auto = [
+                { id: 'V2_PA_ALTA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'OR', condicoes: [ { campo: 'pas', operador: '>', valor: 170 }, { campo: 'pad', operador: '>', valor: 120 } ] },
+                { id: 'V2_PA_BAIXA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'OR', condicoes: [ { campo: 'pas', operador: '<', valor: 80 }, { campo: 'pad', operador: '<', valor: 60 } ] },
+                { id: 'V2_FC_ALTA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'fc', operador: '>=', valor: 160 } ] },
+                { id: 'V2_FC_BAIXA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'fc', operador: '<', valor: 50 } ] },
+                { id: 'V2_FR_ALTA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'fr', operador: '>', valor: 30 } ] },
+                { id: 'V2_FR_BAIXA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'fr', operador: '<', valor: 10 } ] },
+                { id: 'V2_SPO2_BAIXA', criterio: 'V2', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'spo2', operador: '<', valor: 85 } ] },
+                { id: 'V3_GLASGOW', criterio: 'V3', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND', condicoes: [ { campo: 'glasgow', operador: '<=', valor: 8 } ] }
+              ];
+            }
+            if(escalaState.manuais.length === 0) {
+              escalaState.manuais = [
+                { codigo: 'V1', descricao: 'TAE nas últimas 2h', cor: 'VERMELHO', ativo: true, ordem: 1 },
+                { codigo: 'V4', descricao: 'Dor torácica de características anginosas / suspeita de SCA', cor: 'VERMELHO', ativo: true, ordem: 2 },
+                { codigo: 'V5', descricao: 'Agitação psicomotora grave / necessidade de contenção física', cor: 'VERMELHO', ativo: true, ordem: 3 },
+                { codigo: 'A1', descricao: 'Inquietação / gesticulando muito / risco de agitação', cor: 'AMARELO', ativo: true, ordem: 4 },
+                { codigo: 'A2', descricao: 'Presença de encaminhamento a atendimento de urgência', cor: 'AMARELO', ativo: true, ordem: 5 },
+                { codigo: 'A3', descricao: 'Choro intenso', cor: 'AMARELO', ativo: true, ordem: 6 },
+                { codigo: 'A4', descricao: 'Conflitos com acompanhante no pronto atendimento', cor: 'AMARELO', ativo: true, ordem: 7 },
+                { codigo: 'A5', descricao: 'IAE com planejamento', cor: 'AMARELO', ativo: true, ordem: 8 },
+                { codigo: 'G1', descricao: 'Insônia', cor: 'VERDE', ativo: true, ordem: 9 },
+                { codigo: 'G2', descricao: 'Depressão com comportamento tranquilo', cor: 'VERDE', ativo: true, ordem: 10 },
+                { codigo: 'G3', descricao: 'DV estáveis', cor: 'VERDE', ativo: true, ordem: 11 },
+                { codigo: 'G4', descricao: 'Estado Mental Estável', cor: 'VERDE', ativo: true, ordem: 12 },
+                { codigo: 'B1', descricao: 'Relatório', cor: 'AZUL', ativo: true, ordem: 13 },
+                { codigo: 'B2', descricao: 'Renovar receita', cor: 'AZUL', ativo: true, ordem: 14 },
+                { codigo: 'B3', descricao: 'Continuar acompanhamento no ambulatório', cor: 'AZUL', ativo: true, ordem: 15 },
+                { codigo: 'B4', descricao: 'Atestado', cor: 'AZUL', ativo: true, ordem: 16 }
+              ];
+            }
+            renderEscalaUI();
+          } catch(e) { console.error('Erro ao renderizar escala', e); }
+
           if (document.getElementById('config-app-version')) {
             document.getElementById('config-app-version').value = result.data.app_version || '2.0';
           }
+          
+          
+          
+
           if (document.getElementById('config-triagem-template-id')) {
             document.getElementById('config-triagem-template-id').value = result.data.triagem_template_id || '100051';
           }
@@ -3679,6 +3916,27 @@
             if (result.data.tasy_reports_password) {
               document.getElementById('config-tasy-reports-password').value = result.data.tasy_reports_password;
             }
+          }
+
+          // Parâmetros de Triagem P.A.
+          if (document.getElementById('config-triagem-estab')) {
+            document.getElementById('config-triagem-estab').value = result.data.triagem_estab || '';
+            document.getElementById('config-triagem-setor').value = result.data.triagem_setor || '';
+            document.getElementById('config-triagem-procedencia').value = result.data.triagem_procedencia || '';
+            document.getElementById('config-triagem-tipo-atend').value = result.data.triagem_tipo_atend || '';
+            document.getElementById('config-triagem-tipo-atend')._atualizarClinicas?.();
+            document.getElementById('config-triagem-clinica').value = result.data.triagem_clinica || '';
+            document.getElementById('config-triagem-motivo').value = result.data.triagem_motivo || '';
+            document.getElementById('config-triagem-fila-origem').value = result.data.triagem_fila_origem || '';
+            document.getElementById('config-triagem-fila-destino').value = result.data.triagem_fila_destino || '';
+            document.getElementById('config-triagem-classif-nao-identificado').value = result.data.triagem_classif_nao_identificado || '';
+            document.getElementById('config-triagem-classif-sem-doc').value = result.data.triagem_classif_sem_doc || '';
+            document.getElementById('config-triagem-cor-vermelho').value = result.data.triagem_cor_vermelho || '';
+            document.getElementById('config-triagem-cor-amarelo').value = result.data.triagem_cor_amarelo || '';
+            document.getElementById('config-triagem-cor-verde').value = result.data.triagem_cor_verde || '';
+            document.getElementById('config-triagem-cor-azul').value = result.data.triagem_cor_azul || '';
+            document.getElementById('config-triagem-motivo-inutilizacao').value = result.data.triagem_motivo_inutilizacao || '';
+            document.getElementById('config-triagem-campos-clinicos').value = result.data.triagem_campos_clinicos || '';
           }
         }
       } catch (err) {
@@ -3809,6 +4067,87 @@
         }
       } catch (err) {
         showToast('Erro de conexão ao salvar configurações', 'error');
+      }
+    });
+
+    document.getElementById('btn-save-config-triagem-pa')?.addEventListener('click', async () => {
+      const triagem_estab = document.getElementById('config-triagem-estab')?.value;
+      const triagem_setor = document.getElementById('config-triagem-setor')?.value;
+      const triagem_procedencia = document.getElementById('config-triagem-procedencia')?.value;
+      const triagem_clinica = document.getElementById('config-triagem-clinica')?.value;
+      const triagem_tipo_atend = document.getElementById('config-triagem-tipo-atend')?.value;
+      const triagem_motivo = document.getElementById('config-triagem-motivo')?.value;
+      const triagem_fila_origem = document.getElementById('config-triagem-fila-origem')?.value;
+      const triagem_fila_destino = document.getElementById('config-triagem-fila-destino')?.value;
+      const triagem_classif_nao_identificado = document.getElementById('config-triagem-classif-nao-identificado')?.value;
+      const triagem_classif_sem_doc = document.getElementById('config-triagem-classif-sem-doc')?.value;
+      const triagem_cor_vermelho = document.getElementById('config-triagem-cor-vermelho')?.value;
+      const triagem_cor_amarelo = document.getElementById('config-triagem-cor-amarelo')?.value;
+      const triagem_cor_verde = document.getElementById('config-triagem-cor-verde')?.value;
+      const triagem_cor_azul = document.getElementById('config-triagem-cor-azul')?.value;
+      const triagem_motivo_inutilizacao = document.getElementById('config-triagem-motivo-inutilizacao')?.value;
+      const triagem_campos_clinicos = document.getElementById('config-triagem-campos-clinicos')?.value?.trim() || '';
+
+      if (triagem_campos_clinicos) {
+        try {
+          const campos = JSON.parse(triagem_campos_clinicos);
+          if (!Array.isArray(campos.historico) || !Array.isArray(campos.estadoGeral) || !Array.isArray(campos.comportamento)) {
+            throw new Error('Informe os arrays historico, estadoGeral e comportamento.');
+          }
+        } catch (err) {
+          showToast(`Campos clínicos inválidos: ${err.message}`, 'warning');
+          return;
+        }
+      }
+
+      const obrigatorios = {
+        Estabelecimento: triagem_estab,
+        Setor: triagem_setor,
+        Procedência: triagem_procedencia,
+        Clínica: triagem_clinica,
+        'Tipo de atendimento': triagem_tipo_atend,
+        Motivo: triagem_motivo,
+        'Fila origem': triagem_fila_origem,
+        'Fila destino': triagem_fila_destino
+      };
+      const ausentes = Object.entries(obrigatorios)
+        .filter(([, value]) => value === undefined || value === null || String(value).trim() === '' || String(value).trim() === '0')
+        .map(([label]) => label);
+      if (ausentes.length) {
+        showToast(`Preencha os campos obrigatórios da Triagem P.A.: ${ausentes.join(', ')}.`, 'warning');
+        return;
+      }
+
+      try {
+        const result = await api.post(`${apiConfig.baseUrl}/admin/system/config`, {
+          triagem_estab,
+          triagem_setor,
+          triagem_procedencia,
+          triagem_clinica,
+          triagem_tipo_atend,
+          triagem_motivo,
+          triagem_fila_origem,
+          triagem_fila_destino,
+          triagem_classif_nao_identificado,
+          triagem_classif_sem_doc,
+          triagem_cor_vermelho,
+          triagem_cor_amarelo,
+          triagem_cor_verde,
+          triagem_cor_azul,
+          triagem_motivo_inutilizacao,
+          triagem_campos_clinicos
+        });
+        if (result.success) {
+          showToast('Parâmetros da Triagem P.A. salvos com sucesso!', 'success');
+        } else {
+          showToast(result.message || 'Erro ao salvar configurações da Triagem P.A.', 'error');
+        }
+      } catch (err) {
+        const detalhes = err.data?.error?.details?.errors;
+        const mensagem = Array.isArray(detalhes) && detalhes.length
+          ? detalhes.join(' ')
+          : (err.message || 'Não foi possível salvar as configurações da Triagem P.A.');
+        showToast(mensagem, 'error');
       }
     });
 
@@ -5463,6 +5802,205 @@
         console.error('Erro ao carregar telemetria:', err);
       }
     }
+
+    
+    
+
+    
+    let escalaState = { auto: [], manuais: [], precedencia: [] };
+
+    const allowedFields = ['pas', 'pad', 'fc', 'fr', 'sato2', 'glasgow', 'spo2'];
+    const allowedOperators = ['>', '>=', '<', '<=', '==', '!='];
+    const allowedColors = ['VERMELHO', 'AMARELO', 'VERDE', 'AZUL'];
+
+    function renderEscalaUI() {
+      // 1. Auto
+      const cAuto = document.getElementById('container-regras-auto');
+      cAuto.innerHTML = '';
+      escalaState.auto.forEach((regra, i) => {
+        const div = document.createElement('div');
+        div.className = 'col-12';
+        let condsHtml = regra.condicoes.map((c, j) => `
+          <div class="d-flex gap-2 mb-2 align-items-center">
+            <select class="form-select form-select-sm w-auto in-campo" data-r="${i}" data-c="${j}">
+              ${allowedFields.map(f => `<option value="${f}" ${c.campo === f ? 'selected' : ''}>${f}</option>`).join('')}
+            </select>
+            <select class="form-select form-select-sm w-auto in-op" data-r="${i}" data-c="${j}">
+              ${allowedOperators.map(o => `<option value="${o}" ${c.operador === o ? 'selected' : ''}>${o}</option>`).join('')}
+            </select>
+            <input type="number" class="form-control form-control-sm w-auto in-val" value="${c.valor}" data-r="${i}" data-c="${j}">
+            <button class="btn btn-sm btn-outline-danger btn-rm-cond" data-r="${i}" data-c="${j}"><i class="bi bi-trash"></i></button>
+          </div>
+        `).join('');
+
+        div.innerHTML = `
+          <div class="card shadow-sm border-0 mb-2">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <div class="d-flex gap-3 align-items-center">
+                  <input type="text" class="form-control form-control-sm fw-bold in-id" value="${regra.id}" data-r="${i}" style="width:150px">
+                  <select class="form-select form-select-sm in-cor" data-r="${i}" style="width:120px">
+                    ${allowedColors.map(col => `<option value="${col}" ${regra.cor === col ? 'selected' : ''}>${col}</option>`).join('')}
+                  </select>
+                  <div class="form-check form-switch mt-1">
+                    <input class="form-check-input in-ativo" type="checkbox" data-r="${i}" ${regra.ativo ? 'checked' : ''}>
+                    <label class="form-check-label small text-muted">Ativo</label>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-danger btn-rm-regra" data-r="${i}"><i class="bi bi-trash"></i> Excluir Regra</button>
+              </div>
+              <div class="bg-light p-3 rounded">
+                <div class="d-flex gap-2 mb-3 align-items-center">
+                  <span class="fw-bold text-secondary small">Se</span>
+                  <select class="form-select form-select-sm in-logico w-auto fw-bold" data-r="${i}">
+                    <option value="AND" ${regra.operadorLogico === 'AND' ? 'selected' : ''}>TODAS (AND)</option>
+                    <option value="OR" ${regra.operadorLogico === 'OR' ? 'selected' : ''}>QUALQUER (OR)</option>
+                  </select>
+                  <span class="fw-bold text-secondary small">das condições abaixo for atingida:</span>
+                </div>
+                ${condsHtml}
+                <button class="btn btn-sm btn-outline-primary mt-2 btn-add-cond" data-r="${i}"><i class="bi bi-plus"></i> Adicionar Condição</button>
+              </div>
+            </div>
+          </div>
+        `;
+        cAuto.appendChild(div);
+      });
+
+      // 2. Manuais
+      const tbody = document.getElementById('tbody-regras-manuais');
+      tbody.innerHTML = '';
+      escalaState.manuais.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" class="form-control form-control-sm in-m-cod" value="${r.codigo}" data-r="${i}"></td>
+          <td><input type="text" class="form-control form-control-sm in-m-desc" value="${r.descricao}" data-r="${i}"></td>
+          <td>
+            <select class="form-select form-select-sm in-m-cor" data-r="${i}">
+              ${allowedColors.map(col => `<option value="${col}" ${r.cor === col ? 'selected' : ''}>${col}</option>`).join('')}
+            </select>
+          </td>
+          <td><input type="number" class="form-control form-control-sm in-m-ord" value="${r.ordem}" data-r="${i}"></td>
+          <td class="text-center"><input class="form-check-input in-m-ativo mt-2" type="checkbox" ${r.ativo ? 'checked' : ''} data-r="${i}"></td>
+          <td class="text-center"><button class="btn btn-sm btn-danger btn-rm-manual" data-r="${i}"><i class="bi bi-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 3. Precedencia
+      const listP = document.getElementById('list-precedencia');
+      listP.innerHTML = '';
+      escalaState.precedencia.forEach((cor, i) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          <span><span class="badge bg-secondary me-2">${i+1}</span> ${cor}</span>
+          <div>
+            <button class="btn btn-sm btn-light btn-prec-up" data-i="${i}" ${i===0?'disabled':''}><i class="bi bi-arrow-up"></i></button>
+            <button class="btn btn-sm btn-light btn-prec-down" data-i="${i}" ${i===escalaState.precedencia.length-1?'disabled':''}><i class="bi bi-arrow-down"></i></button>
+          </div>
+        `;
+        listP.appendChild(li);
+      });
+
+      attachEscalaEvents();
+    }
+
+    function attachEscalaEvents() {
+      document.querySelectorAll('.in-id').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].id = e.target.value; }));
+      document.querySelectorAll('.in-cor').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].cor = e.target.value; }));
+      document.querySelectorAll('.in-ativo').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].ativo = e.target.checked; }));
+      document.querySelectorAll('.in-logico').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].operadorLogico = e.target.value; }));
+
+      document.querySelectorAll('.in-campo').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].condicoes[e.target.dataset.c].campo = e.target.value; }));
+      document.querySelectorAll('.in-op').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].condicoes[e.target.dataset.c].operador = e.target.value; }));
+      document.querySelectorAll('.in-val').forEach(el => el.addEventListener('change', e => { escalaState.auto[e.target.dataset.r].condicoes[e.target.dataset.c].valor = Number(e.target.value); }));
+
+      document.querySelectorAll('.btn-add-cond').forEach(el => el.addEventListener('click', e => {
+        escalaState.auto[e.target.dataset.r].condicoes.push({ campo: 'fc', operador: '>=', valor: 0 });
+        renderEscalaUI();
+      }));
+
+      document.querySelectorAll('.btn-rm-cond').forEach(el => el.addEventListener('click', e => {
+        let r = e.target.closest('button').dataset.r;
+        let c = e.target.closest('button').dataset.c;
+        escalaState.auto[r].condicoes.splice(c, 1);
+        renderEscalaUI();
+      }));
+
+      document.querySelectorAll('.btn-rm-regra').forEach(el => el.addEventListener('click', e => {
+        let r = e.target.closest('button').dataset.r;
+        escalaState.auto.splice(r, 1);
+        renderEscalaUI();
+      }));
+
+      // Manuais
+      document.querySelectorAll('.in-m-cod').forEach(el => el.addEventListener('change', e => { escalaState.manuais[e.target.dataset.r].codigo = e.target.value; }));
+      document.querySelectorAll('.in-m-desc').forEach(el => el.addEventListener('change', e => { escalaState.manuais[e.target.dataset.r].descricao = e.target.value; }));
+      document.querySelectorAll('.in-m-cor').forEach(el => el.addEventListener('change', e => { escalaState.manuais[e.target.dataset.r].cor = e.target.value; }));
+      document.querySelectorAll('.in-m-ord').forEach(el => el.addEventListener('change', e => { escalaState.manuais[e.target.dataset.r].ordem = Number(e.target.value); }));
+      document.querySelectorAll('.in-m-ativo').forEach(el => el.addEventListener('change', e => { escalaState.manuais[e.target.dataset.r].ativo = e.target.checked; }));
+      
+      document.querySelectorAll('.btn-rm-manual').forEach(el => el.addEventListener('click', e => {
+        let r = e.target.closest('button').dataset.r;
+        escalaState.manuais.splice(r, 1);
+        renderEscalaUI();
+      }));
+
+      // Precedencia
+      document.querySelectorAll('.btn-prec-up').forEach(el => el.addEventListener('click', e => {
+        let i = Number(e.target.closest('button').dataset.i);
+        if(i > 0) {
+          let temp = escalaState.precedencia[i];
+          escalaState.precedencia[i] = escalaState.precedencia[i-1];
+          escalaState.precedencia[i-1] = temp;
+          renderEscalaUI();
+        }
+      }));
+      document.querySelectorAll('.btn-prec-down').forEach(el => el.addEventListener('click', e => {
+        let i = Number(e.target.closest('button').dataset.i);
+        if(i < escalaState.precedencia.length - 1) {
+          let temp = escalaState.precedencia[i];
+          escalaState.precedencia[i] = escalaState.precedencia[i+1];
+          escalaState.precedencia[i+1] = temp;
+          renderEscalaUI();
+        }
+      }));
+    }
+
+    document.getElementById('btn-add-regra-auto')?.addEventListener('click', () => {
+      escalaState.auto.push({
+        id: 'NOVA_REGRA', criterio: '', cor: 'VERMELHO', ativo: true, operadorLogico: 'AND',
+        condicoes: [{ campo: 'fc', operador: '>=', valor: 0 }]
+      });
+      renderEscalaUI();
+    });
+
+    document.getElementById('btn-add-regra-manual')?.addEventListener('click', () => {
+      escalaState.manuais.push({
+        codigo: 'NOVO', descricao: '', cor: 'VERMELHO', ativo: true, ordem: 99
+      });
+      renderEscalaUI();
+    });
+
+    document.getElementById('btn-save-escala-triagem-ui')?.addEventListener('click', async () => {
+      const payload = {
+        triagem_precedencia: JSON.stringify(escalaState.precedencia),
+        triagem_regras_automaticas: JSON.stringify(escalaState.auto),
+        triagem_regras_manuais: JSON.stringify(escalaState.manuais)
+      };
+      
+      try {
+        const res = await api.post(`${apiConfig.baseUrl}/admin/system/config`, payload);
+        if (res.success) {
+          showToast('Escala de Triagem salva com sucesso!', 'success');
+        } else {
+          showToast('Erro ao salvar escala de triagem', 'error');
+        }
+      } catch(err) {
+        showToast('Erro: ' + err.message, 'error');
+      }
+    });
 
     function renderTelemetria(d) {
       if (!d) return;

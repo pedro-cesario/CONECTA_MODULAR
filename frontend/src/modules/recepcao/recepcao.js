@@ -8,7 +8,7 @@ import { escapeHtml } from '../../core/utils.js';
  * Padrão Conecta: Fila de Espera (Guichê) + Histórico de Atendimentos do Dia (GED) + Modal Wizard
  */
 
-let recepcaoState = {
+export let recepcaoState = {
   abaAtiva: 'senhas', // 'senhas' | 'historico'
   filaSelecionada: 9, // PA - NORMAL por padrão
   senhaAtiva: null,
@@ -21,6 +21,15 @@ let recepcaoState = {
   relatorios: [],
   documentosGED: []
 };
+
+// Vincula funções vitais ao escopo global para que outros módulos (como Dashboard PA) possam usar a grade de senhas
+if (typeof window !== 'undefined') {
+  window.conectaCore = window.conectaCore || {};
+  // As funções abaixo serão sobrescritas ou declaradas na sequência, usamos wrappers para resolver o hoisting
+  window.conectaCore.chamarSenhaEspecifica = (nr, e) => chamarSenhaEspecifica(nr, e);
+  window.conectaCore.selecionarSenhaFila = (nr) => selecionarSenhaFila(nr);
+  window.conectaCore.recepcaoState = recepcaoState;
+}
 
 let queuePollInterval = null;
 
@@ -58,10 +67,12 @@ export function startQueuePolling() {
   }, 8000);
 }
 
+
 export async function initRecepcao() {
   window.conectaCore = window.conectaCore || {};
   window.conectaCore.irParaPasso = irParaPasso;
   window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
+  window.conectaCore.recepcaoState = recepcaoState;
   window.conectaCore.chamarSenhaEspecifica = chamarSenhaEspecifica;
 window.conectaCore.inutilizarSenha = inutilizarSenha;
   window.conectaCore.selecionarPaciente = selecionarPaciente;
@@ -102,6 +113,7 @@ window.conectaCore.inativarGED = inativarGED;
   await carregarFilas();
   await carregarSenhas();
   await carregarAtendimentosHoje();
+      if (window.conectaCore && typeof window.conectaCore.loadDashboardPA === 'function') { window.conectaCore.loadDashboardPA(false); }
   await carregarSetoresAtendimento();
   await carregarConvenios();
   await carregarClassificacoesAtendimento();
@@ -395,12 +407,12 @@ export function renderizarBoardSenhasTriagem(listaFiltrada = null) {
   const filasComSenhas = Object.values(senhasPorFila);
   const triagemHtml = filasComSenhas.map(fila => {
     return `
-      <div class="d-flex flex-column" style="flex: 1 1 0%; min-width: 320px;">
-        <div class="text-white p-2 rounded-top mb-2 fw-bold d-flex justify-content-between align-items-center shadow-sm" style="background-color: var(--primary);">
+      <div class="pa-queue-group">
+        <div class="pa-queue-group-title">
           <span><i class="bi bi-diagram-3 me-2"></i>${escapeHtml(fila.nome)}</span>
           <span class="badge bg-white rounded-pill" style="color: var(--primary);">${fila.senhas.length}</span>
         </div>
-        <div class="d-flex flex-column gap-2 w-100" style="max-height: 70vh; overflow-y: auto; padding-right: 4px;">
+        <div class="pa-queue-list">
           ${fila.senhas.map(s => {
             const nrSeq = s.NR_SEQUENCIA ?? s.nr_sequencia;
             const cdSenha = s.CD_SENHA_GERADA ?? s.cd_senha_gerada;
@@ -409,42 +421,48 @@ export function renderizarBoardSenhasTriagem(listaFiltrada = null) {
             const minEspera = s.MINUTOS_ESPERA ?? s.minutos_espera ?? 0;
             const nomePaciente = s.NM_PACIENTE ?? s.nm_paciente ?? s.NM_SOCIAL ?? s.nm_social ?? s.NM_PESSOA_FISICA ?? s.nm_pessoa_fisica ?? null;
             const initials = numLimpo || 'S';
-            const badgeClass = minEspera > 15 ? 'bg-warning text-dark' : 'bg-primary-subtle text-primary';
+            const nrAtendimento = s.NR_ATENDIMENTO ?? s.nr_atendimento;
+            const emAndamento = nrAtendimento != null;
             return `
-              <div class="d-flex flex-wrap align-items-center justify-content-between rounded shadow-sm position-relative overflow-hidden w-100" style="border: 1px solid var(--slate-200); background-color: #ffffff; padding: 0.65rem; gap: 0.5rem;">
-                <div style="width: 4px; height: 100%; background-color: var(--primary); position: absolute; left: 0; top: 0;"></div>
-                <div class="d-flex align-items-center flex-grow-1 ms-2" style="min-width: 180px; max-width: 100%;">
-                  <div class="text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="background-color: var(--primary); width: 38px; height: 38px; font-size: 0.95rem; border-radius: 8px;">
-                    ${initials}
-                  </div>
-                  <div class="ms-2 d-flex flex-column flex-grow-1" style="min-width: 0;">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                      <span class="fw-bold" style="font-size: 1.05rem; color: var(--slate-800);">${escapeHtml(cdFormatado)}</span>
-                      <span class="badge ${badgeClass} shadow-sm border" style="font-size: 0.65rem; border-color: rgba(0,0,0,0.05) !important;">
+              <article class="pa-queue-card">
+                <div class="pa-queue-number">${initials}</div>
+                <div class="pa-queue-main">
+                    <div class="pa-queue-line">
+                      <span class="pa-queue-code">${escapeHtml(cdFormatado)}</span>
+                      <span class="pa-wait-badge">
                         <i class="bi bi-clock me-1"></i>${minEspera} min
                       </span>
+                      ${emAndamento ? '<span class="pa-wait-badge"><i class="bi bi-play-circle me-1"></i>Em andamento</span>' : ''}
                     </div>
-                    <div class="text-truncate text-muted mt-1" style="font-size: 0.75rem;" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
+                    <div class="pa-queue-status" title="${escapeHtml(nomePaciente || 'Aguardando identificação')}">
                       ${nomePaciente ? escapeHtml(nomePaciente) : '<i class="bi bi-person-dash me-1"></i>Aguardando identificação'}
                     </div>
-                  </div>
                 </div>
-                <div class="d-flex align-items-center gap-1 ms-auto flex-shrink-0">
-                  <button class="btn btn-sm btn-outline-primary fw-bold d-flex align-items-center justify-content-center" style="border-width: 1.5px; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar na TV">
+                <div class="pa-queue-buttons">
+                  <button class="btn btn-sm btn-outline-danger" type="button" onclick="window.conectaCore.descartarSenhaPA(${nrSeq}, '${escapeHtml(cdFormatado)}')" title="Descartar Senha">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-primary" type="button" onclick="window.conectaCore.chamarSenhaEspecifica(${nrSeq}, event)" title="Chamar na TV">
                     <i class="bi bi-megaphone-fill me-1"></i> Chamar
                   </button>
-                  <button class="btn btn-sm fw-bold d-flex align-items-center justify-content-center text-white" style="background-color: var(--stable-green, #15803D); border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}')" title="Atender e Identificar">
+                  ${emAndamento ? `
+                  <button class="btn btn-sm btn-warning" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}', true)" title="Continuar Triagem">
+                    <i class="bi bi-play-fill me-1"></i> Continuar Triagem
+                  </button>
+                  ` : `
+                  <button class="btn btn-sm btn-success" type="button" onclick="window.conectaCore.abrirModalTriagemPA(${nrSeq}, '${escapeHtml(cdFormatado)}', '${escapeHtml(nomePaciente || '')}', false)" title="Atender e Identificar">
                     <i class="bi bi-person-check-fill me-1"></i> Atender
                   </button>
+                  `}
                 </div>
-              </div>
+              </article>
             `;
           }).join('')}
         </div>
       </div>
     `;
   }).join('');
-  containerTriagem.innerHTML = '<div class="d-flex w-100 gap-3" style="overflow-x: auto; padding-bottom: 8px;">' + triagemHtml + '</div>';
+  containerTriagem.innerHTML = '<div class="d-flex flex-column gap-3 w-100">' + triagemHtml + '</div>';
 }
 
 function renderizarBoardSenhas(listaFiltrada = null) {
@@ -737,10 +755,12 @@ export async function abrirDocumentosAtendimento(nrAtendimento, cdPessoaFisica, 
 // ============================================================================
 
 function obterNomeMaquina() {
-  const selectGuiche = document.getElementById('recepcao-select-meu-guiche');
-  if (selectGuiche && selectGuiche.value) return selectGuiche.value;
   const customPosto = localStorage.getItem('conecta_ds_guiche');
   if (customPosto && customPosto.trim()) return customPosto.trim();
+  const selectGuichePa = document.getElementById('recepcao-select-meu-guiche-pa');
+  if (selectGuichePa && selectGuichePa.value && !document.getElementById('workspace-dashboard-internacao')?.classList.contains('d-none')) return selectGuichePa.value;
+  const selectGuiche = document.getElementById('recepcao-select-meu-guiche');
+  if (selectGuiche && selectGuiche.value) return selectGuiche.value;
   const custom = localStorage.getItem('conecta_ds_maquina');
   if (custom && custom.trim()) return custom.trim();
   if (state.usuario?.nm_computador) return state.usuario.nm_computador;
@@ -752,7 +772,8 @@ export async function chamarProximaSenha() {
   if (btn) ui.setLoading(btn, true);
 
   try {
-    const fila = recepcaoState.filaSelecionada ? parseInt(recepcaoState.filaSelecionada, 10) : undefined;
+    const stateFila = recepcaoState.filaSelecionada || null;
+    const fila = stateFila ? parseInt(stateFila, 10) : undefined;
     const maquina = obterNomeMaquina();
     const res = await api.post('/api/recepcao/senhas/chamar', {
       nr_seq_fila_senha: fila,
@@ -769,7 +790,13 @@ export async function chamarProximaSenha() {
         ui.showToast(`Senha #${res.data.cd_senha_gerada} chamada no guichê!`, 'success');
       }
       await carregarSenhas();
-      abrirModalAtendimento(res.data);
+      if (window.conectaCore && typeof window.conectaCore.abrirModalTriagemPA === 'function' && !document.getElementById('workspace-dashboard-internacao')?.classList.contains('d-none')) {
+        const numLimpo = String(res.data.cd_senha_gerada || '').replace(/^[^\d]*/i, '').trim();
+        const cdFormatado = numLimpo ? `P ${numLimpo}` : (res.data.cd_senha_gerada || '---');
+        window.conectaCore.abrirModalTriagemPA(res.data.nr_sequencia, cdFormatado, res.data.nm_paciente || '');
+      } else {
+        abrirModalAtendimento(res.data);
+      }
     } else {
       ui.showToast(res.message || 'Nenhuma senha aguardando nesta fila.', 'info');
     }
@@ -806,9 +833,12 @@ export async function chamarSenhaEspecifica(nrSequencia, event) {
   if (event) {
     event.stopPropagation();
   }
-  const senha = recepcaoState.senhasFila.find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
-  if (!senha) return;
-
+  const senha = (recepcaoState.senhasFila || []).find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia) 
+             || (recepcaoState.senhasFilaTriagem || []).find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
+  if (!senha) {
+    return;
+  }
+  
   const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
   const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
   const nomePac = senha.NM_PACIENTE ?? senha.nm_paciente ?? senha.NM_SOCIAL ?? senha.nm_social ?? senha.NM_PESSOA_FISICA ?? senha.nm_pessoa_fisica ?? null;
@@ -836,14 +866,14 @@ export async function chamarSenhaEspecifica(nrSequencia, event) {
       ui.showToast(`Senha #${cd} chamada no guichê e na TV!`, 'success');
     }
     await carregarSenhas();
-    abrirModalAtendimento(recepcaoState.senhaAtiva);
   } catch (err) {
     ui.showToast('Erro ao chamar senha: ' + err.message, 'error');
   }
 }
 
 export function selecionarSenhaFila(nrSequencia) {
-  const senha = recepcaoState.senhasFila.find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
+  const senha = (recepcaoState.senhasFila || []).find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia)
+             || (recepcaoState.senhasFilaTriagem || []).find(s => (s.NR_SEQUENCIA ?? s.nr_sequencia) == nrSequencia);
   if (senha) {
     const seq = senha.NR_SEQUENCIA ?? senha.nr_sequencia;
     const cd = senha.CD_SENHA_GERADA ?? senha.cd_senha_gerada;
@@ -1540,6 +1570,7 @@ export async function abrirAtendimento() {
       await carregarDocumentosGED();
       await carregarSenhas();
       await carregarAtendimentosHoje();
+      if (window.conectaCore && typeof window.conectaCore.loadDashboardPA === 'function') { window.conectaCore.loadDashboardPA(false); }
       irParaPasso(5); // Avança para Relatórios e GED
     }
   } catch (err) {
@@ -1675,6 +1706,7 @@ export function abrirUploadGED() {
           ui.showToast('Documento anexado e sincronizado com o GED do TASY com sucesso!', 'success');
           await carregarDocumentosGED();
           await carregarAtendimentosHoje();
+      if (window.conectaCore && typeof window.conectaCore.loadDashboardPA === 'function') { window.conectaCore.loadDashboardPA(false); }
         } catch (postErr) {
           ui.showToast('Erro ao salvar documento no GED: ' + (postErr.message || JSON.stringify(postErr)), 'error');
         }
@@ -1695,6 +1727,7 @@ export function abrirUploadGED() {
 // Expõe métodos globais para callbacks de HTML inline
 if (!window.conectaCore) window.conectaCore = {};
 window.conectaCore.selecionarSenhaFila = selecionarSenhaFila;
+  window.conectaCore.recepcaoState = recepcaoState;
 window.conectaCore.selecionarPaciente = selecionarPaciente;
 window.conectaCore.novoPaciente = novoPaciente;
 window.conectaCore.imprimirRelatorio = imprimirRelatorio;
@@ -1757,6 +1790,7 @@ export async function confirmarCancelamentoAtendimento() {
       ui.showToast('Atendimento cancelado com sucesso no TASY!', 'success');
       fecharModalCancelamento();
       await carregarAtendimentosHoje();
+      if (window.conectaCore && typeof window.conectaCore.loadDashboardPA === 'function') { window.conectaCore.loadDashboardPA(false); }
     } else {
       ui.showToast(res.message || 'Erro ao cancelar atendimento', 'error');
     }

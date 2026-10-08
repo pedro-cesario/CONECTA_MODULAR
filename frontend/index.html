@@ -1039,7 +1039,46 @@
           </nav>
 
           <!-- Corpo do Modal com os Passos -->
-          <div class="modal-body p-0">
+          
+          <!-- Stepper Triagem -->
+          <nav class="modal-stepper d-none" id="recepcao-triagem-stepper" aria-label="Etapas da Triagem">
+            <button class="modal-step-item active" data-t-step="paciente" type="button">
+              <span class="modal-step-badge"><i class="bi bi-person"></i></span>
+              <span>Paciente</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="queixa" type="button">
+              <span class="modal-step-badge">1</span>
+              <span>Queixa</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="alergias" type="button">
+              <span class="modal-step-badge">2</span>
+              <span>Alergias</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="sinais" type="button">
+              <span class="modal-step-badge">3</span>
+              <span>Sinais Vitais</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="historico" type="button">
+              <span class="modal-step-badge">4</span>
+              <span>Histórico</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="sintomas" type="button">
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="revisao" type="button">
+              <span class="modal-step-badge">6</span>
+              <span class="modal-step-label">Revisão</span>
+            </button>
+              <span class="modal-step-badge">5</span>
+              <span>Sintomas</span>
+            </button>
+          </nav>
+
+          <div class="modal-body p-0" id="triagem-modal-body-container">
             
             <!-- ETAPA 1: Identificação e Cadastro do Paciente -->
             <div class="modal-step-pane" data-step="1">
@@ -1288,20 +1327,31 @@
           </div>
 
           <!-- Footer do Modal com Botões de Navegação -->
-          <div class="modal-footer bg-light d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary" id="modal-btn-voltar-passo">
+                    <div class="modal-footer bg-light d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary d-none" id="modal-btn-voltar-passo">
               <i class="bi bi-arrow-left"></i> Voltar
             </button>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" id="modal-btn-avancar-passo">
-                Avançar <i class="bi bi-arrow-right"></i>
+            <button type="button" class="btn btn-light" id="modal-btn-fechar-atendimento" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <div class="d-flex gap-2 ms-auto">
+              <!-- Botoes Fase 1 a 3 -->
+              <button type="button" class="btn btn-success fw-bold px-4 d-none" id="modal-btn-avancar-passo">
+                <i class="bi bi-check-circle me-1"></i> Salvar e Iniciar Triagem
               </button>
-              <button type="button" class="btn btn-success d-none" id="modal-btn-fechar-atendimento" data-bs-dismiss="modal">
-                <i class="bi bi-check-lg"></i> Concluir Atendimento
+              <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-recepcao-confirmar-inicio-legacy">
+                Iniciar Triagem <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+              
+              <!-- Botoes Fase 4 -->
+              <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-recepcao-avancar-clinico-legacy">
+              <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-recepcao-finalizar-legacy">
+                Finalizar Triagem <i class="bi bi-check-circle ms-1"></i>
+              </button>
+                Próxima Etapa <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -1548,16 +1598,47 @@
     <section class="dashboard-workspace d-none" id="workspace-dashboard-internacao" style="padding: 0; overflow: hidden; background: #f8fafc;">
       <div class="row m-0 h-100 w-100">
         <!-- LADO ESQUERDO: TRIAGEM (GRADE DE SENHAS) -->
-        <div class="col-12 col-xl-5 col-xxl-4 p-0 d-flex flex-column border-end bg-white" style="height: 100%; overflow-y: auto;">
+        <div class="col-12 col-xl-5 col-xxl-4 p-0 d-flex flex-column border-end pa-queue-panel" style="height: 100%; overflow-y: auto;">
           
           <!-- Header Fixo Triagem -->
-          <div class="p-3 border-bottom d-flex justify-content-between align-items-center sticky-top shadow-sm" style="background: var(--primary); z-index: 10;">
-            <h5 class="m-0 fw-bold d-flex align-items-center gap-2 text-white">
-              <i class="bi bi-ticket-perforated text-warning"></i> Fila de Triagem (P.A.)
-            </h5>
-            <button class="btn btn-sm btn-outline-light fw-bold shadow-sm" id="btn-triagem-refresh" type="button" onclick="window.conectaCore.carregarSenhasTriagem(true)" title="Atualizar Fila">
-              <i class="bi bi-arrow-clockwise"></i>
-            </button>
+          <div class="pa-queue-header sticky-top shadow-sm" style="z-index: 10;">
+            <div class="pa-queue-header-top">
+              <h5 class="m-0 fw-bold d-flex align-items-center gap-2 text-white">
+                <i class="bi bi-ticket-perforated text-warning"></i> Fila de Triagem (P.A.)
+              </h5>
+              <div class="d-flex gap-1">
+                <button class="btn btn-sm btn-outline-light d-flex align-items-center justify-content-center" id="btn-triagem-refresh" type="button" onclick="window.conectaCore.carregarSenhasTriagem(true)" title="Atualizar Fila" style="width: 32px; height: 32px; padding: 0;">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="pa-queue-select-row">
+              <!-- Select Meu Posto -->
+              <div class="d-flex align-items-center gap-1 bg-white border rounded px-2 py-1 shadow-sm pa-queue-select">
+                <i class="bi bi-display text-primary"></i>
+                <select class="form-select form-select-sm border-0 bg-transparent fw-bold py-0 px-1 text-primary w-100" id="recepcao-select-meu-guiche-pa" style="cursor: pointer; font-size: 0.8rem;" title="Meu Guichê / Posto">
+                  <option value="Triagem P.A. 01">Triagem P.A. 01</option>
+                  <option value="Triagem P.A. 02">Triagem P.A. 02</option>
+                  <option value="Guichê 01">Guichê 01</option>
+                  <option value="Guichê 02">Guichê 02</option>
+                </select>
+              </div>
+              
+              
+              <!-- Botões de Ação -->
+              <div class="pa-queue-actions">
+                <a class="btn btn-sm btn-light d-flex align-items-center justify-content-center text-primary" id="btn-triagem-abrir-tv" href="/painel.html?painel=triagem_pa" target="_blank" title="Abrir Painel TV" style="width: 32px; height: 32px; padding: 0;">
+                  <i class="bi bi-tv"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1 text-nowrap flex-shrink-0 me-2" id="btn-pa-novo-avulso" type="button" style="border-radius: 6px; font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+                  <i class="bi bi-person-plus"></i> Avulso
+                </button>
+                <button class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 text-nowrap px-2" id="btn-triagem-chamar-proximo" type="button" style="font-size: 0.8rem;">
+                  <i class="bi bi-megaphone-fill"></i> Próxima Senha
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Grade de Senhas (Espelho Recepção) -->
@@ -1570,7 +1651,7 @@
         </div>
 
         <!-- LADO DIREITO: DASHBOARD PA -->
-        <div class="col-12 col-xl-7 col-xxl-8 p-0 d-flex flex-column" style="height: 100%; overflow-y: auto;">
+        <div class="col-12 col-xl-7 col-xxl-8 p-0 d-flex flex-column pa-dashboard-panel" style="height: 100%; overflow-y: auto;">
       <div class="dashboard-header-panel">
         <div class="dashboard-header-main">
           <div class="dashboard-brand">
@@ -1591,6 +1672,7 @@
           </div>
 
           <div class="dashboard-controls">
+
             <div class="dashboard-clock">
               <span class="dashboard-turno-inline" id="dashboard-internacao-turno-label">Turno</span>
               <span class="dot-sep">·</span>
@@ -2009,12 +2091,12 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="src/main.js?v=359"></script>
+  <script type="module" src="src/main.js?v=360"></script>
 
     <!-- Modal Triagem: Identificação e Abertura -->
     <div class="modal fade" id="modal-triagem-identificacao" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1400px;">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
           <div class="modal-header modal-recepcao-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
               <h5 class="modal-recepcao-title">
@@ -2026,103 +2108,247 @@
             </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
+
+          <nav class="modal-stepper triagem-stepper" id="triagem-stepper" aria-label="Etapas da Triagem P.A.">
+            <button class="modal-step-item active" data-t-step="identificacao" type="button"><span class="modal-step-badge">1</span><span>Identificação</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="queixa" type="button"><span class="modal-step-badge">2</span><span>Queixa</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="alergias" type="button"><span class="modal-step-badge">3</span><span>Alergias</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="sinais" type="button"><span class="modal-step-badge">4</span><span>Sinais Vitais</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="historico" type="button"><span class="modal-step-badge">5</span><span>Histórico</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="glasgow" type="button"><span class="modal-step-badge">6</span><span>Glasgow</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="escala" type="button"><span class="modal-step-badge">7</span><span>Escala</span></button><span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="revisao" type="button"><span class="modal-step-badge">8</span><span>Revisão</span></button>
+          </nav>
           
           <div class="modal-body p-0">
-            <!-- Passo 1: Busca -->
-            <div id="triagem-modal-step-busca" class="p-4">
-              <p class="text-muted fw-bold mb-3"><i class="bi bi-search me-1"></i> Busque o paciente no TASY ou cadastre um novo:</p>
-              
-              <div class="input-group input-group-lg shadow-sm mb-4">
-                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0 fw-bold" id="triagem-modal-search-input" placeholder="Nome, CPF ou Prontuário...">
-              </div>
-
-              <div id="triagem-modal-search-results" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
-                <div class="text-center text-muted py-4">
-                  <i class="bi bi-keyboard" style="font-size: 2rem; opacity: 0.3;"></i>
-                  <p class="mt-2 small">Digite para pesquisar...</p>
+            <!-- Passo 1: Busca e Condição -->
+            <div id="triagem-modal-step-busca" class="triagem-pane">
+              <section class="triagem-section-card">
+                <div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-card-checklist"></i></span><div><h5>Condição de Identificação</h5><p>Selecione como o paciente será identificado antes de iniciar a triagem.</p></div></div>
+              <div class="triagem-identification-options mb-3">
+                <div>
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_identificado" value="IDENTIFICADO" checked>
+                  <label class="btn btn-outline-primary w-100 text-start" for="cond_identificado">
+                    <span class="triagem-choice-title"><i class="bi bi-record-circle me-2"></i>Identificado</span><span class="triagem-choice-description">Paciente apresentou documento oficial.</span>
+                  </label>
+                </div>
+                <div>
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_sem_doc" value="NAO_APRESENTOU_IDENTIFICACAO">
+                  <label class="btn btn-outline-primary w-100 text-start" for="cond_sem_doc">
+                    <span class="triagem-choice-title"><i class="bi bi-file-earmark me-2"></i>Não apresentou identificação</span><span class="triagem-choice-description">Paciente informou quem é, mas sem documento.</span>
+                  </label>
+                </div>
+                <div>
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_nao_ident" value="NAO_IDENTIFICADO">
+                  <label class="btn btn-outline-primary w-100 text-start" for="cond_nao_ident">
+                    <span class="triagem-choice-title"><i class="bi bi-person-exclamation me-2"></i>Não identificado</span><span class="triagem-choice-description">Paciente não consegue informar quem é.</span>
+                  </label>
                 </div>
               </div>
-              
-              <div class="mt-4 text-center border-top pt-4">
-                <p class="text-muted small mb-2">Não encontrou o paciente?</p>
-                <button class="btn btn-outline-primary fw-bold px-4" id="btn-triagem-show-cadastro">
-                  <i class="bi bi-person-plus-fill me-1"></i> Cadastrar Novo Paciente (Básico)
-                </button>
+              </section>
+
+              <section class="triagem-section-card" id="triagem-modal-search-section">
+                <div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-search"></i></span><div><h5>Buscar paciente no TASY</h5><p>Pesquise pelo nome, CPF, prontuário ou data de nascimento.</p></div></div>
+                <div class="input-group input-group-lg mb-2">
+                  <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control border-start-0 ps-0 fw-bold" id="triagem-modal-search-input" placeholder="Nome, CPF, prontuário ou data de nascimento">
+                </div>
+
+                <div id="triagem-modal-search-results" class="d-flex flex-column gap-2">
+                  <div class="triagem-search-empty">
+                    <i class="bi bi-file-earmark-search"></i><p>Digite para pesquisar no TASY.</p>
+                  </div>
+                </div>
+                <div class="text-center pt-3"><button class="btn btn-sm btn-outline-primary fw-bold" id="btn-triagem-show-cadastro"><i class="bi bi-person-plus me-1"></i>Cadastrar Novo Paciente (Básico)</button></div>
+              </section>
+
+              <div id="triagem-modal-anonimo-section" class="triagem-section-card d-none text-center py-4">
+                <i class="bi bi-person-slash text-warning" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 fw-bold text-dark">Paciente não identificado</h5>
+                <p class="text-muted small mb-0">O atendimento será aberto para um novo registro de Paciente não identificado.</p>
               </div>
             </div>
 
             <!-- Passo 2: Cadastro Novo -->
-            <div id="triagem-modal-step-cadastro" class="p-4 d-none">
+            <div id="triagem-modal-step-cadastro" class="triagem-pane d-none">
+              <section class="triagem-section-card">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold text-primary m-0"><i class="bi bi-person-plus"></i> Novo Cadastro</h6>
                 <button class="btn btn-sm btn-link text-muted" id="btn-triagem-back-busca"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
               </div>
               
-              <form id="form-triagem-novo-paciente">
+              <form id="form-triagem-novo-paciente" class="triagem-form-grid">
                 <div class="mb-3">
                   <label class="form-label fw-bold text-muted small mb-1">Nome Completo <span class="text-danger">*</span></label>
                   <input type="text" class="form-control fw-bold" id="triagem-form-nome" required>
                 </div>
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold text-muted small mb-1">CPF</label>
-                    <input type="text" class="form-control" id="triagem-form-cpf" placeholder="000.000.000-00">
-                  </div>
-                  <div class="col-md-6">
+                <div>
+                    <label class="form-label fw-bold text-muted small mb-1">CPF <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="triagem-form-cpf" placeholder="000.000.000-00" inputmode="numeric" required>
+                </div>
+                <div>
                     <label class="form-label fw-bold text-muted small mb-1">Data Nasc. <span class="text-danger">*</span></label>
                     <input type="date" class="form-control" id="triagem-form-nascimento" required>
-                  </div>
-                </div>
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold text-muted small mb-1">Sexo <span class="text-danger">*</span></label>
-                    <select class="form-select" id="triagem-form-sexo" required>
-                      <option value="">Selecione...</option>
-                      <option value="M">Masculino</option>
-                      <option value="F">Feminino</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold text-muted small mb-1">Telefone Celular</label>
-                    <input type="text" class="form-control" id="triagem-form-telefone" placeholder="(00) 00000-0000">
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label fw-bold text-muted small mb-1">Nome da Mãe</label>
-                  <input type="text" class="form-control" id="triagem-form-mae">
                 </div>
               </form>
+              </section>
             </div>
 
-            <!-- Passo 3: Confirmação -->
-            <div id="triagem-modal-step-confirmacao" class="p-4 d-none">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-primary m-0"><i class="bi bi-person-check"></i> Confirmar Paciente</h6>
-                <button class="btn btn-sm btn-link text-muted" id="btn-triagem-back-busca-conf"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
+
+            <!-- FASE 4: Etapas Clínicas -->
+            
+            <!-- Queixa Principal -->
+            <div id="triagem-modal-step-queixa" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary" class="triagem-patient-summary mb-3"></div><section class="triagem-section-card">
+              <div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-chat-square-text"></i></span><div><h5>Queixa principal</h5><p>Registre o motivo principal do atendimento.</p></div></div>
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">Queixa Principal <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="triagem-queixa-principal" rows="5" placeholder="Relate a queixa do paciente..."></textarea>
+                <div class="invalid-feedback">Informe a queixa principal.</div>
               </div>
-              <div class="card bg-light border-0">
-                <div class="card-body" id="triagem-confirm-details">
-                  <!-- detalhes preenchidos via JS -->
+              </section>
+            </div>
+
+            <!-- Alergias -->
+            <div id="triagem-modal-step-alergias" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary-alergias" class="triagem-patient-summary mb-3"></div>
+              <section class="triagem-section-card">
+                <div class="row g-3">
+                  <div class="col-md-7">
+                    <div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-capsule"></i></span><div><h5>Alergias cadastradas no TASY</h5><p>Itens recuperados para conferência.</p></div></div>
+                  <div id="triagem-alergias-existentes" class="triagem-criteria-list">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Buscando...
+                  </div>
+                  </div>
+                  <div class="col-md-5">
+                    <div class="triagem-check-section h-100"><h6>Registrar nova alergia</h6>
+                      <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="triagem-nega-alergias">
+                        <label class="form-check-label fw-bold" for="triagem-nega-alergias">Nega alergias</label>
+                      </div>
+                      <div class="mb-3" id="triagem-nova-alergia-container">
+                        <label class="form-label text-muted small fw-bold">Princípio ativo</label>
+                        <div class="input-group">
+                          <input type="text" class="form-control" id="triagem-nova-alergia-input" placeholder="Busque pelo princípio ativo, ex.: Dipirona" autocomplete="off">
+                          <button class="btn btn-outline-primary" type="button" id="btn-triagem-add-alergia"><i class="bi bi-plus-lg"></i> Adicionar</button>
+                        </div>
+                        <div id="triagem-principios-ativos-resultados" class="list-group mt-2" aria-live="polite"></div>
+                      </div>
+                      <ul class="list-group" id="triagem-novas-alergias-list"></ul>
+                    </div>
+                  </div>
                 </div>
+              </section>
+            </div>
+
+            <!-- Sinais Vitais -->
+            <div id="triagem-modal-step-sinais" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary-sinais" class="triagem-patient-summary mb-3"></div>
+              <div class="triagem-vital-layout"><section class="triagem-section-card"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-heart-pulse"></i></span><div><h5>Sinais Vitais</h5><p>Registre os sinais do paciente no momento da triagem.</p></div></div>
+                <div class="triagem-vital-grid">
+                  <div class="triagem-vital-field"><label>PA Sistólica (PAS)</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-pas" min="0" max="350"><span class="input-group-text">mmHg</span></div></div>
+                  <div class="triagem-vital-field"><label>PA Diastólica (PAD)</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-pad" min="0" max="250"><span class="input-group-text">mmHg</span></div></div>
+                  <div class="triagem-vital-field"><label>Frequência Cardíaca (FC)</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-fc" min="0" max="350"><span class="input-group-text">bpm</span></div></div>
+                  <div class="triagem-vital-field"><label>Frequência Respiratória (FR)</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-fr" min="0" max="150"><span class="input-group-text">irpm</span></div></div>
+                  <div class="triagem-vital-field"><label>Temperatura</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-temp" min="15" max="45" step="0.1"><span class="input-group-text">°C</span></div></div>
+                  <div class="triagem-vital-field"><label>Saturação de O₂ (SpO₂)</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-spo2" min="0" max="100"><span class="input-group-text">%</span></div></div>
+                  <div class="triagem-vital-field"><label>Peso</label><div class="input-group"><input type="number" class="form-control fw-bold" id="triagem-sv-peso" min="0" max="600" step="0.01"><span class="input-group-text">kg</span></div></div>
+                </div></section>
+                <aside class="triagem-section-card triagem-quick-summary"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-bar-chart-line"></i></span><div><h5>Resumo rápido</h5><p>Principais parâmetros desta triagem.</p></div></div><ul id="triagem-sinais-resumo"></ul></aside>
               </div>
+            </div>
+
+            <!-- Histórico -->
+            <div id="triagem-modal-step-historico" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary-historico" class="triagem-patient-summary mb-3"></div>
+              <div class="triagem-history-grid">
+                <section class="triagem-check-section"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-heart"></i></span><div><h5>Histórico de Saúde</h5><p>Condições de saúde conhecidas.</p></div></div><div class="row" id="triagem-historico-container"><div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div></div></section>
+                <section class="triagem-check-section"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-activity"></i></span><div><h5>Estado Geral</h5><p>Características atuais do paciente.</p></div></div><div class="row" id="triagem-estado-geral-container"><div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div></div></section>
+                <section class="triagem-check-section"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-person"></i></span><div><h5>Comportamento</h5><p>Comportamento apresentado.</p></div></div><div class="row" id="triagem-comportamento-container"><div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div></div></section>
+                <section class="triagem-check-section"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-thermometer-half"></i></span><div><h5>Sintomas Gripais</h5><p>Paciente apresenta sintomas gripais?</p></div></div><div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="triagem-sintomas-gripais-check"><label class="form-check-label fw-bold" for="triagem-sintomas-gripais-check">Sim, apresenta sintomas gripais</label></div><div id="triagem-sintomas-gripais-desc-container" class="d-none"><textarea class="form-control" id="triagem-sintomas-gripais-desc" rows="2" placeholder="Descreva os sintomas, tempo de início, entre outros."></textarea></div></section>
+              </div>
+            </div>
+
+            
+            <!-- Glasgow -->
+            <div id="triagem-modal-step-glasgow" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary-glasgow" class="triagem-patient-summary mb-3"></div><section class="triagem-section-card"><div class="d-flex justify-content-between align-items-start mb-3"><div class="triagem-section-heading mb-0"><span class="triagem-section-icon"><i class="bi bi-brain"></i></span><div><h5>Escala de Coma de Glasgow</h5><p>Selecione a melhor resposta em cada categoria.</p></div></div><div class="triagem-glasgow-total">Total Glasgow <span id="triagem-glasgow-total">-</span></div></div>
+              <div class="triagem-glasgow-grid"><div class="triagem-glasgow-column"><h6>Abertura Ocular (E)</h6>
+                  <select class="form-select" id="triagem-glasgow-ocular">
+                    <option value="">Selecione...</option>
+                    <option value="4">4 - Espontânea</option>
+                    <option value="3">3 - À voz</option>
+                    <option value="2">2 - À dor</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select></div>
+                <div class="triagem-glasgow-column"><h6>Resposta Verbal (V)</h6>
+                  <select class="form-select" id="triagem-glasgow-verbal">
+                    <option value="">Selecione...</option>
+                    <option value="5">5 - Orientada</option>
+                    <option value="4">4 - Confusa</option>
+                    <option value="3">3 - Palavras inapropriadas</option>
+                    <option value="2">2 - Sons ininteligíveis</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select></div>
+                <div class="triagem-glasgow-column"><h6>Resposta Motora (M)</h6>
+                  <select class="form-select" id="triagem-glasgow-motora">
+                    <option value="">Selecione...</option>
+                    <option value="6">6 - Obedece a comandos</option>
+                    <option value="5">5 - Localiza a dor</option>
+                    <option value="4">4 - Flexão normal (Retirada)</option>
+                    <option value="3">3 - Flexão anormal (Decorticação)</option>
+                    <option value="2">2 - Extensão (Descerebração)</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select></div></div></section>
+              <section class="triagem-section-card triagem-scale-preview"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-clipboard2-pulse"></i></span><div><h5>Escala de Triagem P.A. (preview)</h5><p>Critérios identificados até o momento.</p></div></div><div id="triagem-glasgow-criterios" class="triagem-criteria-list"></div></section>
+            </div>
+
+            <!-- Sintomas Gripais -->
+            <div id="triagem-modal-step-escala" class="triagem-pane d-none triagem-clinical-step"><div id="triagem-patient-summary-escala" class="triagem-patient-summary mb-3"></div><section class="triagem-section-card"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-clipboard2-pulse"></i></span><div><h5>Escala de Triagem P.A.</h5><p>Critérios e classificação resolvidos pelo motor clínico atual.</p></div></div><div id="triagem-escala-conteudo" class="triagem-review-grid"></div></section></div>
+
+            <!-- Passo 3: Confirmação -->
+            
+            <!-- Revisão -->
+            <div id="triagem-modal-step-revisao" class="triagem-pane d-none triagem-clinical-step">
+              <div id="triagem-patient-summary-revisao" class="triagem-patient-summary mb-3"></div>
+              <section class="triagem-section-card"><div class="triagem-section-heading"><span class="triagem-section-icon"><i class="bi bi-clipboard-check"></i></span><div><h5>Revisão da Triagem</h5><p>Confira todas as informações antes de finalizar o atendimento.</p></div></div><div id="triagem-revisao-conteudo" class="triagem-review-grid"></div></section>
+            </div>
+
+            <div id="triagem-modal-step-confirmacao" class="triagem-pane d-none">
+              <section class="triagem-section-card triagem-confirm-card">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="triagem-section-heading mb-0"><span class="triagem-section-icon"><i class="bi bi-person-check"></i></span><div><h5>Paciente selecionado</h5><p>Confirme os dados antes de iniciar a triagem.</p></div></div>
+                <button class="btn btn-sm btn-link text-primary" id="btn-triagem-back-busca-conf"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
+              </div>
+              <div class="triagem-confirm-data" id="triagem-confirm-details">
+                  <!-- detalhes preenchidos via JS -->
+              </div>
+              </section>
             </div>
           </div>
           
-          <div class="modal-footer bg-light d-flex justify-content-between">
+          <div class="modal-footer">
+            <div class="triagem-footer-actions">
             <button type="button" class="btn btn-outline-secondary d-none" id="btn-triagem-voltar-step">
               <i class="bi bi-arrow-left"></i> Voltar
             </button>
             <button type="button" class="btn btn-light" id="btn-triagem-cancelar" data-bs-dismiss="modal">
               Cancelar
             </button>
+            <button type="button" class="btn btn-outline-secondary d-none" id="btn-triagem-voltar-nao-identificado">
+              <i class="bi bi-arrow-left"></i> Voltar
+            </button>
             <div class="d-flex gap-2 ms-auto">
+              <button type="button" class="btn btn-outline-primary fw-bold d-none" id="btn-triagem-salvar-rascunho"><i class="bi bi-floppy"></i> Salvar rascunho</button>
               <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-triagem-salvar-paciente">
-                <i class="bi bi-check-circle me-1"></i> Salvar e Iniciar Triagem
+                <i class="bi bi-check-circle me-1"></i> Cadastrar e Continuar
               </button>
               <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-triagem-confirmar-inicio">
                 Iniciar Triagem <i class="bi bi-arrow-right ms-1"></i>
               </button>
+              <button type="button" class="btn btn-primary fw-bold d-none" id="btn-triagem-avancar-clinico">Avançar <i class="bi bi-arrow-right ms-1"></i></button>
+              <button type="button" class="btn btn-primary fw-bold d-none" id="btn-triagem-finalizar"><i class="bi bi-check2"></i> Finalizar Triagem</button>
+            </div>
             </div>
           </div>
         </div>

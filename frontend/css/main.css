@@ -11,6 +11,7 @@
 @import url('modules/auditorias.css');
 @import url('modules/registros.css');
 @import url('modules/recepcao.css');
+@import url('modules/triagem-pa.css');
 @import url('modules/skeleton.css');
 
 /* Prevenção de FOUC / Flash de Tela de Login no Reload */

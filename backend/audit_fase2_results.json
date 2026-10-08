@@ -1,0 +1,205 @@
+{
+  "classif_pessoa_cols": [
+    "IE_AGRESSIVO",
+    "IE_DETENTO",
+    "NR_SEQUENCIA",
+    "DT_ATUALIZACAO",
+    "NM_USUARIO",
+    "DT_ATUALIZACAO_NREC",
+    "NM_USUARIO_NREC",
+    "DS_CLASSIFICACAO",
+    "IE_SITUACAO",
+    "DS_OBSERVACAO",
+    "NR_DIAS_VIG_FINAL",
+    "IE_COMPRAS",
+    "IE_FINALIZAR_ALTA",
+    "IE_IMAGEM",
+    "IE_EXIBE_OCUPACAO_QUIMIO",
+    "IE_EXIBE_PFCS",
+    "DS_COR",
+    "IE_EXIBE_PANORAMA",
+    "IE_EXIBE_QUIMIOTERAPIA"
+  ],
+  "pessoa_classif_cols": [
+    "CD_ESPECIALIDADE_REFERENCIA",
+    "CD_ESTABELECIMENTO",
+    "IE_CLINICA",
+    "NM_USUARIO_INATIVACAO",
+    "DS_JUSTIF_INATIVACAO",
+    "CD_CGC",
+    "DT_INATIVACAO",
+    "NR_SEQUENCIA",
+    "DT_ATUALIZACAO",
+    "NM_USUARIO",
+    "DT_ATUALIZACAO_NREC",
+    "NM_USUARIO_NREC",
+    "NR_SEQ_CLASSIF",
+    "CD_PESSOA_FISICA",
+    "DT_INICIO_VIGENCIA",
+    "DT_FINAL_VIGENCIA",
+    "DS_OBSERVACAO",
+    "CD_PESSOA_REF"
+  ],
+  "paciente_410252": [
+    {
+      "NR_SEQUENCIA": 28,
+      "DT_ATUALIZACAO": "2026-10-07T14:33:40.000Z",
+      "NM_USUARIO": "pedro.cesario",
+      "DT_ATUALIZACAO_NREC": "2026-10-07T14:33:40.000Z",
+      "NM_USUARIO_NREC": "pedro.cesario",
+      "NR_SEQ_CLASSIF": 2,
+      "CD_PESSOA_FISICA": "410252",
+      "DT_INICIO_VIGENCIA": "2026-10-07T14:33:16.000Z",
+      "DT_FINAL_VIGENCIA": null,
+      "DS_OBSERVACAO": "teste asdsad sad ",
+      "CD_PESSOA_REF": null,
+      "CD_ESTABELECIMENTO": 1,
+      "IE_CLINICA": null,
+      "DT_INATIVACAO": null,
+      "NM_USUARIO_INATIVACAO": null,
+      "DS_JUSTIF_INATIVACAO": null,
+      "CD_CGC": null,
+      "CD_ESPECIALIDADE_REFERENCIA": null
+    }
+  ],
+  "procs_pessoa_classif": [
+    {
+      "NAME": "ISH_PAT_CASE_PCK",
+      "TYPE": "PACKAGE BODY"
+    },
+    {
+      "NAME": "ATUALIZAR_PESSOA_CLASSIF_COBR",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "ACERTAR_DUPLIC_PESSOA_FISICA",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "GER_CARGA_PCK",
+      "TYPE": "PACKAGE BODY"
+    },
+    {
+      "NAME": "EIS_CONTAS_PEND_FILTROS",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "SPECIAL_PERSON_CLASSIF_DISC",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "ISH_OUTPAT_CASE_PCK",
+      "TYPE": "PACKAGE BODY"
+    },
+    {
+      "NAME": "QT_OBTER_DESC_CLASSIF_PACIENTE",
+      "TYPE": "FUNCTION"
+    },
+    {
+      "NAME": "OBTER_DADOS_PF",
+      "TYPE": "FUNCTION"
+    },
+    {
+      "NAME": "NEO_ATUALIZA_MATRICULA",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "SPECIAL_PERSON_CLASSIFICATION",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "INTPD_RECEBER_BLACKLIST",
+      "TYPE": "PROCEDURE"
+    },
+    {
+      "NAME": "OBTER_SELECT_COMP_PACIENTE",
+      "TYPE": "FUNCTION"
+    },
+    {
+      "NAME": "ISH_PATIENT_PCK",
+      "TYPE": "PACKAGE BODY"
+    }
+  ],
+  "pf_unique_constraints": [
+    {
+      "CONSTRAINT_NAME": "PESFISI_PK",
+      "CONSTRAINT_TYPE": "P",
+      "COLUMN_NAME": "CD_PESSOA_FISICA"
+    },
+    {
+      "CONSTRAINT_NAME": "PESFISI_U1",
+      "CONSTRAINT_TYPE": "U",
+      "COLUMN_NAME": "NR_PRONTUARIO"
+    },
+    {
+      "CONSTRAINT_NAME": "PESFISI_U2",
+      "CONSTRAINT_TYPE": "U",
+      "COLUMN_NAME": "NR_TRANSPLANTE"
+    },
+    {
+      "CONSTRAINT_NAME": "PESFISI_U3",
+      "CONSTRAINT_TYPE": "U",
+      "COLUMN_NAME": "NR_CONTRA_REF_SUS"
+    }
+  ],
+  "pf_nullability": [
+    {
+      "COLUMN_NAME": "NM_PESSOA_FISICA",
+      "NULLABLE": "N"
+    },
+    {
+      "COLUMN_NAME": "DT_NASCIMENTO",
+      "NULLABLE": "Y"
+    },
+    {
+      "COLUMN_NAME": "NR_CPF",
+      "NULLABLE": "Y"
+    }
+  ],
+  "procs_unificar": [],
+  "procs_inserir_pf": [],
+  "triagem_risco": [
+    {
+      "NR_SEQUENCIA": 1,
+      "DS_CLASSIFICACAO": "Vermelho",
+      "DS_COR_HTML": "#DA2935",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    },
+    {
+      "NR_SEQUENCIA": 2,
+      "DS_CLASSIFICACAO": "Laranja",
+      "DS_COR_HTML": "#E86C00",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    },
+    {
+      "NR_SEQUENCIA": 3,
+      "DS_CLASSIFICACAO": "Amarelo",
+      "DS_COR_HTML": "#E3A600",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    },
+    {
+      "NR_SEQUENCIA": 4,
+      "DS_CLASSIFICACAO": "Verde",
+      "DS_COR_HTML": "#00BA2F",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    },
+    {
+      "NR_SEQUENCIA": 5,
+      "DS_CLASSIFICACAO": "Azul",
+      "DS_COR_HTML": "#0096ED",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    },
+    {
+      "NR_SEQUENCIA": 6,
+      "DS_CLASSIFICACAO": "Branco",
+      "DS_COR_HTML": "#FFFFFF",
+      "IE_SITUACAO": "A",
+      "CD_ESTABELECIMENTO": 1
+    }
+  ]
+}

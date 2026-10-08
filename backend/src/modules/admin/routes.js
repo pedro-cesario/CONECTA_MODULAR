@@ -30,6 +30,7 @@ router.post('/dashboard-pa/config', requireAuth, requireAdmin, adminController.s
 
 router.get('/system/config', requireAuth, requireAdmin, adminController.obterConfigSistema);
 router.post('/system/config', requireAuth, requireAdmin, adminController.salvarConfigSistema);
+router.get('/triagem-pa/opcoes', requireAuth, requireAdmin, adminController.listarOpcoesTriagemPA);
 
 router.get('/ect/agendas', requireAuth, requireAdmin, adminController.listarAgendasEct);
 router.get('/ect/procedimentos', requireAuth, requireAdmin, adminController.listarProcedimentosEct);

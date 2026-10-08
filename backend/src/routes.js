@@ -78,4 +78,7 @@ router.use('/evolucao', evolucaoRoutes);
 const ehrRoutes = require('./modules/ehr/ehrRoutes');
 router.use('/ehr', ehrRoutes);
 
+const triagemPaRoutes = require('./modules/triagem-pa/routes');
+router.use('/triagem-pa', triagemPaRoutes);
+
 module.exports = router;

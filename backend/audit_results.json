@@ -1,0 +1,246 @@
+{
+  "constraints": [
+    {
+      "CONSTRAINT_NAME": "ATEPACI_TRICLRI_FK",
+      "CONSTRAINT_TYPE": "R",
+      "SEARCH_CONDITION": null,
+      "COLUMN_NAME": "NR_SEQ_TRIAGEM",
+      "REF_TABLE": "TRIAGEM_CLASSIF_RISCO",
+      "REF_CONSTRAINT": "TRICLRI_PK"
+    }
+  ],
+  "bifrost_integracao_senhas": "PROCEDURE bifrost_integracao_senhas(nr_seq_senha_p      NUMBER,\n                                                      nr_seq_integracao_p NUMBER DEFAULT 1681) AS\n    js_dados_w      philips_json;\n    js_list_monitor philips_json_list;\n\n    ds_guiche_w          VARCHAR2(2000);\n    cd_senha_w           VARCHAR2(2000);\n    ds_maquina_chamada_w VARCHAR2(2000);\n    nm_computador_w      VARCHAR2(2000);\n\n    ds_event_w            VARCHAR2(100);\n    ds_message_response_w CLOB;\n    CURSOR c_dados_1681 IS\n        SELECT substr(obter_guiche_maquina_curto(psf.nr_sequencia), 1, 100) ds_guiche,\n               substr(obter_letra_verifacao_senha(nvl(nr_seq_fila_senha_origem, nr_seq_fila_senha)), 1, 10) ||\n               cd_senha_gerada cd_senha,\n               ds_maquina_chamada,\n               nr_seq_comp_monitor,\n               ds_local,\n               nm_computador\n          FROM paciente_senha_fila psf,\n               (SELECT f.nr_sequencia,\n                       f.nr_seq_comp_monitor,\n                       f.ds_local,\n                       (SELECT cp.nm_computador FROM computador cp WHERE cp.nr_sequencia = f.nr_seq_comp_monitor) AS nm_computador\n                  FROM maquina_local_senha f\n                 WHERE f.ie_situacao = 'A'\n                UNION ALL\n                SELECT h.nr_sequencia,\n                       g.nr_seq_comp_monitor,\n                       h.ds_local,\n                       (SELECT cp.nm_computador FROM computador cp WHERE cp.nr_sequencia = g.nr_seq_comp_monitor) AS nm_computador\n                  FROM maquina_local_senha       h,\n                       maquina_monitor_adicional g\n                 WHERE g.nr_seq_local = h.nr_sequencia\n                   AND h.ie_situacao = 'A') mls\n         WHERE psf.nr_sequencia = nr_seq_senha_p\n           AND (psf.nr_seq_local_senha = mls.nr_sequencia(+));\n\nBEGIN\n    SELECT MAX(ds_action)\n      INTO ds_event_w\n      FROM cliente_integracao c\n     WHERE c.nr_seq_inf_integracao = nr_seq_integracao_p\n       AND c.ie_situacao IN ('A', 'P');\n\n    IF ds_event_w IS NOT NULL THEN\n        js_dados_w      := philips_json();\n        js_list_monitor := philips_json_list();\n\n        IF nr_seq_integracao_p = 1681 THEN\n            FOR i IN c_dados_1681 LOOP\n                js_list_monitor.append(i.ds_local);\n                ds_guiche_w          := i.ds_guiche;\n                cd_senha_w           := i.cd_senha;\n                ds_maquina_chamada_w := i.ds_maquina_chamada;\n                nm_computador_w:= i.nm_computador;\n\n            END LOOP;\n            js_dados_w.put('guiche', ds_guiche_w);\n            js_dados_w.put('senha', cd_senha_w);\n            js_dados_w.put('maquina', ds_maquina_chamada_w);\n            js_dados_w.put('computador', nm_computador_w );\n            js_dados_w.put('local', js_list_monitor);\n\n        END IF;\n\n        dbms_lob.createtemporary(ds_message_response_w, TRUE);\n        js_dados_w.to_clob(ds_message_response_w);\n        ds_message_response_w := bifrost.send_integration_content(ds_event_w,\n                                                                  ds_message_response_w,\n                                                                  obter_usuario_ativo);\n\n    END IF;\nEND;",
+  "atualizar_senha_monitor": "procedure ATUALIZAR_SENHA_MONITOR(\n\t\t\t\t\t\t\tnr_sequencia_p\t\t\tnumber,\n\t\t\t\t\t\t\tie_tipo_acao_p\t\t\tvarchar2) is\n\nbegin\n/*\nie_tipo_acao_p\n\nI\t-\tInserir data\nL\t-\tLimpar data\n\n*/\n\nif\t(ie_tipo_acao_p = 'I') then\n\n\tupdate \tpaciente_senha_fila\n\tset\t\tdt_visualizacao_monitor = sysdate\n\twhere\tnr_sequencia = nr_sequencia_p;\n\nend if;\n\nif\t(ie_tipo_acao_p = 'L') then\n\n\tupdate \tpaciente_senha_fila\n\tset\t\tdt_visualizacao_monitor = null\n\twhere\tnr_sequencia = nr_sequencia_p;\n\nend if;\n\n\ncommit;\n\nend atualizar_senha_monitor;",
+  "triggers_atendimento_paciente": [],
+  "triggers_paciente_senha_fila": [],
+  "tables_triagem": [
+    {
+      "TABLE_NAME": "CLASSIFICACAO_ATENDIMENTO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_ATEND_LIB"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_CONVENIO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_ETARIA"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_GLOSSARIO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_RECOMENDACAO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_TRANSCRICAO"
+    },
+    {
+      "TABLE_NAME": "CML_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "CNES_SERVICO_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "HD_CLASSIFICACAO_SOROLOGIA"
+    },
+    {
+      "TABLE_NAME": "MAN_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "PLE_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "PLS_AGRAVO_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_AGRAVO"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_CPT"
+    },
+    {
+      "TABLE_NAME": "PLS_SCA_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "REGRA_CLASSIFICACAO_SETOR"
+    },
+    {
+      "TABLE_NAME": "ROP_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "SUG_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "SUS_CLASSIFICACAO_HOSPITAL"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLASSIF_PRIORIDADE"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLASSIF_RISCO"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_PRONTO_ATEND"
+    },
+    {
+      "TABLE_NAME": "NUT_CLASSIFICACAO_ALERTA"
+    },
+    {
+      "TABLE_NAME": "SAN_CLASSIFICACAO_EXAME"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_FILA"
+    },
+    {
+      "TABLE_NAME": "MAN_CLASSIFICACAO_JUSTIF"
+    },
+    {
+      "TABLE_NAME": "PROJ_ATA_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_METS"
+    },
+    {
+      "TABLE_NAME": "QUA_NC_CLASSIFICACAO_LIB"
+    },
+    {
+      "TABLE_NAME": "QUA_NC_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_CONTRATO"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_PRONTO_ATEND_AVAL"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_LIB_CONVENIO"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_CARENCIA"
+    },
+    {
+      "TABLE_NAME": "QUA_NC_CLASSIFICACAO_ESTAB"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_REGIAO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_PARAMETRO"
+    },
+    {
+      "TABLE_NAME": "GPW_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "PROJ_PAUTA_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "CLINICA_REGRA_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "REGRA_TRIAGEM_CLASSIF"
+    },
+    {
+      "TABLE_NAME": "LAB_CLASSIFICACAO_EXAME"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_FERIADO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_PROJETO"
+    },
+    {
+      "TABLE_NAME": "RP_CLASSIFICACAO_PEDIDO"
+    },
+    {
+      "TABLE_NAME": "LOG_CLASSIF_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLAS_RISCO_REGRA"
+    },
+    {
+      "TABLE_NAME": "EME_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "MPREV_CLASSIFICACAO_PAC"
+    },
+    {
+      "TABLE_NAME": "ATEND_REGRA_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "TO_LIFE_TRIAGEM_RISCO"
+    },
+    {
+      "TABLE_NAME": "PLS_CLASSIFICACAO_BENEF"
+    },
+    {
+      "TABLE_NAME": "MAN_ORDEM_SERV_LOG_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "QMS_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_DIAGNOSTICO"
+    },
+    {
+      "TABLE_NAME": "MPREV_CLASSIFICACAO_TEMA"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_INTEGRACAO"
+    },
+    {
+      "TABLE_NAME": "LOG_CLASSIFICACAO_SP"
+    },
+    {
+      "TABLE_NAME": "CORPO_HUMANO_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_PROJETO_LIB"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_PRONTO_ATEND_RET"
+    },
+    {
+      "TABLE_NAME": "QUEIXA_PACIENTE_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_CIF"
+    },
+    {
+      "TABLE_NAME": "REGRA_CLASSIFICACAO_RADS"
+    },
+    {
+      "TABLE_NAME": "REGRA_SENHA_TRIAGEM"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLASSIFICATORIA_SV"
+    },
+    {
+      "TABLE_NAME": "PHI_CLASSIFICACAO_JUSTIF"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_PAC_ONC"
+    },
+    {
+      "TABLE_NAME": "TERM_CLASSIFICACAO"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_PREOP"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLAS_RISCO_ITEM"
+    },
+    {
+      "TABLE_NAME": "TRIAGEM_CLAS_RISCO_AUTO"
+    },
+    {
+      "TABLE_NAME": "LOG_TRIAGEM_PA"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_TRIBUTO"
+    },
+    {
+      "TABLE_NAME": "CLASSIFICACAO_PARAMETRO"
+    }
+  ]
+}

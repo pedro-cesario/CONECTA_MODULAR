@@ -2,6 +2,7 @@ const configCache = require('../../core/config/configCache');
 const ldapService = require('../auth/ldapService');
 const perfilRepository = require('../auth/perfilRepository');
 const setorService = require('../setores/setorService');
+const TriagemValidationService = require('./TriagemValidationService');
 
 async function listarPerfis(req, res) {
   try {
@@ -243,14 +244,35 @@ async function obterConfigSistema(req, res) {
   }
 }
 
-async function salvarConfigSistema(req, res) {
+async function listarOpcoesTriagemPA(req, res, next) {
+  try {
+    const opcoes = await TriagemValidationService.listarOpcoesPA();
+    res.json({ success: true, data: opcoes });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function salvarConfigSistema(req, res, next) {
   try {
     const configs = req.body || {};
+    
+    // Validação específica da Triagem P.A. (Fase 2)
+    const hasPAConfigs = Object.keys(configs).some(k => k.startsWith('triagem_'));
+    if (hasPAConfigs) {
+      const configuracaoCompleta = {
+        ...configCache.getSystemConfig(),
+        ...configs
+      };
+      TriagemValidationService.validateRequiredPAConfigs(configuracaoCompleta);
+      await TriagemValidationService.validatePAConfigs(configuracaoCompleta);
+    }
+    
     const result = await configCache.saveSystemConfig(configs);
     res.json({ success: true, data: result });
   } catch (err) {
     console.error('[Admin] Erro ao salvar config sistema:', err);
-    res.status(500).json({ success: false, message: err.message });
+    next(err);
   }
 }
 
@@ -1033,6 +1055,7 @@ module.exports = {
   obterConfigDashboardPA,
   salvarConfigDashboardPA,
   obterConfigSistema,
+  listarOpcoesTriagemPA,
   salvarConfigSistema,
   listarAgendasEct,
   listarProcedimentosEct,
@@ -1067,4 +1090,3 @@ module.exports = {
   toggleRelatorioTasy,
   obterTelemetriaServidor
 };
-

@@ -31,7 +31,7 @@ function getInicioPlantao(turno) {
 }
 
 async function findSetoresInternacao() {
-  const conn = await getConnection();
+  const conn = customGetConnection ? await customGetConnection() : await getConnection();
   try {
     const result = await conn.execute(
       `SELECT cd_setor_atendimento, ds_setor_atendimento
@@ -541,10 +541,21 @@ async function findPacientesDecididos() {
 }
 
 async function findDetalhesInternacao(nrAtendimento, nrSeqTempl) {
-  const placeholders = nrSeqTempl ? String(nrSeqTempl).split(',').map(() => '?').join(',') : '';
-  const binds = nrSeqTempl ? [nrAtendimento, ...String(nrSeqTempl).split(',')] : [nrAtendimento];
+  const templates = String(nrSeqTempl || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => /^\d+$/.test(value));
 
-  const conn = await getConnection();
+  if (templates.length === 0) return [];
+
+  const binds = { nr_atendimento: String(nrAtendimento) };
+  const placeholders = templates.map((template, index) => {
+    const bindName = `templ_${index}`;
+    binds[bindName] = template;
+    return `:${bindName}`;
+  }).join(', ');
+
+  const conn = customGetConnection ? await customGetConnection() : await getConnection();
   let execErr = null;
   let result;
   try {
@@ -552,18 +563,20 @@ async function findDetalhesInternacao(nrAtendimento, nrSeqTempl) {
       `SELECT *
        FROM (
          SELECT
-           a.nr_seq_temp_conteudo,
+           a.nr_sequencia AS nr_seq_temp_conteudo,
            b.ds_resultado,
-           ROW_NUMBER() OVER (PARTITION BY a.nr_seq_temp_conteudo ORDER BY b.dt_atualizacao DESC) AS rn
+           ROW_NUMBER() OVER (PARTITION BY a.nr_sequencia ORDER BY b.dt_atualizacao DESC) AS rn
          FROM
-           tpl_guia_conteudo_v a
-           JOIN ehr_registro_conteudo b ON a.nr_seq_temp_conteudo = b.nr_seq_temp_conteudo
-           JOIN ehr_registro c ON b.nr_seq_reg = c.nr_sequencia
+           ehr_registro c
+           JOIN ehr_reg_template rt ON rt.nr_seq_reg = c.nr_sequencia
+           JOIN ehr_reg_elemento b ON b.nr_seq_reg_template = rt.nr_sequencia
+           JOIN ehr_template_conteudo_v a ON a.nr_sequencia = b.nr_seq_temp_conteudo
          WHERE
            c.nr_atendimento = :nr_atendimento
            AND c.dt_inativacao IS NULL
            AND c.dt_liberacao IS NOT NULL
-           AND a.nr_seq_temp_conteudo IN (${placeholders})
+           AND rt.dt_inativacao IS NULL
+           AND rt.nr_seq_template IN (${placeholders})
        )
        WHERE rn = 1`,
       binds
@@ -671,10 +684,9 @@ async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisic
     await conn.commit();
     let warnings = [];
 
-    // Gera nova senha na fila de internação indicada na configuração (ou fallback fila 18)
+    // Gera entrada na fila de internação indicada (Fila 18 = PA - INTERNAÇÃO) para cair por nome (Avulso)
     try {
-      const configPA = configCache.getDashboardPAConfig();
-      const nrFilaDestino = (configPA && configPA.nr_sequencia_fila) ? Number(configPA.nr_sequencia_fila) : 18;
+      const nrFilaDestino = 18;
 
       if (nrFilaDestino) {
         // 1. Busca dados do paciente e senha anterior vinculada ao atendimento
@@ -713,17 +725,11 @@ async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisic
           }
         }
 
-        // 3. Gera nova sequência e próximo número diário da fila destino
+        // 3. Gera nova sequência da fila destino (Sem gerar numero de senha, para cair por nome)
         const seqPwdRes = await conn.execute(`SELECT PACIENTE_SENHA_FILA_SEQ.NEXTVAL AS id FROM dual`);
         const newSeqPwd = seqPwdRes.rows[0].ID;
 
-        const maxPwdRes = await conn.execute(
-          `SELECT NVL(MAX(cd_senha_gerada), 0) + 1 AS proxima FROM paciente_senha_fila WHERE nr_seq_fila_senha = :fila AND TRUNC(dt_geracao_senha) = TRUNC(SYSDATE)`,
-          { fila: nrFilaDestino }
-        );
-        const proximaSenha = maxPwdRes.rows[0].PROXIMA;
-
-        // 4. Insere novo ticket na fila com vínculo do paciente
+        // 4. Insere novo ticket na fila APENAS POR NOME
         await conn.execute(
           `INSERT INTO paciente_senha_fila (
              nr_sequencia, dt_atualizacao, nm_usuario, dt_atualizacao_nrec, nm_usuario_nrec,
@@ -732,24 +738,17 @@ async function aceitarInternacao(nrAtendimento, nmUsuario, motivo, cdPessoaFisic
              dt_chamada, dt_primeira_chamada, dt_fim_atendimento, dt_inutilizacao, dt_utilizacao
            ) VALUES (
              :seq, SYSDATE, :usuario, SYSDATE, :usuario,
-             :cd_senha, SYSDATE, :fila, :fila,
+             NULL, SYSDATE, :fila, :fila,
              1, :cd_pf, :nm_paciente, 2,
              NULL, NULL, NULL, NULL, NULL
            )`,
           {
             seq: newSeqPwd,
             usuario: nmUsuario,
-            cd_senha: proximaSenha,
             fila: nrFilaDestino,
             cd_pf: cdPFPaciente ? String(cdPFPaciente) : null,
             nm_paciente: nmPaciente ? String(nmPaciente).substring(0, 100) : null
           }
-        );
-
-        // 5. Vincula a nova senha gerada ao prontuário do paciente no TASY
-        await conn.execute(
-          `UPDATE atendimento_paciente SET nr_seq_pac_senha_fila = :seq WHERE nr_atendimento = :nr`,
-          { seq: newSeqPwd, nr: nrAtendimento }
         );
 
         await conn.commit();

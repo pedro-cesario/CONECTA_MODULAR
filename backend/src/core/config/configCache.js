@@ -53,6 +53,9 @@ function setCacheForTest(newCache) {
 }
 
 async function ensureAccessSchema() {
+  
+  
+
   await run(`CREATE TABLE IF NOT EXISTS configuracoes_sistema (
     chave TEXT PRIMARY KEY,
     valor TEXT NOT NULL,
@@ -1170,7 +1173,11 @@ async function togglePassagemCheckbox(id, ativo) {
   return { success: true, id, ativo: val };
 }
 
+
+
+
 module.exports = {
+  
   setCacheForTest,
   load,
   loadConfig: load,

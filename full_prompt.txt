@@ -1,0 +1,1316 @@
+<USER_REQUEST>
+Você atuará como implementador frontend do módulo Triagem P.A. do Conecta HEAL.
+
+Projeto:
+
+/media/SAAS/SAAS/CONECTA_MODULAR/
+
+OBJETIVO:
+
+Aplicar EXATAMENTE o padrão visual já aprovado para:
+
+1. Dashboard do Pronto Atendimento;
+2. Fila de Triagem P.A.;
+3. listagem de pacientes do Pronto Atendimento;
+4. modal completo da Triagem P.A.;
+5. todas as etapas do fluxo do enfermeiro.
+
+IMPORTANTE:
+
+O design já foi aprovado.
+
+NÃO criar uma nova proposta visual.
+
+NÃO reinterpretar o layout.
+
+NÃO redesenhar por conta própria.
+
+NÃO mudar a identidade do Conecta.
+
+NÃO alterar regras clínicas.
+
+NÃO alterar integrações TASY por motivo visual.
+
+O objetivo desta tarefa é:
+
+CODIFICAR FIELMENTE AS REFERÊNCIAS VISUAIS APROVADAS.
+
+==================================================
+REGRA PRINCIPAL
+==================================================
+
+AS IMAGENS SÃO A FONTE DE VERDADE VISUAL.
+
+A descrição textual deste prompt serve para explicar comportamento, composição e restrições.
+
+Se houver divergência entre:
+
+- interpretação própria;
+- layout atual;
+- preferência automática da LLM;
+
+e a imagem de referência:
+
+A IMAGEM DE REFERÊNCIA VENCE.
+
+==================================================
+PASTA OFICIAL DE DESIGN
+==================================================
+
+Todas as referências estão em:
+
+/media/SAAS/SAAS/CONECTA_MODULAR/design/pronto atendimento/modal triagem/
+
+ANTES DE CODIFICAR:
+
+1. listar os arquivos desta pasta;
+2. abrir TODAS as imagens;
+3. analisar individualmente cada referência;
+4. comparar cada uma com a interface atual;
+5. somente depois iniciar alterações de código.
+
+NÃO implementar baseado somente no texto deste prompt.
+
+==================================================
+ARQUIVOS VISUAIS OFICIAIS
+==================================================
+
+Use estes arquivos como base oficial do layout:
+
+1. dashboard pronto atendimento.png
+
+2. modal_de_triagem_p.a._médica.png
+
+3. confirmação_de_paciente_na_triagem_p.a.png
+
+4. triagem_p.a._queixa_principal.png
+
+5. tela_de_triagem_p.a._alergias.png
+
+6. modal_de_triagem_com_sinais_vitais.png
+
+7. tela_de_triagem_médica_modernizada.png
+
+8. interface_de_triagem_p.a._com_escala_de_glasgow.png
+
+9. revisão_da_triagem_p.a._em_vermelho.png
+
+Caso algum arquivo possua pequena diferença de extensão ou normalização de acentos no filesystem:
+
+localizar o equivalente pelo nome.
+
+NÃO ignorar nenhuma referência.
+
+==================================================
+MAPEAMENTO DAS REFERÊNCIAS
+==================================================
+
+### dashboard pronto atendimento.png
+
+Fonte de verdade para:
+
+- Fila de Triagem P.A.;
+- cabeçalho da fila;
+- seletor de setor;
+- botão Avulso;
+- botão Próxima Senha;
+- botão atualizar;
+- agrupamento PA - NORMAL;
+- cards das senhas;
+- posição dos botões Chamar / Atender / Descartar;
+- área principal do Pronto Atendimento;
+- cards de indicadores;
+- barra de atualização;
+- listagem dos pacientes do Pronto Atendimento;
+- proporção entre coluna esquerda e área direita.
+
+### modal_de_triagem_p.a._médica.png
+
+Fonte de verdade para:
+
+- entrada do modal;
+- identificação;
+- estrutura geral do modal;
+- cabeçalho;
+- stepper;
+- cards de identificação;
+- busca de paciente;
+- footer.
+
+### confirmação_de_paciente_na_triagem_p.a.png
+
+Fonte de verdade para:
+
+- paciente selecionado;
+- confirmação de dados;
+- ação Voltar à busca;
+- organização das informações antes de iniciar a triagem.
+
+### triagem_p.a._queixa_principal.png
+
+Fonte de verdade para:
+
+- Queixa Principal;
+- resumo compacto do paciente;
+- textarea;
+- observações;
+- footer das etapas clínicas.
+
+### tela_de_triagem_p.a._alergias.png
+
+Fonte de verdade para:
+
+- consulta de alergias;
+- chips/itens de alergias existentes;
+- registro de nova alergia;
+- Nega alergias.
+
+### modal_de_triagem_com_sinais_vitais.png
+
+Fonte de verdade para:
+
+- Sinais Vitais;
+- disposição dos campos;
+- unidades;
+- resumo rápido.
+
+### tela_de_triagem_médica_modernizada.png
+
+Fonte de verdade para:
+
+- Histórico de Saúde;
+- Estado Geral;
+- Comportamento;
+- Sintomas Gripais.
+
+### interface_de_triagem_p.a._com_escala_de_glasgow.png
+
+Fonte de verdade para:
+
+- Glasgow;
+- disposição Ocular / Verbal / Motora;
+- Total Glasgow;
+- preview dos critérios da Escala de Triagem P.A.
+
+### revisão_da_triagem_p.a._em_vermelho.png
+
+Fonte de verdade para:
+
+- Revisão;
+- resumo final;
+- classificação;
+- critérios identificados;
+- botão Finalizar Triagem.
+
+==================================================
+1. DASHBOARD PRONTO ATENDIMENTO
+==================================================
+
+Refazer visualmente a tela externa utilizando:
+
+dashboard pronto atendimento.png
+
+como referência prioritária.
+
+Manter arquitetura atual:
+
+┌─────────────────────────┬─────────────────────────────────────┐
+│ Fila de Triagem P.A.    │ Pronto Atendimento                 │
+│                         │                                     │
+│ senhas                  │ pacientes / informações             │
+│                         │                                     │
+└─────────────────────────┴─────────────────────────────────────┘
+
+==================================================
+2. FILA DE TRIAGEM P.A.
+==================================================
+
+A fila deve ficar claramente separada da área de pacientes.
+
+Cabeçalho azul/navy:
+
+Fila de Triagem (P.A.)
+
+Abaixo:
+
+Setor
+
+[ P.A. - NORMAL ▼ ]
+
+Ações:
+
+Avulso
+
+Próxima Senha
+
+Atualizar
+
+==================================================
+3. AGRUPAMENTO DE FILA
+==================================================
+
+Exibir:
+
+PA - NORMAL
+
+com contador de senhas.
+
+Visual conforme:
+
+dashboard pronto atendimento.png
+
+Não inventar outro formato de accordion/card.
+
+==================================================
+4. CARD DA SENHA
+==================================================
+
+Cada senha deverá permanecer compacta.
+
+Mostrar:
+
+Número da senha
+
+Exemplo:
+
+265
+P 265
+
+Tempo de espera
+
+Status:
+
+Aguardando identificação
+
+Ações:
+
+Descartar
+Chamar
+Atender
+
+Não aumentar desnecessariamente altura dos cards.
+
+==================================================
+5. PRONTO ATENDIMENTO — ÁREA DIREITA
+==================================================
+
+Cabeçalho:
+
+Pronto Atendimento
+Conecta Heal
+
+Indicadores:
+
+TOTAL PACIENTES
+
+DECIDIDOS
+
+Horário/data
+
+Turno
+
+Abaixo:
+
+barra de atualização automática.
+
+==================================================
+6. LISTAGEM DE PACIENTES DO PRONTO ATENDIMENTO
+==================================================
+
+IMPORTANTE.
+
+O usuário aprovou especificamente o CARD MENOR.
+
+NÃO utilizar card grande.
+
+NÃO utilizar avatar.
+
+NÃO utilizar bonequinho à esquerda.
+
+A referência correta é:
+
+dashboard pronto atendimento.png
+
+O card deve iniciar diretamente com:
+
+Nome do paciente
+
+Exemplo:
+
+Pedro Henrique Felicio Teles
+
+Abaixo, informações compactas como:
+
+# 773931
+Pronto Atendimento
+01
+PMMG
+
+ou os equivalentes reais existentes.
+
+==================================================
+REGRA DO CARD
+==================================================
+
+O card de paciente deve ser:
+
+- pequeno;
+- horizontal;
+- discreto;
+- limpo;
+- fácil de escanear;
+- semelhante ao tamanho atual;
+- harmonizado com o novo visual.
+
+PROIBIDO:
+
+- avatar grande;
+- círculo com usuário;
+- card ocupando largura exagerada;
+- card com altura excessiva.
+
+==================================================
+7. ESTADO SEM SELEÇÃO
+==================================================
+
+Na área principal do Pronto Atendimento, quando nenhum paciente estiver sendo visualizado:
+
+mostrar empty state semelhante à referência:
+
+Selecione um paciente da fila
+
+com ícone discreto e texto auxiliar.
+
+Não deixar área visualmente quebrada.
+
+==================================================
+8. MODAL TRIAGEM P.A.
+==================================================
+
+TODO o atendimento deverá usar um único padrão visual.
+
+Cabeçalho fixo:
+
+Triagem P.A.
+
+Senha P 265
+
+X fechar
+
+Azul/navy conforme referência.
+
+==================================================
+9. STEPPER ÚNICO
+==================================================
+
+Manter stepper horizontal em todas as telas.
+
+Etapas:
+
+1. Identificação
+2. Queixa
+3. Alergias
+4. Sinais Vitais
+5. Histórico
+6. Glasgow
+7. Escala
+8. Revisão
+
+Etapa atual:
+
+azul.
+
+Etapas concluídas:
+
+check azul.
+
+Próximas etapas:
+
+cinza.
+
+O stepper deve manter exatamente a mesma posição, proporção e linguagem ao navegar entre etapas.
+
+==================================================
+10. CONTEÚDO DO MODAL
+==================================================
+
+O conteúdo central muda.
+
+A estrutura externa NÃO.
+
+Sempre manter:
+
+Header
+↓
+Stepper
+↓
+Conteúdo
+↓
+Footer
+
+Não reconstruir o modal inteiro a cada etapa de forma visualmente inconsistente.
+
+==================================================
+11. IDENTIFICAÇÃO
+==================================================
+
+Referência:
+
+modal_de_triagem_p.a._médica.png
+
+Criar bloco:
+
+Condição de Identificação
+
+Com três radio cards:
+
+Identificado
+
+Descrição:
+Paciente apresentou documento oficial.
+
+Não apresentou identificação
+
+Descrição:
+Paciente informou quem é, mas sem documento.
+
+Não identificado
+
+Descrição:
+Paciente não consegue informar quem é.
+
+==================================================
+12. VISUAL DOS RADIO CARDS
+==================================================
+
+Evitar o layout antigo vertical gigante.
+
+Usar três cards lado a lado conforme referência.
+
+Estado selecionado:
+
+borda azul
+fundo azul muito leve
+radio marcado
+
+Não identificado pode possuir destaque visual discreto, conforme referência.
+
+==================================================
+13. BUSCA DO PACIENTE
+==================================================
+
+Abaixo:
+
+Buscar paciente no TASY
+
+Campo:
+
+Nome, CPF, prontuário ou data de nascimento
+
+Manter a busca inteligente já implementada.
+
+Não mudar regra funcional.
+
+==================================================
+14. EMPTY STATE DA BUSCA
+==================================================
+
+Antes da pesquisa:
+
+ícone discreto
+
+Digite para pesquisar no TASY...
+
+Botão:
+
+Cadastrar Novo Paciente (Básico)
+
+==================================================
+15. CONFIRMAÇÃO DO PACIENTE
+==================================================
+
+Referência:
+
+confirmação_de_paciente_na_triagem_p.a.png
+
+Após selecionar paciente:
+
+mostrar:
+
+Paciente selecionado
+
+Link:
+
+Voltar à busca
+
+Informações:
+
+Nome Completo
+Data de Nascimento
+CPF
+Nome da Mãe
+
+Status:
+
+Paciente localizado no TASY
+
+==================================================
+16. AVATAR NA CONFIRMAÇÃO
+==================================================
+
+Não é necessário avatar.
+
+Priorizar conteúdo clínico/demográfico.
+
+==================================================
+17. INÍCIO DA TRIAGEM
+==================================================
+
+Footer:
+
+Cancelar
+
+Avançar e Iniciar Triagem
+
+Após iniciar:
+
+seguir para Queixa mantendo o mesmo modal.
+
+==================================================
+18. RESUMO COMPACTO DO PACIENTE
+==================================================
+
+Nas etapas clínicas seguintes, mostrar no topo um resumo compacto.
+
+Exemplo:
+
+Pedro Henrique Felicio Teles
+Atendimento #773931 • P.A. - NORMAL • P 265
+
+ou informações equivalentes reais.
+
+Não utilizar avatar.
+
+Não ocupar espaço excessivo.
+
+==================================================
+19. QUEIXA
+==================================================
+
+Referência:
+
+triagem_p.a._queixa_principal.png
+
+Mostrar:
+
+Queixa principal *
+
+Textarea principal.
+
+Obrigatório.
+
+Abaixo:
+
+Observações iniciais (opcional)
+
+Não inventar outros campos.
+
+==================================================
+20. ALERGIAS
+==================================================
+
+Referência:
+
+tela_de_triagem_p.a._alergias.png
+
+Seção:
+
+Alergias cadastradas no TASY
+
+Mostrar alergias ativas.
+
+Exemplo visual:
+
+Dipirona
+Penicilina
+
+Abaixo:
+
+Registrar nova alergia
+
+Campo + Adicionar
+
+Ao lado:
+
+Nega alergias
+
+Com texto explicativo.
+
+==================================================
+21. SINAIS VITAIS
+==================================================
+
+Referência:
+
+modal_de_triagem_com_sinais_vitais.png
+
+Campos:
+
+PA Sistólica
+PA Diastólica
+FC
+FR
+Temperatura
+SpO2
+Peso
+
+Usar grid visual conforme imagem.
+
+Mostrar unidades.
+
+==================================================
+22. RESUMO RÁPIDO
+==================================================
+
+Manter painel lateral:
+
+Resumo rápido
+
+Exibir os valores informados.
+
+IMPORTANTE:
+
+Não inventar interpretação clínica visual.
+
+Se o sistema já possui regra para destacar valores conforme classificação configurada, usar essa informação.
+
+Não colocar vermelho em valor apenas por decisão visual hardcoded.
+
+==================================================
+23. HISTÓRICO
+==================================================
+
+Referência:
+
+tela_de_triagem_médica_modernizada.png
+
+Organizar em quatro áreas:
+
+Histórico de Saúde
+
+Estado Geral
+
+Comportamento
+
+Sintomas Gripais
+
+==================================================
+24. HISTÓRICO DE SAÚDE
+==================================================
+
+Renderizar opções vindas do Admin.
+
+Não substituir pelas opções ilustrativas da imagem caso sejam diferentes da configuração real.
+
+A imagem define:
+
+LAYOUT.
+
+O Admin define:
+
+CONTEÚDO.
+
+==================================================
+25. ESTADO GERAL
+==================================================
+
+Mesmo princípio:
+
+Imagem define estrutura visual.
+
+Configuração define opções e regras.
+
+==================================================
+26. COMPORTAMENTO
+==================================================
+
+Usar grid compacto de checkboxes.
+
+Conteúdo vem do Admin.
+
+==================================================
+27. SINTOMAS GRIPAIS
+==================================================
+
+Sim
+Não
+
+Observação quando aplicável.
+
+Manter implementação funcional atual.
+
+==================================================
+28. GLASGOW
+==================================================
+
+Referência:
+
+interface_de_triagem_p.a._com_escala_de_glasgow.png
+
+Organizar:
+
+Abertura Ocular
+
+Resposta Verbal
+
+Resposta Motora
+
+Cada uma em coluna própria.
+
+==================================================
+29. TOTAL GLASGOW
+==================================================
+
+Mostrar card discreto:
+
+Total Glasgow
+
+13
+
+ou valor calculado.
+
+O frontend não altera regra.
+
+Usar cálculo existente.
+
+==================================================
+30. PREVIEW DA ESCALA
+==================================================
+
+Na parte inferior:
+
+Escala de Triagem P.A. (preview)
+
+Mostrar critérios identificados.
+
+Exemplo:
+
+V2 - Sinais vitais alterados
+
+A3 - Choro intenso
+
+Conteúdo real deve vir do motor.
+
+Não hardcodar.
+
+==================================================
+31. ESCALA
+==================================================
+
+A etapa 7 deve utilizar o mesmo padrão visual.
+
+Mostrar:
+
+- critérios automáticos;
+- critérios manuais;
+- classificação sugerida/resolvida;
+- evidências.
+
+Tudo conforme configuração do Admin.
+
+==================================================
+32. REVISÃO
+==================================================
+
+Referência:
+
+revisão_da_triagem_p.a._em_vermelho.png
+
+Mostrar cards para:
+
+Paciente
+
+Queixa principal
+
+Alergias
+
+Sinais Vitais
+
+Histórico / Estado Geral / Comportamento
+
+Glasgow
+
+Escala de Triagem P.A.
+
+Classificação final
+
+==================================================
+33. CLASSIFICAÇÃO FINAL
+==================================================
+
+Mostrar card destacado.
+
+Exemplo da referência:
+
+VERMELHO
+
+Mas a cor/descrição REAL deve vir do motor/configuração.
+
+Não hardcodar Vermelho.
+
+==================================================
+34. CRITÉRIOS IDENTIFICADOS
+==================================================
+
+Mostrar todos os critérios relevantes.
+
+Mesmo critérios de menor prioridade devem permanecer visíveis conforme lógica atual.
+
+==================================================
+35. FINALIZAÇÃO
+==================================================
+
+Mostrar callout:
+
+Triagem pronta para finalização
+
+Botão:
+
+Finalizar Triagem
+
+==================================================
+36. FOOTER PADRÃO
+==================================================
+
+Todas as etapas devem utilizar o mesmo footer.
+
+Composição:
+
+Voltar
+
+Salvar rascunho
+
+Avançar
+
+Na última etapa:
+
+Voltar
+
+Salvar rascunho
+
+Finalizar Triagem
+
+==================================================
+37. SALVAR RASCUNHO
+==================================================
+
+Manter funcionalidade atual.
+
+Não alterar lógica de autosave/versionamento por motivo visual.
+
+==================================================
+38. COESÃO
+==================================================
+
+TODAS as telas precisam parecer partes do MESMO modal.
+
+Padronizar:
+
+- altura do header;
+- stepper;
+- margins;
+- padding;
+- cards;
+- border-radius;
+- border;
+- sombras;
+- tipografia;
+- títulos;
+- subtítulos;
+- ícones;
+- inputs;
+- checkboxes;
+- radios;
+- buttons;
+- footer.
+
+==================================================
+39. IDENTIDADE DO CONECTA
+==================================================
+
+Preservar:
+
+navy
+azul
+branco
+cinza muito claro
+
+Visual institucional hospitalar.
+
+Não utilizar:
+
+gradientes extravagantes;
+glassmorphism exagerado;
+cores neon;
+animações desnecessárias;
+componentes fora da identidade atual.
+
+==================================================
+40. ÍCONES
+==================================================
+
+Utilizar a biblioteca de ícones já adotada pelo projeto.
+
+Não adicionar nova biblioteca apenas para imitar a referência.
+
+Usar equivalentes visuais existentes.
+
+==================================================
+41. CSS
+==================================================
+
+Evitar style inline espalhado.
+
+Criar/organizar estilos de forma centralizada conforme arquitetura existente.
+
+Preferência por classes reutilizáveis para:
+
+- triagem modal
+- triagem card
+- step
+- summary card
+- form section
+- footer
+- patient summary
+- queue card
+
+==================================================
+42. NÃO QUEBRAR O LAYOUT GLOBAL
+==================================================
+
+Houve incidente anterior de HTML estrutural.
+
+Portanto:
+
+CUIDADO REDOBRADO COM index.html.
+
+Não deixar:
+
+div extra;
+tag não fechada;
+workspace fora de #screen-app;
+modal alterando estrutura global.
+
+Após modificar HTML:
+
+executar validação estrutural.
+
+==================================================
+43. MODAIS
+==================================================
+
+O modal da Triagem deve continuar fora do fluxo normal do workspace conforme padrão da aplicação.
+
+Quando fechado:
+
+não pode ocupar espaço na página.
+
+==================================================
+44. ARQUITETURA FRONTEND
+==================================================
+
+Antes de alterar, revisar:
+
+frontend/index.html
+
+frontend/src/modules/dashboard/dashboard.js
+
+frontend/src/modules/triagem-pa/TriagemPaClinico.js
+
+frontend/src/modules/triagem-pa/TriagemPaUI.js
+
+frontend/src/modules/recepcao/recepcao.js
+
+CSS relacionados.
+
+==================================================
+45. NÃO ALTERAR FUNCIONALIDADE
+==================================================
+
+Esta tarefa é VISUAL.
+
+NÃO alterar:
+
+- SQL;
+- PL/SQL;
+- TASY;
+- repositories Oracle;
+- classificação;
+- regras clínicas;
+- idempotência;
+- finalização;
+- fila;
+- rascunho;
+- assinatura;
+- rotas;
+
+exceto se for estritamente necessário para renderização de dados já existentes.
+
+==================================================
+46. REUTILIZAR DADOS REAIS
+==================================================
+
+Não codificar os dados presentes nas imagens.
+
+Exemplos ilustrativos como:
+
+Pedro Henrique Felicio Teles
+773931
+PMMG
+180/100
+Glasgow 13
+
+NÃO devem virar dados fixos.
+
+Usar os dados reais fornecidos pelo sistema.
+
+==================================================
+47. IMAGEM = DESIGN, NÃO DADO
+==================================================
+
+Regra obrigatória:
+
+AS IMAGENS DEFINEM A APRESENTAÇÃO.
+
+O SISTEMA EXISTENTE DEFINE OS DADOS E REGRAS.
+
+==================================================
+48. RESPONSIVIDADE
+==================================================
+
+Foco:
+
+desktop institucional do HEAL.
+
+Mas garantir que:
+
+- modal não ultrapasse viewport;
+- corpo tenha scroll interno;
+- header permaneça visível;
+- footer permaneça visível quando possível;
+- campos não quebrem de forma grotesca em resolução menor.
+
+==================================================
+49. TESTES VISUAIS
+==================================================
+
+Após implementação, validar manualmente todas as etapas:
+
+Dashboard
+
+Identificação
+
+Paciente selecionado
+
+Queixa
+
+Alergias
+
+Sinais Vitais
+
+Histórico
+
+Glasgow
+
+Escala
+
+Revisão
+
+==================================================
+50. TESTE DE NAVEGAÇÃO
+==================================================
+
+Abrir modal.
+
+Avançar todas as etapas.
+
+Voltar todas as etapas.
+
+Fechar.
+
+Reabrir.
+
+Continuar triagem.
+
+Confirmar que o layout permanece consistente.
+
+==================================================
+51. TESTE DE DADOS
+==================================================
+
+Confirmar que os componentes visuais continuam ligados ao state real.
+
+Nenhuma alteração visual pode quebrar:
+
+- autosave;
+- retomada;
+- classificação;
+- validações;
+- finalização.
+
+==================================================
+52. SYNTAX CHECK
+==================================================
+
+Executar syntax checks nos JS modificados.
+
+No mínimo:
+
+dashboard.js
+TriagemPaClinico.js
+TriagemPaUI.js
+recepcao.js
+
+e qualquer novo arquivo JS criado.
+
+==================================================
+53. HTML CHECK
+==================================================
+
+Validar estruturalmente:
+
+frontend/index.html
+
+Confirmar:
+
+- tags balanceadas;
+- IDs não duplicados;
+- #screen-app correto;
+- workspaces corretos;
+- modal não quebra a shell.
+
+==================================================
+54. NÃO FAZER REDESIGN ADICIONAL
+==================================================
+
+Não aproveitar esta tarefa para:
+
+- trocar menu;
+- redesenhar navbar;
+- mudar Recepção;
+- mudar Dashboard de Pacientes;
+- alterar outros módulos.
+
+Escopo:
+
+Pronto Atendimento
++
+Fila de Triagem P.A.
++
+Modal Triagem P.A.
+
+==================================================
+55. REGISTRO DA IMPLEMENTAÇÃO
+==================================================
+
+Gerar:
+
+/media/SAAS/SAAS/CONECTA_MODULAR/RELATORIO_APLICACAO_VISUAL_TRIAGEM_PA.md
+
+Estrutura:
+
+# 1. Resumo
+
+# 2. Imagens de referência analisadas
+
+Listar os 9 arquivos.
+
+# 3. Dashboard Pronto Atendimento
+
+# 4. Fila de Triagem
+
+# 5. Card da senha
+
+# 6. Card do paciente
+
+# 7. Modal
+
+# 8. Stepper
+
+# 9. Identificação
+
+# 10. Confirmação do paciente
+
+# 11. Queixa
+
+# 12. Alergias
+
+# 13. Sinais Vitais
+
+# 14. Histórico
+
+# 15. Glasgow
+
+# 16. Escala
+
+# 17. Revisão
+
+# 18. CSS/componentes reutilizados
+
+# 19. Arquivos alterados
+
+# 20. Validação HTML
+
+# 21. Syntax checks
+
+# 22. Regressões verificadas
+
+# 23. Resultado
+
+==================================================
+CRITÉRIOS DE ACEITE
+==================================================
+
+Somente considerar concluído se:
+
+1. dashboard estiver visualmente aderente à imagem;
+2. fila estiver aderente à imagem;
+3. card de paciente do P.A. estiver COMPACTO;
+4. card de paciente NÃO possuir avatar;
+5. modal seguir padrão aprovado;
+6. todas as etapas forem visualmente coesas;
+7. stepper for consistente;
+8. footer for consistente;
+9. dados continuarem dinâmicos;
+10. regras continuarem vindas do Admin;
+11. nenhuma funcionalidade for quebrada;
+12. nenhum hardcode de exemplo for introduzido;
+13. layout global continuar íntegro;
+14. syntax checks passarem;
+15. HTML estrutural continuar válido.
+
+==================================================
+RESPOSTA FINAL
+==================================================
+
+Depois da implementação, responda somente:
+
+1. Todas as imagens foram analisadas: SIM/NÃO
+2. Dashboard P.A. aplicado: SIM/NÃO
+3. Fila de Triagem aplicada: SIM/NÃO
+4. Card do paciente compacto: SIM/NÃO
+5. Avatar removido do card: SIM/NÃO
+6. Modal completo aplicado: SIM/NÃO
+7. Todas as etapas ficaram coesas: SIM/NÃO
+8. Dados continuam dinâmicos: SIM/NÃO
+9. Regras clínicas preservadas: SIM/NÃO
+10. Sem regressão funcional: SIM/NÃO
+11. HTML validado: SIM/NÃO
+12. Syntax checks passaram: SIM/NÃO
+13. Caminho do relatório:
+
+/media/SAAS/SAAS/CONECTA_MODULAR/RELATORIO_APLICACAO_VISUAL_TRIAGEM_PA.md
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-07T20:50:23-03:00.
+</ADDITIONAL_METADATA>

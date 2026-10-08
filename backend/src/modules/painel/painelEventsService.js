@@ -31,11 +31,14 @@ function addClient(painelId, res) {
     clients.set(pId, new Set());
   }
   clients.get(pId).add(res);
+  
+  console.log(`[SSE] Novo cliente conectado no painel: ${pId}. Total neste painel: ${clients.get(pId).size}`);
 
   // Heartbeat inicial
   res.write(`event: conectado\ndata: ${JSON.stringify({ painelId: pId, timestamp: new Date().toISOString() })}\n\n`);
 
   res.on('close', () => {
+    console.log(`[SSE] Cliente desconectado do painel: ${pId}`);
     removeClient(pId, res);
   });
 }
@@ -66,11 +69,14 @@ function broadcastChamada(painelId, dadosChamada) {
   const message = `event: chamada\ndata: ${payload}\n\n`;
 
   // Envia para o painel específico
+  console.log(`[SSE] Tentando enviar chamada para o painel ${pId}. Clientes conectados neste painel: ${clients.has(pId) ? clients.get(pId).size : 0}`);
   if (clients.has(pId)) {
     clients.get(pId).forEach(client => {
       try {
         client.write(message);
+        console.log(`[SSE] Enviado payload de chamada para cliente no painel ${pId}`);
       } catch (err) {
+        console.error(`[SSE] Erro ao escrever no cliente do painel ${pId}:`, err);
         removeClient(pId, client);
       }
     });

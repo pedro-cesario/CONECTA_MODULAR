@@ -14,7 +14,7 @@ import { loadModule } from './core/moduleLoader.js';
 import { setupEvolucao } from './modules/evolucao/evolucao.js';
 
 // Expose global bridge for backwards compatibility
-window.conectaCore = {
+window.conectaCore = Object.assign(window.conectaCore || {}, {
   ...router,
   ...draft,
   ...auth,
@@ -24,7 +24,7 @@ window.conectaCore = {
   api,
   state,
   MODULOS_CONFIG
-};
+});
 window.conectaApp = window.conectaCore;
 
 // Global error handlers

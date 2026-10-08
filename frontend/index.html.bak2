@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#00387A">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Conecta Heal</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/main.css?v=359" rel="stylesheet">
+  <script>
+    if (sessionStorage.getItem('session_active') === '1') {
+      document.documentElement.classList.add('has-session');
+    }
+  </script>
+</head>
+<body>
+
+  <div id="screen-login" class="screen">
+    <div class="login-wrapper">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-icon">
+            <i class="bi bi-heart-pulse"></i>
+          </div>
+          <h1>Conecta HEAL</h1>
+          <p class="subtitle" id="app-subtitle">Integrações Assistenciais</p>
+        </div>
+        <form id="form-login" autocomplete="off">
+          <label class="login-field-label" for="inp-usuario">Usuário</label>
+          <div class="input-group-custom">
+            <i class="bi bi-person"></i>
+            <input type="text" id="inp-usuario" placeholder="Nome de usuário" required>
+          </div>
+          <label class="login-field-label" for="inp-senha">Senha</label>
+          <div class="input-group-custom mt-3">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="inp-senha" placeholder="Insira sua senha do Windows" required>
+            <button class="password-toggle" id="btn-toggle-password" type="button" aria-label="Exibir senha" title="Exibir senha">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-login">
+            <span class="btn-text">Entrar</span>
+            <span class="btn-loader d-none"><i class="bi bi-arrow-repeat spin"></i></span>
+          </button>
+        </form>
+        <div id="login-error" class="alert alert-danger d-none mt-3"></div>
+        <div class="login-security-note">
+          <i class="bi bi-shield-check"></i>
+          <span>Acesso seguro ao ecossistema assistencial</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-app" class="screen">
+    <nav class="topbar">
+      <div class="topbar-left" id="topbar-brand" title="Voltar ao menu">
+        <i class="bi bi-heart-pulse"></i>
+        <span class="topbar-title">Conecta HEAL</span>
+      </div>
+      <div class="topbar-nav d-none" id="topbar-nav" aria-label="Módulos do sistema">
+        <button class="topbar-nav-item d-none" id="nav-passagem" type="button">Passagem de Plantão</button>
+        <button class="topbar-nav-item d-none" id="nav-livro" type="button">Livro Administrativo</button>
+        <button class="topbar-nav-item d-none" id="nav-escala" type="button">Gestão de Escalas</button>
+        <button class="topbar-nav-item d-none" id="nav-dashboard" type="button">Dashboard de Pacientes</button>
+        <button class="topbar-nav-item d-none" id="nav-dashboard-pa" type="button">Pronto Atendimento</button>
+        <button class="topbar-nav-item d-none" id="nav-auditorias" type="button">Auditorias</button>
+        <button class="topbar-nav-item d-none" id="nav-registros" type="button">Registros</button>
+        <button class="topbar-nav-item d-none" id="nav-recepcao" type="button">Recepção</button>
+        <button class="topbar-nav-item d-none" id="nav-painel-senhas" type="button">Painel de Senhas</button>
+      </div>
+      <div class="topbar-right">
+        <div class="user-dropdown-container" id="user-dropdown-container">
+          <button class="user-badge user-badge-clickable" id="user-display" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar perfil">
+            <i class="bi bi-person-circle"></i>
+            <span class="user-copy">
+              <strong id="user-name"></strong>
+              <small id="user-profile-label">Perfil assistencial</small>
+            </span>
+            <i class="bi bi-chevron-down user-badge-chevron"></i>
+          </button>
+          <div class="user-profile-menu d-none" id="user-profile-menu" role="menu">
+            <div class="user-profile-menu-header">
+              <i class="bi bi-person-badge"></i> Alternar Perfil
+            </div>
+            <div class="user-profile-menu-list" id="user-profile-menu-list">
+              <!-- Perfis renderizados dinamicamente -->
+            </div>
+            <button class="user-profile-menu-admin d-none" id="nav-admin" type="button" title="Painel de Administração" aria-label="Administração">
+              <i class="bi bi-gear-fill"></i> Painel de Administração
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </nav>
+
+    <section class="mode-selector d-none" id="mode-selector">
+      <div class="mode-selector-card">
+        <div class="mode-heading">
+          <span class="mode-eyebrow">Integrações assistenciais</span>
+          <h3>Escolha o módulo</h3>
+          <p id="mode-context">Selecione para continuar no plantão de hoje.</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-option-btn d-none" id="btn-abrir-passagem" type="button">
+            <span class="module-icon module-icon-primary"><i class="bi bi-arrow-left-right"></i></span>
+            <span class="module-content">
+              <strong>Passagem de Plantão</strong>
+              <small>Registre intercorrências e transfira informações com segurança.</small>
+            </span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-livro" type="button">
+            <span class="module-icon module-icon-orange"><i class="bi bi-book"></i></span>
+            <span class="module-content">
+              <strong>Livro Administrativo</strong>
+              <small>Gerencie a escala, a equipe e os registros do plantão.</small>
+            </span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-escala" type="button">
+            <span class="module-icon module-icon-blue"><i class="bi bi-people"></i></span>
+            <span class="module-content">
+              <strong>Gestão de Escalas</strong>
+              <small>Gestão de turnos e escalas da equipe multidisciplinar de psicologia.</small>
+            </span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-dashboard" type="button">
+            <span class="module-icon module-icon-blue"><i class="bi bi-people"></i></span>
+            <span class="module-content">
+              <strong>Dashboard de Pacientes</strong>
+              <small>Acompanhe pacientes, alertas e indicadores assistenciais.</small>
+            </span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-dashboard-internacao" type="button">
+            <span class="module-icon module-icon-red"><i class="bi bi-hospital"></i></span>
+            <span class="module-content">
+              <strong>Pronto Atendimento</strong>
+              <small>Monitore indicações de internação e decisões do pronto atendimento.</small>
+            </span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-auditorias" type="button">
+            <span class="module-icon module-icon-primary"><i class="bi bi-clipboard2-check"></i></span>
+            <span class="module-content"><strong>Auditorias</strong><small>Registre auditorias assistenciais do Núcleo de Segurança do Paciente.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-registros" type="button">
+            <span class="module-icon module-icon-blue"><i class="bi bi-journal-bookmark"></i></span>
+            <span class="module-content"><strong>Registros</strong><small>Acolhimento a demandas espontâneas e registros assistenciais.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-recepcao" type="button">
+            <span class="module-icon module-icon-primary"><i class="bi bi-person-badge"></i></span>
+            <span class="module-content"><strong>Recepção e Acolhimento</strong><small>Cadastro de pacientes, acolhimento, abertura de atendimentos e emissão de documentos.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn d-none" id="btn-abrir-painel-senhas" type="button">
+            <span class="module-icon module-icon-orange"><i class="bi bi-tv"></i></span>
+            <span class="module-content"><strong>Painel de Senhas</strong><small>Abra o monitor de TV configurado para exibição e chamada ao vivo.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+          <button class="mode-option-btn" id="btn-abrir-evolucao" type="button">
+            <span class="module-icon module-icon-primary"><i class="bi bi-file-earmark-medical"></i></span>
+            <span class="module-content"><strong>Nova Evolução (Teste)</strong><small>Criar evolução clínica e testar validação de assinatura.</small></span>
+            <i class="bi bi-arrow-up-right module-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditorias-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditorias-voltar-home" type="button" aria-label="Voltar ao menu principal"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-choice-eyebrow">Núcleo de Segurança do Paciente</span><h1>Auditorias</h1><p>Selecione uma auditoria para registrar ou consultar seus lançamentos.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditorias-higiene-maos" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-hand-index-thumb"></i></span>
+            <span class="livro-choice-card-copy"><strong>Higiene de Mãos</strong><small>Registre oportunidades observadas e resultados de adesão.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-auditorias-processos" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clipboard2-check"></i></span>
+            <span class="livro-choice-card-copy"><strong>Auditoria de Processos</strong><small>Avalie metas de segurança do paciente conforme FO NSP 016.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditoria-processos-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-voltar" type="button" aria-label="Voltar às auditorias"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-choice-eyebrow">Auditorias</span><h1>Auditoria de Processos</h1><p>Registre uma nova avaliação ou consulte o histórico.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditoria-processos-nova" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-pencil-square"></i></span>
+            <span class="livro-choice-card-copy"><strong>Nova Auditoria</strong><small>Preencha dados do paciente, internação e avalie as metas.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-auditoria-processos-historico" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clock-history"></i></span>
+            <span class="livro-choice-card-copy"><strong>Histórico</strong><small>Recupere auditorias persistidas e gere XLSX ou PDF novamente.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="auditoria-higiene-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-auditoria-higiene-voltar" type="button" aria-label="Voltar às auditorias"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-hand-index-thumb"></i></span>
+          <div><span class="livro-choice-eyebrow">Auditorias</span><h1>Higiene de Mãos</h1><p>Registre uma nova observação ou consulte o histórico de auditorias.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-auditoria-nova" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-pencil-square"></i></span>
+            <span class="livro-choice-card-copy"><strong>Nova Auditoria</strong><small>Preencha os dados da observação e as cinco oportunidades de higiene.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-auditoria-historico" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clock-history"></i></span>
+            <span class="livro-choice-card-copy"><strong>Histórico</strong><small>Recupere auditorias persistidas e gere XLSX ou PDF novamente.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-higiene-form">
+      <header class="livro-page-header">
+        <div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-form-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-hand-index-thumb"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Nova Auditoria de Higiene de Mãos</h2><p>Registre a observação e as oportunidades avaliadas.</p></div></div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+      <div class="livro-filter-panel auditoria-form-grid" aria-label="Informações da observação">
+        <div class="livro-field"><label for="auditoria-data">Data <span class="required-star">*</span></label><input type="date" id="auditoria-data" required></div>
+        <div class="livro-field"><label for="auditoria-setor">Setor <span class="required-star">*</span></label><select id="auditoria-setor" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field"><label for="auditoria-avaliador">Avaliador <span class="required-star">*</span></label><select id="auditoria-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
+        <div class="livro-field auditoria-profissional-field"><label for="auditoria-profissional">Categoria <span class="required-star">*</span></label><select id="auditoria-profissional" class="form-select" required><option value="">Selecione...</option></select></div>
+      </div>
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-person-check"></i> Oportunidades Observadas</span></div>
+        <div class="livro-section-body">
+          <div id="auditoria-oportunidades" class="auditoria-oportunidades"></div>
+        </div>
+      </div>
+      <div class="livro-section auditoria-section"><div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div><div class="livro-section-body"><textarea id="auditoria-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div></div>
+      <div class="auditoria-feedback d-none" id="auditoria-feedback" role="status"></div>
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-auditoria-ver-historico" type="button">
+            <i class="bi bi-search"></i> Ver auditorias realizadas
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-auditoria-cancelar" type="button">Cancelar</button>
+          <button class="btn-save" id="btn-auditoria-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-historico">
+      <header class="livro-page-header"><div class="livro-page-heading"><button class="livro-page-back" id="btn-auditoria-historico-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button><span class="livro-page-icon"><i class="bi bi-clock-history"></i></span><div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Histórico de Higiene de Mãos</h2><p>Auditorias persistidas no Oracle e disponíveis para nova exportação.</p></div></div><div class="auditoria-view-toggle"><button class="btn-secondary active" id="btn-auditoria-visao-individual" type="button"><i class="bi bi-person-lines-fill"></i> Individual</button><button class="btn-secondary" id="btn-auditoria-visao-consolidada" type="button"><i class="bi bi-bar-chart-line"></i> Consolidado</button></div></header>
+      <div class="livro-preview auditoria-historico-list" id="auditoria-historico-list"><div class="loading-placeholder">Carregando auditorias...</div></div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Seleção de Paciente ────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-paciente">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-paciente-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Selecionar Paciente</h2><p>Escolha um paciente internado ontem ou utilize o sorteio aleatório para iniciar a auditoria.</p></div>
+        </div>
+      </header>
+
+      <!-- Hero Card de Sorteio Aleatório -->
+      <div class="auditoria-hero-random">
+        <div class="auditoria-hero-content">
+          <div class="auditoria-hero-icon">
+            <i class="bi bi-shuffle"></i>
+          </div>
+          <div class="auditoria-hero-copy">
+            <h3>Sorteio Aleatório de Paciente</h3>
+            <p>Sorteie instantaneamente qualquer paciente internado nos setores assistenciais ativos para auditar.</p>
+          </div>
+        </div>
+        <button class="btn-hero-random" id="btn-auditoria-processos-aleatorio" type="button">
+          <i class="bi bi-dice-5-fill"></i> Sortear e Iniciar
+        </button>
+      </div>
+
+      <!-- Seção com Barra de Busca e Grid de Pacientes -->
+      <div class="livro-section auditoria-section auditoria-pacientes-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-calendar-event"></i> Pacientes Internados Ontem</span>
+          <span class="auditoria-pacientes-counter" id="proc-pacientes-counter">0 pacientes</span>
+        </div>
+        
+        <div class="auditoria-search-bar">
+          <div class="auditoria-search-input-wrap">
+            <i class="bi bi-search"></i>
+            <input type="text" id="proc-pacientes-search" placeholder="Filtrar por nome do paciente, leito ou atendimento..." autocomplete="off">
+            <button type="button" id="btn-proc-search-clear" class="btn-search-clear d-none" aria-label="Limpar busca"><i class="bi bi-x-circle-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="livro-section-body" style="padding-top: 0.5rem;">
+          <div id="proc-pacientes-ontem-list" class="auditoria-pacientes-grid">
+            <div class="loading-placeholder"><i class="bi bi-arrow-repeat spin"></i> Carregando pacientes...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Formulário ──────────────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-form">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-form-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Nova Auditoria de Processos</h2><p>Avalie as metas de segurança do paciente conforme FO NSP 016.</p></div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <!-- Card 1: Identificação do Paciente & Leito (Campos Esmaltecidos / Readonly) -->
+      <div class="livro-section auditoria-section auditoria-glazed-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-person-vcard"></i> Identificação do Paciente & Internação</span>
+          <span class="auditoria-locked-badge"><i class="bi bi-lock-fill"></i> Dados vinculados</span>
+        </div>
+        <div class="livro-section-body">
+          <div class="auditoria-grid-3">
+            <div class="livro-field field-glazed">
+              <label for="proc-nm-paciente"><i class="bi bi-person"></i> Nome do Paciente</label>
+              <input type="text" id="proc-nm-paciente" readonly placeholder="Nome completo">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-dt-nascimento"><i class="bi bi-calendar-date"></i> Data de Nascimento</label>
+              <input type="date" id="proc-dt-nascimento" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-nr-idade"><i class="bi bi-hourglass-split"></i> Idade</label>
+              <input type="text" id="proc-nr-idade" readonly placeholder="Calculada automaticamente">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-dt-admissao"><i class="bi bi-calendar-check"></i> Admissão</label>
+              <input type="date" id="proc-dt-admissao" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-unidade-leito"><i class="bi bi-hospital"></i> Unidade / Leito</label>
+              <input type="text" id="proc-unidade-leito" readonly placeholder="Ex: UTI-Leito 03">
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="proc-nr-atendimento"><i class="bi bi-hash"></i> Atendimento</label>
+              <input type="text" id="proc-nr-atendimento" readonly placeholder="Nº do atendimento">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Dados da Auditoria & Pergunta Inicial -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-clipboard-check"></i> Dados da Auditoria</span></div>
+        <div class="livro-section-body">
+          <div class="auditoria-grid-3" style="align-items: end;">
+            <div class="livro-field"><label for="proc-dt-auditoria">Data <span class="required-star">*</span></label><input type="date" id="proc-dt-auditoria" required></div>
+            <div class="livro-field"><label for="proc-setor">Setor <span class="required-star">*</span></label><select id="proc-setor" class="form-select" required><option value="">Selecione...</option></select></div>
+            <div class="livro-field"><label for="proc-avaliador">Responsável <span class="required-star">*</span></label><select id="proc-avaliador" class="form-select" required><option value="">Selecione...</option></select></div>
+          </div>
+
+          <div class="auditoria-pergunta-item auditoria-perg-inicial" style="margin-top: 1.25rem;">
+            <span class="auditoria-pergunta-texto"><i class="bi bi-people"></i> O paciente está com acompanhante?</span>
+            <div class="auditoria-choice-group">
+              <label class="auditoria-choice-btn opt-sim"><input type="radio" name="proc-perg-acompanhante" value="S"><span><i class="bi bi-check-circle-fill"></i> Sim</span></label>
+              <label class="auditoria-choice-btn opt-nao"><input type="radio" name="proc-perg-acompanhante" value="N"><span><i class="bi bi-x-circle-fill"></i> Não</span></label>
+              <label class="auditoria-choice-btn opt-na"><input type="radio" name="proc-perg-acompanhante" value="NA"><span><i class="bi bi-dash-circle-fill"></i> NA</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container dinâmico para metas -->
+      <div id="proc-metas-container"></div>
+
+      <!-- Observações -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header"><span><i class="bi bi-chat-left-text"></i> Observações</span></div>
+        <div class="livro-section-body"><textarea id="proc-observacoes" rows="4" placeholder="Registre observações complementares da auditoria."></textarea></div>
+      </div>
+
+      <div class="auditoria-feedback d-none" id="proc-feedback" role="status"></div>
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-auditoria-processos-ver-historico" type="button">
+            <i class="bi bi-search"></i> Ver auditorias realizadas
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-auditoria-processos-cancelar" type="button">Cancelar</button>
+          <button class="btn-save" id="btn-auditoria-processos-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Auditoria de Processos: Histórico ───────────────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-auditoria-processos-historico">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-auditoria-processos-historico-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clock-history"></i></span>
+          <div><span class="livro-page-eyebrow">Auditorias · NISA</span><h2>Histórico de Auditoria de Processos</h2><p>Auditorias persistidas no Oracle e disponíveis para nova exportação.</p></div>
+        </div>
+        <div class="auditoria-view-toggle">
+          <button class="btn-secondary active" id="btn-auditoria-processos-visao-individual" type="button"><i class="bi bi-person-lines-fill"></i> Individual</button>
+          <button class="btn-secondary" id="btn-auditoria-processos-visao-consolidada" type="button"><i class="bi bi-bar-chart-line"></i> Consolidado</button>
+        </div>
+      </header>
+      <div class="livro-preview auditoria-historico-list" id="auditoria-processos-historico-list"><div class="loading-placeholder">Carregando auditorias...</div></div>
+    </section>
+
+    <!-- ─── Registros: Submenu ─────────────────────────────────────────── -->
+    <section class="livro-sub-menu d-none" id="registros-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-registros-voltar-home" type="button" aria-label="Voltar ao menu principal"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-choice-icon"><i class="bi bi-journal-bookmark"></i></span>
+          <div><span class="livro-choice-eyebrow">Atendimento Assistencial</span><h1>Registros</h1><p>Selecione o tipo de registro que deseja realizar ou consultar.</p></div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-registro-tipo-demanda" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-chat-heart"></i></span>
+            <span class="livro-choice-card-copy"><strong>Demanda Espontânea</strong><small>Acolhimento e atendimento a demandas espontâneas do Serviço Social.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Registros: Busca e Validação de Pessoa ─────────────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-registros-pessoa-busca">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-registros-busca-voltar" type="button" aria-label="Voltar aos Registros"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-person-vcard"></i></span>
+          <div><span class="livro-page-eyebrow">Registros · Demanda Espontânea</span><h2>Identificação da Pessoa Atendida</h2><p>Pesquise por CPF ou Nome para localizar ou cadastrar o cidadão/paciente.</p></div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <!-- Painel de Busca Inteligente -->
+      <div class="livro-filter-panel" style="margin-bottom: 1.25rem;">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-end; width: 100%;">
+          <div class="livro-field" style="flex: 1; min-width: 240px;">
+            <label for="reg-busca-termo" id="reg-busca-label"><i class="bi bi-search"></i> Pesquisar por CPF ou Nome da Pessoa <span class="required-star">*</span></label>
+            <input type="text" id="reg-busca-termo" placeholder="Digite o CPF (com ou sem pontuação) ou Nome completo/parcial..." autocomplete="off">
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+            <button class="btn-save" id="btn-reg-buscar-pessoa" type="button" style="white-space: nowrap;">
+              <i class="bi bi-search"></i> Buscar
+            </button>
+            <button class="btn-secondary livro-clear-btn" id="btn-reg-limpar-busca" type="button">
+              Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback de status da busca -->
+      <div id="reg-busca-feedback" class="d-none" style="margin-bottom: 1rem;"></div>
+
+      <!-- Estado: Lista de Pessoas Encontradas -->
+      <div class="d-none" id="reg-area-multiplos-resultados">
+        <div class="livro-section">
+          <div class="livro-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span><i class="bi bi-people"></i> Pessoas Localizadas (<span id="reg-qtd-encontrados">0</span>)</span>
+              <small style="color: var(--slate-500); font-weight: 600; margin-left: 0.5rem;">Clique no cadastro para conferir dados e histórico</small>
+            </div>
+            <button class="btn-secondary" id="btn-reg-novo-cadastro-header" type="button" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">
+              <i class="bi bi-person-plus-fill"></i> Cadastrar Nova Pessoa
+            </button>
+          </div>
+          <div class="livro-section-body" style="padding: 0;">
+            <div class="auditoria-pacientes-grid" id="reg-lista-candidatos" style="padding: 1rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado: Pessoa Não Encontrada -->
+      <div class="d-none" id="reg-area-nao-encontrado">
+        <div class="livro-section" style="text-align: center; padding: 2.5rem 1.5rem;">
+          <div style="font-size: 2.5rem; color: var(--slate-400); margin-bottom: 0.75rem;">
+            <i class="bi bi-person-x"></i>
+          </div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--slate-800); margin-bottom: 0.4rem;">Pessoa não localizada no cadastro</h3>
+          <p style="font-size: 0.9rem; color: var(--slate-600); max-width: 480px; margin: 0 auto 1.5rem;">Nenhum registro correspondente foi encontrado no TASY. Você pode cadastrar uma nova pessoa física agora mesmo.</p>
+          <button class="btn-save" id="btn-reg-abrir-cadastro-pessoa" type="button">
+            <i class="bi bi-person-plus-fill"></i> Cadastrar Nova Pessoa Física
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Registros: Modal de Conferência de Dados e Histórico da Pessoa ──────── -->
+    <div class="modal-overlay d-none" id="modal-registros-conferencia-pessoa">
+      <div class="modal-card modal-card-wide" style="max-width: 1060px; width: 96%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 1.5rem;">
+        <div class="modal-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 0.75rem; flex-shrink: 0;">
+          <h3 style="margin: 0; font-size: 1.2rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+            <i class="bi bi-person-check-fill" style="color: var(--primary);"></i> Conferência de Dados da Pessoa
+          </h3>
+          <button class="modal-close-btn" id="btn-modal-reg-conferencia-fechar" type="button">&times;</button>
+        </div>
+
+        <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+          <div class="reg-split-layout">
+            <!-- Coluna Esquerda: Conferência de Dados Cadastrais -->
+            <div class="reg-col-dados">
+              <div class="livro-section">
+                <div class="livro-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="bi bi-person-lines-fill"></i> Dados Cadastrais</span>
+                  <span class="auditoria-badge-leito" style="background: #059669;"><i class="bi bi-pencil-square"></i> Editável</span>
+                </div>
+                <div class="livro-section-body">
+                  <div class="reg-dados-fields-grid">
+                    <div class="livro-field reg-field-full">
+                      <label for="reg-conf-nome"><i class="bi bi-person"></i> Nome Completo <span class="required-star">*</span></label>
+                      <input type="text" id="reg-conf-nome" placeholder="Digite o nome completo" autocomplete="off">
+                    </div>
+                    <div class="livro-field">
+                      <label for="reg-conf-cpf"><i class="bi bi-person-badge"></i> CPF</label>
+                      <input type="text" id="reg-conf-cpf" placeholder="000.000.000-00" autocomplete="off">
+                    </div>
+                    <div class="livro-field">
+                      <label for="reg-conf-nascimento"><i class="bi bi-calendar3"></i> Data de Nascimento</label>
+                      <input type="date" id="reg-conf-nascimento">
+                    </div>
+                    <div class="livro-field">
+                      <label for="reg-conf-sexo"><i class="bi bi-gender-ambiguous"></i> Sexo</label>
+                      <select id="reg-conf-sexo" class="form-select">
+                        <option value="">Não informado</option>
+                        <option value="M">Masculino</option>
+                        <option value="F">Feminino</option>
+                        <option value="I">Indeterminado</option>
+                      </select>
+                    </div>
+                    <div class="livro-field">
+                      <label for="reg-conf-telefone"><i class="bi bi-telephone"></i> Telefone Celular</label>
+                      <input type="text" id="reg-conf-telefone" placeholder="(00) 00000-0000" autocomplete="off">
+                    </div>
+                    <div class="livro-field field-glazed reg-field-full">
+                      <label><i class="bi bi-hash"></i> Código TASY (Fixo)</label>
+                      <input type="text" id="reg-conf-codigo" readonly disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Demandas Espontâneas Anteriores -->
+            <div class="reg-col-historico">
+              <div class="livro-section auditoria-section" id="reg-section-demandas-anteriores">
+                <div class="livro-section-header">
+                  <span><i class="bi bi-clock-history"></i> Demandas Anteriores (<span id="reg-count-demandas-anteriores">0</span>)</span>
+                  <small style="color: var(--slate-500); font-weight: 600;">Histórico no TASY</small>
+                </div>
+                <div class="livro-section-body" id="reg-lista-demandas-anteriores">
+                  <!-- Renderizado dinamicamente -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--slate-200); padding-top: 1rem; flex-shrink: 0;">
+          <button class="btn-secondary" id="btn-modal-reg-conferencia-voltar" type="button">
+            <i class="bi bi-arrow-left"></i> Voltar à Lista
+          </button>
+          <button class="btn-save" id="btn-modal-reg-conferencia-confirmar" type="button">
+            <i class="bi bi-check-circle-fill"></i> Confirmar Pessoa e Iniciar Registro
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Registros: Modal de Cadastro Rápido de Pessoa Física ──────── -->
+    <div class="modal-overlay d-none" id="modal-registros-cadastrar-pessoa">
+      <div class="modal-card modal-card-wide" style="max-width: 820px;">
+        <div class="modal-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 0.75rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="bi bi-person-plus" style="color: var(--primary);"></i> Cadastrar Pessoa Física
+          </h3>
+          <button class="modal-close-btn" id="btn-modal-reg-cadastrar-fechar" type="button">&times;</button>
+        </div>
+        <form id="form-registros-cadastrar-pessoa">
+          <div id="cad-pessoa-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="livro-field" style="grid-column: 1 / -1;">
+              <label for="cad-pessoa-nome">Nome Completo <span class="required-star">*</span></label>
+              <input type="text" id="cad-pessoa-nome" required placeholder="Digite o nome completo da pessoa" autocomplete="off">
+            </div>
+            <div class="livro-field">
+              <label for="cad-pessoa-cpf">CPF</label>
+              <input type="text" id="cad-pessoa-cpf" placeholder="000.000.000-00" autocomplete="off">
+            </div>
+            <div class="livro-field">
+              <label for="cad-pessoa-nascimento">Data de Nascimento</label>
+              <input type="date" id="cad-pessoa-nascimento">
+            </div>
+            <div class="livro-field">
+              <label for="cad-pessoa-sexo">Sexo</label>
+              <select id="cad-pessoa-sexo" class="form-select">
+                <option value="">Não informado</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="I">Indeterminado</option>
+              </select>
+            </div>
+            <div class="livro-field">
+              <label for="cad-pessoa-telefone">Telefone Celular</label>
+              <input type="text" id="cad-pessoa-telefone" placeholder="(00) 00000-0000" autocomplete="off">
+            </div>
+            <div class="livro-field" style="grid-column: 1 / -1;">
+              <label for="cad-pessoa-observacao">Observação Cadastral</label>
+              <input type="text" id="cad-pessoa-observacao" placeholder="Ex: Atendimento no Serviço Social" autocomplete="off">
+            </div>
+          </div>
+          <div id="modal-cad-pessoa-feedback" class="d-none" style="margin-bottom: 1rem;"></div>
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-200); padding-top: 1rem;">
+            <button class="btn-secondary livro-clear-btn" id="btn-modal-reg-cadastrar-cancelar" type="button">Cancelar</button>
+            <button class="btn-save" id="btn-modal-reg-cadastrar-salvar" type="submit">
+              <i class="bi bi-check-circle"></i> Salvar e Prosseguir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── Registros: Modal de Visualização de Histórico de Demandas ─── -->
+    <div class="modal-overlay d-none" id="modal-registros-historico">
+      <div class="modal-card modal-card-wide" style="max-width: 720px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 0.75rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="bi bi-clock-history" style="color: var(--primary);"></i> Demandas Espontâneas Anteriores
+          </h3>
+          <button class="modal-close-btn" id="btn-modal-reg-historico-fechar" type="button">&times;</button>
+        </div>
+        <div id="modal-reg-historico-conteudo" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 4px;">
+          <!-- Conteúdo dinâmico -->
+        </div>
+        <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 1rem;">
+          <button class="btn-secondary" id="btn-modal-reg-historico-fechar-btn" type="button">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Registros: Formulário Nova Demanda Espontânea ──────────────── -->
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-registros-demanda-form">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-registros-form-voltar" type="button" aria-label="Voltar para busca de pessoa"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-chat-heart"></i></span>
+          <div><span class="livro-page-eyebrow">Registros · Serviço Social</span><h2>Nova Demanda Espontânea</h2><p>Registre o contexto do atendimento, solicitações e orientações prestadas.</p></div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <!-- Card 1: Identificação da Pessoa Selecionada (Readonly Esmaltecido) -->
+      <div class="livro-section auditoria-glazed-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-person-vcard"></i> Identificação da Pessoa Atendida</span>
+          <span class="auditoria-locked-badge"><i class="bi bi-lock-fill"></i> Cadastro vinculado</span>
+        </div>
+        <div class="livro-section-body">
+          <div class="livro-filter-panel auditoria-form-grid" style="padding: 0; background: transparent; border: none; margin-bottom: 0;">
+            <div class="livro-field field-glazed" style="grid-column: span 2;">
+              <label for="reg-form-nome"><i class="bi bi-person"></i> Nome da Pessoa</label>
+              <input type="text" id="reg-form-nome" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="reg-form-cpf"><i class="bi bi-person-badge"></i> CPF</label>
+              <input type="text" id="reg-form-cpf" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="reg-form-nascimento"><i class="bi bi-calendar3"></i> Data de Nascimento</label>
+              <input type="text" id="reg-form-nascimento" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="reg-form-idade"><i class="bi bi-hourglass-split"></i> Idade</label>
+              <input type="text" id="reg-form-idade" readonly>
+            </div>
+            <div class="livro-field field-glazed">
+              <label for="reg-form-telefone"><i class="bi bi-telephone"></i> Telefone</label>
+              <input type="text" id="reg-form-telefone" readonly>
+            </div>
+            <div class="livro-field">
+              <label for="reg-form-data"><i class="bi bi-calendar-event"></i> Data do Registro <span class="required-star">*</span></label>
+              <input type="date" id="reg-form-data" required>
+            </div>
+            <input type="hidden" id="reg-form-cd-pessoa">
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Histórico do Registro (Textarea Amplo) -->
+      <div class="livro-section auditoria-section">
+        <div class="livro-section-header">
+          <span><i class="bi bi-journal-text"></i> Histórico do Registro <span class="required-star">*</span></span>
+        </div>
+        <div class="livro-section-body">
+          <textarea id="reg-form-historico" rows="8" placeholder="Descreva detalhadamente a demanda espontânea, acolhimento, orientações fornecidas, encaminhamentos ou solicitações realizadas..." required></textarea>
+        </div>
+      </div>
+
+      <div class="auditoria-feedback d-none" id="registros-feedback" role="status"></div>
+
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-registros-ver-historico" type="button">
+            <i class="bi bi-search"></i> Ver registros realizados
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-registros-cancelar" type="button">Cancelar</button>
+          <button class="btn-save" id="btn-registros-salvar" type="button"><i class="bi bi-check2-circle"></i> Salvar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO DE PAINEL DE SENHAS (MONITOR DE TV & PAINEL DE CHAMADAS) -->
+    <section class="recepcao-workspace d-none" id="workspace-painel-senhas">
+      <!-- 1. Header Padrão Conecta -->
+      <header class="livro-page-header" id="psenhas-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-psenhas-voltar-home" type="button" aria-label="Voltar ao menu principal" onclick="window.conectaCore.showModeChooser()">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-tv"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">MONITOR DE TV &amp; PAINEL DE CHAMADAS</span>
+            <h2 id="psenhas-tv-title">Painel Conecta TV</h2>
+            <p id="psenhas-tv-subtitle">Monitor de exibição de senhas da recepção e acolhimento.</p>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-secondary" id="btn-psenhas-recarregar" type="button" onclick="window.conectaCore.carregarMonitorTv()" title="Recarregar monitor">
+            <i class="bi bi-arrow-clockwise"></i> Recarregar
+          </button>
+          <button class="btn btn-sm btn-outline-primary" id="btn-psenhas-fullscreen" type="button" onclick="window.conectaCore.toggleMonitorFullscreen()" title="Tela Cheia">
+            <i class="bi bi-arrows-fullscreen me-1"></i> Tela Cheia
+          </button>
+          <a class="btn btn-sm btn-primary fw-bold" id="btn-psenhas-nova-aba" href="/painel.html?painel=recepcao_principal" target="_blank" title="Abrir TV em Nova Janela">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Abrir em Nova Janela
+          </a>
+        </div>
+      </header>
+
+      <!-- Estado: Carregando -->
+      <div class="p-5 text-center text-muted" id="psenhas-loading">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <h5>Identificando monitor deste computador...</h5>
+        <p class="small text-muted">Consultando painéis de TV autorizados no sistema.</p>
+      </div>
+
+      <!-- Estado: Máquina Não Vinculada (Seleção Manual / Instrução) -->
+      <div class="card border shadow-sm rounded-4 m-3 p-4 d-none text-center" id="psenhas-empty-state" style="background: #ffffff;">
+        <div class="rounded-circle bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+          <i class="bi bi-tv fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">Computador sem Monitor Vinculado</h4>
+        <p class="text-muted mb-3">
+          Este computador (<code id="psenhas-empty-maquina-nome">---</code>) ainda não foi indicado para abrir uma TV específica no cadastro de <strong>Painéis de TV</strong> do Admin.
+        </p>
+        <div class="alert alert-info d-inline-block text-start small mb-4 py-2 px-3 border" style="max-width: 650px;">
+          <i class="bi bi-info-circle me-1"></i> Para que esta máquina abra automaticamente o monitor correto na inicialização, acesse o <strong>Painel de Administração &gt; Painéis de TV Cadastrados</strong> e adicione o nome ou IP desta máquina no campo <em>"Máquinas que Abrem este Monitor"</em>.
+        </div>
+        <div class="fw-bold small text-secondary text-uppercase mb-3">Selecione qual monitor deseja abrir manualmente:</div>
+        <div class="d-flex flex-wrap justify-content-center gap-3" id="psenhas-empty-botoes">
+          <!-- Botões renderizados via JS -->
+        </div>
+      </div>
+
+      <!-- Estado: Monitor TV Carregado no Iframe -->
+      <div class="d-none w-100 p-2" id="psenhas-tv-container">
+        <iframe id="psenhas-tv-frame" src="" class="w-100 border rounded-4 shadow-sm" style="height: calc(100vh - 160px); min-height: 600px; background: #0b132b;" allow="autoplay"></iframe>
+      </div>
+    </section>
+
+    <!-- MÓDULO DE RECEPÇÃO & ACOLHIMENTO (PADRÃO CONECTA: SENHAS + HISTÓRICO ATENDIMENTOS HOJE) -->
+    <section class="recepcao-workspace d-none" id="workspace-recepcao">
+      <!-- 1. Header Padrão Conecta -->
+      <header class="livro-page-header" id="recepcao-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-recepcao-voltar-home" type="button" aria-label="Voltar ao menu principal" onclick="window.conectaCore.showModeChooser()">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-person-badge"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">RECEPÇÃO HOSPITALAR</span>
+            <h2>Recepção e Guiches</h2>
+            <p>Acompanhamento de senhas em tempo real, chamador de guichê e prontuário TASY.</p>
+          </div>
+        </div>
+        <div class="livro-page-status">
+          <span class="status-indicator active"></span>
+          <span>TASY Integrado</span>
+        </div>
+      </header>
+
+      <!-- 2. Sub-Navegação em Abas & Barra de Ações Rápidas -->
+      <div class="recepcao-sub-nav">
+        <div class="recepcao-tab-pills">
+          <button class="recepcao-tab-pill active" id="tab-btn-senhas" type="button" onclick="window.conectaCore.trocarAbaRecepcao('senhas')">
+            <i class="bi bi-ticket-perforated"></i> Fila de Espera
+            <span class="badge" id="tab-badge-espera">0</span>
+          </button>
+          <button class="recepcao-tab-pill" id="tab-btn-historico" type="button" onclick="window.conectaCore.trocarAbaRecepcao('historico')">
+            <i class="bi bi-clock"></i> Atendimentos Hoje
+            <span class="badge" id="tab-badge-hoje">0</span>
+          </button>
+        </div>
+
+        <div class="recepcao-action-buttons">
+          <div class="d-flex align-items-center gap-1 bg-white border rounded px-2 py-1 shadow-sm text-nowrap flex-shrink-0" style="font-size: 0.82rem;">
+            <i class="bi bi-display text-primary"></i>
+            <span class="small fw-bold text-muted me-1">Meu Posto:</span>
+            <select class="form-select form-select-sm border-0 bg-transparent fw-bold py-0 ps-1 pe-3 text-primary" id="recepcao-select-meu-guiche" style="width: auto; cursor: pointer; font-size: 0.82rem;" title="Selecione o seu Guichê de Atendimento">
+              <option value="Guichê 01">Guichê 01</option>
+              <option value="Guichê 02">Guichê 02</option>
+              <option value="Guichê 03">Guichê 03</option>
+              <option value="Triagem P.A.">Triagem P.A.</option>
+            </select>
+          </div>
+          <a class="btn btn-sm btn-outline-info d-inline-flex align-items-center justify-content-center flex-shrink-0" id="btn-recepcao-abrir-tv" href="/painel.html?painel=recepcao_principal" target="_blank" title="Abrir Conecta TV em Nova Aba" style="width: 32px; height: 32px; border-radius: 6px; padding: 0;">
+            <i class="bi bi-tv"></i>
+          </a>
+          <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0" id="btn-recepcao-refresh" type="button" title="Atualizar fila" style="width: 32px; height: 32px; border-radius: 6px; padding: 0;">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-warning fw-bold d-inline-flex align-items-center gap-1 text-nowrap flex-shrink-0" id="btn-recepcao-rechamar" type="button" style="border-radius: 6px; font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+            <i class="bi bi-arrow-repeat"></i> Rechamar
+          </button>
+          <button class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1 text-nowrap flex-shrink-0" id="btn-recepcao-novo-avulso" type="button" style="border-radius: 6px; font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+            <i class="bi bi-person-plus"></i> Avulso
+          </button>
+          <button class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-2 text-nowrap flex-shrink-0" id="btn-recepcao-chamar-proximo" type="button" style="background-color: var(--primary, #00387a); border-color: var(--primary, #00387a); border-radius: 6px; font-size: 0.82rem; padding: 0.35rem 0.85rem;">
+            <i class="bi bi-megaphone-fill"></i> Próxima Senha
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. KPIs & Resumo Operacional -->
+      <div class="recepcao-kpi-row">
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon primary">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div class="recepcao-kpi-value" id="kpi-total-espera">0</div>
+            <div class="recepcao-kpi-label">Senhas em Espera</div>
+          </div>
+        </div>
+
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon warning">
+            <i class="bi bi-ticket-detailed-fill"></i>
+          </div>
+          <div>
+            <div class="recepcao-kpi-value" id="guiche-active-number" style="font-family: inherit;">---</div>
+            <div class="recepcao-kpi-label" id="guiche-active-type">CHAMADO</div>
+          </div>
+        </div>
+
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon info">
+            <i class="bi bi-check2-all"></i>
+          </div>
+          <div>
+            <div class="recepcao-kpi-value text-primary" id="kpi-total-hoje">0</div>
+            <div class="recepcao-kpi-label">Atendidos Hoje</div>
+          </div>
+        </div>
+
+        <div class="recepcao-kpi-card">
+          <div class="recepcao-kpi-icon success">
+            <i class="bi bi-funnel-fill"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="recepcao-kpi-label">VISÃO DE FILAS</div>
+            <div class="fw-bold text-success d-flex align-items-center gap-1 mt-1" style="font-size: 0.92rem;">
+              <i class="bi bi-display"></i> Dinâmica por Perfil
+            </div>
+            <select id="recepcao-select-fila" class="d-none">
+              <option value="">Todas as Filas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. ABA 1: BOARD DE SENHAS EM ESPERA -->
+      <div id="pane-recepcao-senhas" class="senhas-board-card">
+        <div class="senhas-board-header">
+          <div>
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-ticket-perforated text-primary"></i> Fila de Senhas Aguardando Atendimento
+              <span class="badge bg-primary rounded-pill fs-6" id="recepcao-queue-count">0</span>
+            </h5>
+            <small class="text-muted">Clique em qualquer senha abaixo para iniciar o acolhimento e abertura de atendimento no TASY</small>
+          </div>
+
+          <div class="senhas-board-filters">
+            <div class="input-group input-group-sm" style="max-width: 260px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="recepcao-search-senha" placeholder="Filtrar por número...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade de Senhas em Espera -->
+        <div class="recepcao-filas-board" id="recepcao-senhas-grid">
+          <div class="col-12 py-5 text-center text-muted w-100">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>Carregando fila de senhas do TASY...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. ABA 2: HISTÓRICO DE ATENDIMENTOS REALIZADOS HOJE (COM GESTÃO GED) -->
+      <div id="pane-recepcao-historico" class="atendimentos-hoje-card d-none">
+        <div class="senhas-board-header">
+          <div>
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history text-primary"></i> Atendimentos Gerados Hoje
+              <span class="badge bg-success rounded-pill fs-6" id="recepcao-hoje-count">0</span>
+            </h5>
+            <small class="text-muted">Consulte atendimentos já abertos, emita relatórios oficiais ou anexe novos documentos no GED TASY</small>
+          </div>
+
+          <div class="senhas-board-filters">
+            <div class="input-group input-group-sm" style="max-width: 280px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="recepcao-search-historico" placeholder="Buscar paciente, CPF ou Nº...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table-conecta-recepcao">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Senha</th>
+                <th>Paciente</th>
+                <th>CPF</th>
+                <th>Nº Atendimento</th>
+                <th>Convênio / Setor</th>
+                <th>GED</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="recepcao-historico-tbody">
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div> Carregando atendimentos de hoje...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL DE ACOLHIMENTO & ABERTURA DE ATENDIMENTO (WIZARD 5 ETAPAS) -->
+    <div class="modal fade" id="modal-atendimento-recepcao" tabindex="-1" aria-labelledby="modalAtendimentoLabel" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          
+          <!-- Header do Modal -->
+          <div class="modal-header modal-recepcao-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <h5 class="modal-recepcao-title" id="modalAtendimentoLabel">
+                <i class="bi bi-person-badge"></i> Acolhimento & Atendimento
+              </h5>
+              <span class="modal-recepcao-senha-badge" id="modal-atend-senha-badge">
+                <i class="bi bi-ticket-perforated"></i> Senha: ---
+              </span>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+
+          <!-- Stepper de Navegação no Topo do Modal -->
+          <nav class="modal-stepper" aria-label="Etapas do Atendimento">
+            <button class="modal-step-item active" data-step="1" type="button">
+              <span class="modal-step-badge">1</span>
+              <span>Identificação</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="2" type="button">
+              <span class="modal-step-badge">2</span>
+              <span>Endereço</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="3" type="button">
+              <span class="modal-step-badge">3</span>
+              <span>Convênio</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="4" type="button">
+              <span class="modal-step-badge">4</span>
+              <span>Atendimento</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-step="5" type="button">
+              <span class="modal-step-badge">5</span>
+              <span>Relatórios & GED</span>
+            </button>
+          </nav>
+
+          <!-- Corpo do Modal com os Passos -->
+          
+          <!-- Stepper Triagem -->
+          <nav class="modal-stepper d-none" id="triagem-stepper" aria-label="Etapas da Triagem">
+            <button class="modal-step-item active" data-t-step="paciente" type="button">
+              <span class="modal-step-badge"><i class="bi bi-person"></i></span>
+              <span>Paciente</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="queixa" type="button">
+              <span class="modal-step-badge">1</span>
+              <span>Queixa</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="alergias" type="button">
+              <span class="modal-step-badge">2</span>
+              <span>Alergias</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="sinais" type="button">
+              <span class="modal-step-badge">3</span>
+              <span>Sinais Vitais</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="historico" type="button">
+              <span class="modal-step-badge">4</span>
+              <span>Histórico</span>
+            </button>
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="sintomas" type="button">
+            <span class="modal-step-divider"></span>
+            <button class="modal-step-item" data-t-step="revisao" type="button">
+              <span class="modal-step-badge">6</span>
+              <span class="modal-step-label">Revisão</span>
+            </button>
+              <span class="modal-step-badge">5</span>
+              <span>Sintomas</span>
+            </button>
+          </nav>
+
+          <div class="modal-body p-0" id="triagem-modal-body-container">
+            
+            <!-- ETAPA 1: Identificação e Cadastro do Paciente -->
+            <div class="modal-step-pane" data-step="1">
+              <div class="recepcao-section-title">
+                <i class="bi bi-person-bounding-box"></i> 1. Identificação do Paciente (Pessoa Física TASY)
+              </div>
+
+              <!-- Busca Rápida -->
+              <div class="paciente-search-box mb-3">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" id="recepcao-busca-paciente" placeholder="Digite CPF, Cartão SUS ou Nome do paciente para buscar no TASY...">
+                </div>
+                <button class="btn btn-outline-primary text-nowrap" id="btn-recepcao-novo-paciente" type="button">
+                  <i class="bi bi-person-plus"></i> Novo Cadastro
+                </button>
+              </div>
+
+              <div class="paciente-search-results" id="recepcao-search-results"></div>
+
+              <!-- Card de Paciente Selecionado -->
+              <div class="paciente-badge-selected d-none my-3" id="card-paciente-selecionado">
+                <div>
+                  <strong id="paciente-sel-nome" class="fs-5 text-primary"></strong>
+                  <div id="paciente-sel-details" class="text-muted small"></div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-recepcao-limpar-paciente" type="button">
+                  <i class="bi bi-x-circle"></i> Trocar Paciente
+                </button>
+              </div>
+
+              <!-- Alerta de Duplicidade de Cadastro / Atendimento Aberto -->
+              <div id="recepcao-alerta-duplicidade" class="d-none my-3"></div>
+
+              <!-- Formulário de Pessoa Física -->
+              <div id="form-paciente-container" class="mt-3">
+                <input type="hidden" id="recepcao-cd-pessoa">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-completo" class="form-label small fw-bold">Nome Completo <span class="required-star">*</span></label>
+                    <input type="text" class="form-control" id="recepcao-nome-completo" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-social" class="form-label small fw-bold">Nome Social</label>
+                    <input type="text" class="form-control" id="recepcao-nome-social">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-dt-nascimento" class="form-label small fw-bold">Data de Nascimento <span class="required-star">*</span></label>
+                    <input type="date" class="form-control" id="recepcao-dt-nascimento" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-sexo" class="form-label small fw-bold">Sexo <span class="required-star">*</span></label>
+                    <select class="form-select" id="recepcao-sexo">
+                      <option value="M">Masculino</option>
+                      <option value="F">Feminino</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-cpf" class="form-label small fw-bold">CPF</label>
+                    <input type="text" class="form-control" id="recepcao-cpf" placeholder="000.000.000-00">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="recepcao-rg" class="form-label small fw-bold">RG / Identidade</label>
+                    <input type="text" class="form-control" id="recepcao-rg">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-mae" class="form-label small fw-bold">Nome da Mãe</label>
+                    <input type="text" class="form-control" id="recepcao-nome-mae">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="recepcao-nome-pai" class="form-label small fw-bold">Nome do Pai</label>
+                    <input type="text" class="form-control" id="recepcao-nome-pai">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-cns" class="form-label small fw-bold">Cartão SUS (CNS)</label>
+                    <input type="text" class="form-control" id="recepcao-cns">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-celular" class="form-label small fw-bold">Telefone Celular</label>
+                    <input type="text" class="form-control" id="recepcao-celular" placeholder="(00) 00000-0000">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="recepcao-email" class="form-label small fw-bold">E-mail</label>
+                    <input type="email" class="form-control" id="recepcao-email" placeholder="paciente@email.com">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 2: Endereço e Contato -->
+            <div class="modal-step-pane d-none" data-step="2">
+              <div class="recepcao-section-title">
+                <i class="bi bi-geo-alt"></i> 2. Endereço & Localização (COMPL_PESSOA_FISICA)
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label for="recepcao-cep" class="form-label small fw-bold">CEP (com busca automática)</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="recepcao-cep" placeholder="00000-000">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  </div>
+                </div>
+                <div class="col-md-7">
+                  <label for="recepcao-logradouro" class="form-label small fw-bold">Logradouro / Rua</label>
+                  <input type="text" class="form-control" id="recepcao-logradouro" placeholder="Av, Rua, Praça...">
+                </div>
+                <div class="col-md-2">
+                  <label for="recepcao-numero" class="form-label small fw-bold">Número</label>
+                  <input type="text" class="form-control" id="recepcao-numero" placeholder="123">
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-complemento" class="form-label small fw-bold">Complemento</label>
+                  <input type="text" class="form-control" id="recepcao-complemento" placeholder="Apto, Bloco, Casa...">
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-bairro" class="form-label small fw-bold">Bairro</label>
+                  <input type="text" class="form-control" id="recepcao-bairro">
+                </div>
+                <div class="col-md-3">
+                  <label for="recepcao-cidade" class="form-label small fw-bold">Cidade</label>
+                  <input type="text" class="form-control" id="recepcao-cidade">
+                </div>
+                <div class="col-md-1">
+                  <label for="recepcao-uf" class="form-label small fw-bold">UF</label>
+                  <input type="text" class="form-control" id="recepcao-uf" maxlength="2" placeholder="MG">
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 3: Convênio e Procedência -->
+            <div class="modal-step-pane d-none" data-step="3">
+              <div class="recepcao-section-title">
+                <i class="bi bi-credit-card-2-front"></i> 3. Convênio, Plano & Procedência de Entrada
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="recepcao-convenio" class="form-label small fw-bold">Convênio <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-convenio">
+                    <option value="">Carregando convênios...</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-categoria" class="form-label small fw-bold">Categoria / Plano <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-categoria">
+                    <option value="">Selecione o convênio...</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="recepcao-carteirinha" class="form-label small fw-bold">Nº Carteirinha / Guia</label>
+                  <input type="text" class="form-control" id="recepcao-carteirinha" placeholder="000000000000">
+                </div>
+                <div class="col-md-6">
+                  <label for="recepcao-procedencia" class="form-label small fw-bold">Procedência da Entrada</label>
+                  <select class="form-select" id="recepcao-procedencia">
+                    <option value="1" selected>1 - Residência / Própria</option>
+                    <option value="2">2 - SAMU / Resgate</option>
+                    <option value="3">3 - Transferência Hospitalar</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 4: Abertura do Atendimento no TASY -->
+            <div class="modal-step-pane d-none" data-step="4">
+              <div class="recepcao-section-title">
+                <i class="bi bi-hospital"></i> 4. Classificação & Abertura Oficial de Atendimento (ATENDIMENTO_PACIENTE)
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="recepcao-setor-atend" class="form-label small fw-bold">Setor de Atendimento <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-setor-atend">
+                    <option value="39" selected>39 - Pronto Atendimento</option>
+                    <option value="37">37 - Sala de Observação</option>
+                    <option value="32">32 - Unidade de Internação</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="recepcao-classificacao" class="form-label small fw-bold">Classificação do Atendimento <span class="required-star">*</span></label>
+                  <select class="form-select" id="recepcao-classificacao">
+                    <option value="2" selected>2 - Voluntário</option>
+                    <option value="1">1 - Involuntário</option>
+                    <option value="3">3 - Compulsória / determinação judicial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="alert alert-warning mt-4 d-flex align-items-center gap-3">
+                <i class="bi bi-ticket-detailed fs-2 text-warning"></i>
+                <div>
+                  <strong>Vínculo de Senha Automático:</strong> A senha vinculada será transferida no TASY diretamente para a <strong>Fila de Triagem / Consultório Médico</strong> com a abertura do episódio.
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-center mt-4">
+                <button class="btn btn-primary btn-lg fw-bold px-5 py-3 shadow" id="btn-recepcao-abrir-atendimento" type="button" style="border-radius: 12px;">
+                  <i class="bi bi-check2-circle fs-5 me-2"></i> Abrir Atendimento Oficial no TASY
+                </button>
+              </div>
+            </div>
+
+            <!-- ETAPA 5: Emissão Nativa de Relatórios TASY e GED -->
+            <div class="modal-step-pane d-none" data-step="5">
+              <div class="recepcao-section-title">
+                <i class="bi bi-file-earmark-text"></i> 5. Documentos Oficiais TasyReports & GED
+              </div>
+
+              <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                  Atendimento gerado com sucesso no TASY: <strong class="fs-5" id="recepcao-atendimento-numero">---</strong>
+                </div>
+              </div>
+
+              <!-- Relatórios Oficiais TasyReports -->
+              <div class="mb-4">
+                <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-printer text-primary"></i> Relatórios Oficiais Emitidos via TasyAppServer
+                </h6>
+                <div class="relatorios-grid" id="recepcao-relatorios-list">
+                  <div class="loading-placeholder">Carregando modelos de relatórios...</div>
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <!-- Repositório GED TASY -->
+              <div class="ged-container">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-folder-fill text-primary"></i> Repositório GED (TASY Storage)
+                  </h6>
+                  <button class="btn btn-sm btn-outline-primary" id="btn-recepcao-upload-ged" type="button">
+                    <i class="bi bi-upload"></i> Anexar Documento ao GED
+                  </button>
+                </div>
+
+                <div class="ged-files-grid" id="recepcao-ged-list">
+                  <div class="p-3 text-center text-muted col-12">Nenhum documento anexado para este atendimento.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer do Modal com Botões de Navegação -->
+                    <div class="modal-footer bg-light d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary d-none" id="btn-triagem-voltar-step">
+              <i class="bi bi-arrow-left"></i> Voltar
+            </button>
+            <button type="button" class="btn btn-light" id="btn-triagem-cancelar" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <div class="d-flex gap-2 ms-auto">
+              <!-- Botoes Fase 1 a 3 -->
+              <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-triagem-salvar-paciente">
+                <i class="bi bi-check-circle me-1"></i> Salvar e Iniciar Triagem
+              </button>
+              <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-triagem-confirmar-inicio">
+                Iniciar Triagem <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+              
+              <!-- Botoes Fase 4 -->
+              <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-triagem-avancar-clinico">
+              <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-triagem-finalizar">
+                Finalizar Triagem <i class="bi bi-check-circle ms-1"></i>
+              </button>
+                Próxima Etapa <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="livro-sub-menu d-none" id="livro-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-livro-voltar-home" type="button" aria-label="Voltar ao menu principal">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-choice-icon"><i class="bi bi-journal-medical"></i></span>
+          <div>
+            <span class="livro-choice-eyebrow">Gestão do plantão</span>
+            <h1>Livro Administrativo</h1>
+            <p>Selecione como deseja trabalhar com as escalas assistenciais.</p>
+          </div>
+        </header>
+
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-livro-lancar" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary">
+              <i class="bi bi-pencil-square"></i>
+            </span>
+            <span class="livro-choice-card-copy">
+              <strong>Lançar / Editar</strong>
+              <small>Preencha a composição do plantão, registre ocorrências e atualize escalas existentes.</small>
+            </span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+
+          <button class="livro-choice-card" id="btn-livro-imprimir" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent">
+              <i class="bi bi-printer"></i>
+            </span>
+            <span class="livro-choice-card-copy">
+              <strong>Imprimir escalas liberadas</strong>
+              <small>Consulte escalas por data, turno e setor para impressão individual ou em lote.</small>
+            </span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-sub-menu d-none" id="passagem-sub-menu">
+      <div class="livro-choice-shell">
+        <header class="livro-choice-heading">
+          <button class="livro-page-back" id="btn-passagem-voltar-home" type="button" aria-label="Voltar ao menu principal">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-choice-icon"><i class="bi bi-arrow-left-right"></i></span>
+          <div>
+            <span class="livro-choice-eyebrow">Cuidado contínuo</span>
+            <h1>Passagem de Plantão</h1>
+            <p>Escolha entre registrar uma nova passagem ou consultar os últimos lançamentos.</p>
+          </div>
+        </header>
+        <div class="livro-choice-grid">
+          <button class="livro-choice-card" id="btn-passagem-lancar" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-primary"><i class="bi bi-pencil-square"></i></span>
+            <span class="livro-choice-card-copy"><strong>Lançar nova passagem</strong><small>Registre informações do setor e dos pacientes para continuidade do cuidado.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+          <button class="livro-choice-card" id="btn-passagem-anteriores" type="button">
+            <span class="livro-choice-card-icon livro-choice-card-icon-accent"><i class="bi bi-clock-history"></i></span>
+            <span class="livro-choice-card-copy"><strong>Visualizar passagens anteriores</strong><small>Consulte as sete passagens liberadas mais recentes do perfil ativo.</small></span>
+            <i class="bi bi-arrow-up-right livro-choice-card-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace d-none passagem-history-page" id="workspace-passagens-anteriores">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-passagens-voltar" type="button" aria-label="Voltar"><i class="bi bi-arrow-left"></i></button>
+          <span class="livro-page-icon"><i class="bi bi-clock-history"></i></span>
+          <div><span class="livro-page-eyebrow">Passagem de Plantão</span><h2>Passagens anteriores</h2><p>Últimos lançamentos liberados para o perfil e setores autorizados.</p></div>
+        </div>
+      </header>
+
+      <div class="livro-filter-panel" id="passagens-filter-panel" aria-label="Filtros de passagens anteriores">
+        <div class="livro-field">
+          <label for="passagens-filter-setor">Setor</label>
+          <select id="passagens-filter-setor" class="form-select">
+            <option value="">Todos os setores</option>
+          </select>
+        </div>
+        <div class="livro-field">
+          <label for="passagens-filter-data-inicio">Data Inicial</label>
+          <input type="date" id="passagens-filter-data-inicio">
+        </div>
+        <div class="livro-field">
+          <label for="passagens-filter-data-fim">Data Final</label>
+          <input type="date" id="passagens-filter-data-fim">
+        </div>
+        <button class="btn-save print-filter-button" id="btn-passagens-filtrar" type="button">
+          <i class="bi bi-funnel"></i> Aplicar filtros
+        </button>
+      </div>
+
+      <div class="passagem-history-layout">
+        <div class="passagem-history-list" id="passagem-history-list"><div class="loading-placeholder">Carregando passagens...</div></div>
+        <article class="passagem-history-detail" id="passagem-history-detail">
+          <div class="loading-placeholder"><i class="bi bi-journal-text"></i> Selecione uma passagem para visualizar.</div>
+        </article>
+      </div>
+    </section>
+
+    <div class="app-container d-none" id="workspace-passagem">
+      <aside class="sidebar" id="sidebar-setores">
+        <div class="sidebar-header" style="justify-content: flex-start; gap: 12px;">
+          <button class="livro-page-back" id="btn-voltar-passagem-principal" type="button" aria-label="Voltar">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <h3 style="margin: 0;"><i class="bi bi-building"></i> Setores</h3>
+        </div>
+        <div class="sidebar-body" id="setores-list">
+          <div class="loading-placeholder">
+            <i class="bi bi-arrow-repeat spin"></i> Carregando setores...
+          </div>
+        </div>
+      </aside>
+
+      <button class="sidebar-backdrop d-none" id="sidebar-backdrop" type="button" aria-label="Fechar menu de setores"></button>
+
+      <button class="sidebar-toggle-btn d-none" id="btn-expand-sidebar" type="button" title="Abrir setores" aria-controls="sidebar-setores" aria-expanded="false" aria-label="Abrir setores">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <main class="main-content" id="main-area">
+        <div id="pacientes-area" class="pacientes-area">
+          <header class="livro-page-header" id="passagem-page-header">
+            <div class="livro-page-heading">
+              <button class="livro-page-back" id="btn-passagem-voltar-header" type="button" aria-label="Voltar ao menu de Passagem de Plantão">
+                <i class="bi bi-arrow-left"></i>
+              </button>
+              <span class="livro-page-icon"><i class="bi bi-arrow-left-right"></i></span>
+              <div>
+                <span class="livro-page-eyebrow">Passagem de Plantão</span>
+                <h2>Lançar nova passagem</h2>
+                <p id="passagem-context">Selecione o setor e o turno para carregar os pacientes.</p>
+              </div>
+            </div>
+          </header>
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-arrow-left-circle"></i>
+            </div>
+            <h4>Selecione um setor</h4>
+            <p>Escolha um setor na barra lateral para carregar os pacientes.</p>
+          </div>
+          <div id="pacientes-list" class="pacientes-list d-none"></div>
+        </div>
+
+        <div class="main-footer d-none" id="main-footer">
+          <div class="main-footer-left">
+            <div class="footer-info">
+              <span id="pacientes-count">0</span> paciente(s) · <span id="intercorrencias-count">0</span> intercorrência(s)
+            </div>
+          </div>
+
+          <div class="main-footer-center" id="main-footer-turno-wrapper">
+            <div class="turno-label" id="turno-label-dinamico">
+              <i class="bi bi-clock-history"></i> Plantão: <span class="required-star">*</span>
+            </div>
+            <div class="turno-options" id="turno-options-dinamico">
+              <!-- As opções de turno serão injetadas via JS baseado no perfil -->
+            </div>
+          </div>
+
+          <div class="main-footer-right">
+            <button class="btn-clear-patients" id="btn-clear-patients" type="button" title="Limpar pacientes da tela">
+              <i class="bi bi-trash3"></i> Limpar Tela
+            </button>
+            <button class="btn-save" id="btn-salvar" type="button">
+              <i class="bi bi-check-circle"></i> Salvar / Finalizar Passagem
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <section class="dashboard-workspace d-none" id="workspace-dashboard">
+      <div class="dashboard-header-panel">
+        <div class="dashboard-header-main">
+          <div class="dashboard-brand">
+            <div class="dashboard-logo">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div>
+              <h2>Dashboard de Pacientes</h2>
+              <span>Conecta Heal</span>
+            </div>
+          </div>
+
+          <div class="dashboard-stats" id="dashboard-stats-cards">
+            <div class="dashboard-stat">
+              <span>Total Pacientes</span>
+              <strong id="dashboard-total">0</strong>
+            </div>
+            <div class="dashboard-stat dashboard-stat-red">
+              <span>Prescrição de Agora</span>
+              <strong id="dashboard-medicacao">0</strong>
+            </div>
+            <div class="dashboard-stat dashboard-stat-yellow">
+              <span>Checagens Pendentes</span>
+              <strong id="dashboard-checagens">0</strong>
+            </div>
+          </div>
+
+          <div class="dashboard-controls">
+            <select id="dashboard-setor" class="form-select dashboard-setor-select">
+              <option value="">Selecione o setor...</option>
+            </select>
+            <div class="dashboard-clock">
+              <span class="dashboard-turno-inline" id="dashboard-turno-label">Turno</span>
+              <span class="dot-sep">·</span>
+              <div class="dashboard-clock-text">
+                <strong id="dashboard-clock-time">--:--:--</strong>
+                <span id="dashboard-clock-date">--/--/----</span>
+              </div>
+              <button class="dashboard-refresh-btn" id="btn-dashboard-refresh" type="button" title="Atualizar">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-update-bar">
+          <span><span class="dashboard-pulse"></span> Atualização automática a cada 30 segundos</span>
+          <span id="dashboard-last-update">Aguardando setor...</span>
+        </div>
+      </div>
+
+      <div class="dashboard-feedback" id="dashboard-feedback">
+        <i class="bi bi-building"></i>
+        <span>Selecione um setor para visualizar os pacientes.</span>
+      </div>
+
+      <div class="dashboard-patients-grid" id="dashboard-pacientes-grid"></div>
+    </section>
+
+    <section class="dashboard-workspace d-none" id="workspace-dashboard-internacao" style="padding: 0; overflow: hidden; background: #f8fafc;">
+      <div class="row m-0 h-100 w-100">
+        <!-- LADO ESQUERDO: TRIAGEM (GRADE DE SENHAS) -->
+        <div class="col-12 col-xl-5 col-xxl-4 p-0 d-flex flex-column border-end bg-white" style="height: 100%; overflow-y: auto;">
+          
+          <!-- Header Fixo Triagem -->
+          <div class="p-3 border-bottom d-flex flex-column gap-2 sticky-top shadow-sm" style="background: var(--primary); z-index: 10;">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="m-0 fw-bold d-flex align-items-center gap-2 text-white">
+                <i class="bi bi-ticket-perforated text-warning"></i> Fila de Triagem (P.A.)
+              </h5>
+              <div class="d-flex gap-1">
+                <button class="btn btn-sm btn-outline-light d-flex align-items-center justify-content-center" id="btn-triagem-refresh" type="button" onclick="window.conectaCore.carregarSenhasTriagem(true)" title="Atualizar Fila" style="width: 32px; height: 32px; padding: 0;">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+              <!-- Select Meu Posto -->
+              <div class="d-flex align-items-center gap-1 bg-white border rounded px-2 py-1 shadow-sm flex-grow-1" style="font-size: 0.8rem;">
+                <i class="bi bi-display text-primary"></i>
+                <select class="form-select form-select-sm border-0 bg-transparent fw-bold py-0 px-1 text-primary w-100" id="recepcao-select-meu-guiche-pa" style="cursor: pointer; font-size: 0.8rem;" title="Meu Guichê / Posto">
+                  <option value="Triagem P.A. 01">Triagem P.A. 01</option>
+                  <option value="Triagem P.A. 02">Triagem P.A. 02</option>
+                  <option value="Guichê 01">Guichê 01</option>
+                  <option value="Guichê 02">Guichê 02</option>
+                </select>
+              </div>
+              
+              
+              <!-- Botões de Ação -->
+              <div class="d-flex gap-1 flex-shrink-0">
+                <a class="btn btn-sm btn-light d-flex align-items-center justify-content-center text-primary" id="btn-triagem-abrir-tv" href="/painel.html?painel=triagem_pa" target="_blank" title="Abrir Painel TV" style="width: 32px; height: 32px; padding: 0;">
+                  <i class="bi bi-tv"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1 text-nowrap flex-shrink-0 me-2" id="btn-pa-novo-avulso" type="button" style="border-radius: 6px; font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+                  <i class="bi bi-person-plus"></i> Avulso
+                </button>
+                <button class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 text-nowrap px-2" id="btn-triagem-chamar-proximo" type="button" style="font-size: 0.8rem;">
+                  <i class="bi bi-megaphone-fill"></i> Próxima Senha
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade de Senhas (Espelho Recepção) -->
+          <div id="triagem-senhas-grid" class="flex-grow-1 p-3" style="background: var(--slate-50); overflow-y: auto;">
+             <div class="text-center text-muted mt-5">
+               <div class="spinner-border text-primary mb-3" role="status"></div>
+               <p class="fw-bold" style="opacity: 0.7;">Carregando fila de senhas...</p>
+             </div>
+          </div>
+        </div>
+
+        <!-- LADO DIREITO: DASHBOARD PA -->
+        <div class="col-12 col-xl-7 col-xxl-8 p-0 d-flex flex-column" style="height: 100%; overflow-y: auto;">
+      <div class="dashboard-header-panel">
+        <div class="dashboard-header-main">
+          <div class="dashboard-brand">
+            <div class="dashboard-logo">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div>
+              <h2>Pronto Atendimento</h2>
+              <span>Conecta Heal</span>
+            </div>
+          </div>
+
+          <div class="dashboard-pa-stats" id="dashboard-pa-stats-cards">
+            <div class="dashboard-stat dashboard-stat-primary">
+              <span>Total Pacientes</span>
+              <strong id="pa-total-count">0</strong>
+            </div>
+          </div>
+
+          <div class="dashboard-controls">
+
+            <div class="dashboard-clock">
+              <span class="dashboard-turno-inline" id="dashboard-internacao-turno-label">Turno</span>
+              <span class="dot-sep">·</span>
+              <div class="dashboard-clock-text">
+                <strong id="dashboard-internacao-clock-time">--:--:--</strong>
+                <span id="dashboard-internacao-clock-date">--/--/----</span>
+              </div>
+              <button class="dashboard-refresh-btn" id="btn-dashboard-internacao-refresh" type="button" title="Atualizar">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-update-bar">
+          <span><span class="dashboard-pulse"></span> Atualização automática a cada 30 segundos</span>
+          <span id="dashboard-internacao-last-update">Aguardando carregamento...</span>
+        </div>
+      </div>
+
+      <div class="dashboard-feedback d-none" id="dashboard-pa-feedback">
+        <i class="bi bi-arrow-repeat spin"></i>
+        <span>Carregando...</span>
+      </div>
+
+      <div class="dashboard-pa-patients-grid" id="dashboard-pa-patients-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace livro-stitch-page d-none" id="workspace-livro">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-livro-voltar" type="button" aria-label="Voltar ao menu do Livro Administrativo">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-journal-medical"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">Escala assistencial</span>
+            <h2>Lançar / Editar Livro Administrativo</h2>
+            <p>Organize a equipe e registre as informações do plantão.</p>
+          </div>
+        </div>
+        <span class="livro-page-status"><i class="bi bi-shield-check"></i> Registro seguro</span>
+      </header>
+
+      <div class="livro-filter-panel" aria-label="Identificação do plantão">
+        <div class="livro-field">
+          <label for="livro-setor">Setor <span class="required-star">*</span></label>
+          <select id="livro-setor" class="form-select">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="livro-field">
+          <label for="livro-data-plantao">Data do plantão</label>
+          <input type="date" id="livro-data-plantao">
+        </div>
+        <div class="livro-field">
+          <span class="livro-field-label">Turno <span class="required-star">*</span></span>
+          <div class="livro-turno-options">
+            <label class="livro-turno-option">
+              <input type="radio" name="livro-turno" value="M" checked>
+              <span><i class="bi bi-sun"></i> Diurno</span>
+            </label>
+            <label class="livro-turno-option">
+              <input type="radio" name="livro-turno" value="N">
+              <span><i class="bi bi-moon"></i> Noturno</span>
+            </label>
+          </div>
+        </div>
+        <div class="livro-field">
+          <label for="livro-enfermeiro">Enfermeiro responsável <span class="required-star">*</span></label>
+          <select id="livro-enfermeiro" class="form-select">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="livro-sections-grid">
+        <div class="livro-section d-none" id="livro-secao-ect-pre">
+          <div class="livro-section-header">
+            <span><i class="bi bi-person-workspace"></i> Pré-Procedimento</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-pre" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-pre-list"></div>
+        </div>
+
+        <div class="livro-section d-none" id="livro-secao-ect-sala">
+          <div class="livro-section-header">
+            <span><i class="bi bi-hospital"></i> Sala de Procedimento</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-sala" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-sala-list"></div>
+        </div>
+
+        <div class="livro-section d-none" id="livro-secao-ect-recuperacao">
+          <div class="livro-section-header">
+            <span><i class="bi bi-heart-pulse"></i> Sala de Recuperação</span>
+            <button class="btn-sm btn-secondary" id="btn-add-ect-recuperacao" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-ect-recuperacao-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-tecnicos">
+          <div class="livro-section-header">
+            <span><i class="bi bi-people"></i> Técnicos do plantão</span>
+            <button class="btn-sm btn-secondary" id="btn-add-tecnico" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-tecnicos-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-patio">
+          <div class="livro-section-header">
+            <span><i class="bi bi-signpost-split"></i> Pátio</span>
+            <button class="btn-sm btn-secondary" id="btn-add-patio" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-patio-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-circulante">
+          <div class="livro-section-header">
+            <span><i class="bi bi-arrow-repeat"></i> Circulante</span>
+            <button class="btn-sm btn-secondary" id="btn-add-circulante" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar técnico
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-circulante-list"></div>
+        </div>
+
+        <div class="livro-section livro-section-alert" id="livro-secao-faltas">
+          <div class="livro-section-header">
+            <span><i class="bi bi-calendar-x"></i> Faltas e folgas</span>
+            <button class="btn-sm btn-secondary" id="btn-add-falta" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body" id="livro-faltas-list"></div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-avaliacao-externa">
+          <div class="livro-section-header">
+            <span><i class="bi bi-box-arrow-up-right"></i> Avaliação externa</span>
+            <button class="btn-sm btn-secondary" id="btn-add-avaliacao-externa" type="button">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="livro-section-body">
+            <div id="livro-avaliacao-externa-list"></div>
+          </div>
+        </div>
+
+        <div class="livro-section" id="livro-secao-obs">
+          <div class="livro-section-header">
+            <span><i class="bi bi-chat-left-text"></i> Observações do plantão</span>
+          </div>
+          <div class="livro-section-body">
+            <textarea id="livro-observacoes" rows="4" placeholder="Registre aqui informações gerais e pontos de atenção do plantão"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="livro-preview" id="livro-preview">
+        <div class="loading-placeholder">Nenhuma escala carregada para visualização.</div>
+      </div>
+
+      <div class="livro-actions livro-action-bar">
+        <div class="livro-action-group">
+          <button class="btn-secondary d-none" id="btn-livro-historico" type="button">
+            <i class="bi bi-clock-history"></i> Histórico <span id="livro-historico-count"></span>
+          </button>
+          <button class="btn-secondary" id="btn-livro-buscar" type="button">
+            <i class="bi bi-search"></i> Ver livros liberados para impressão
+          </button>
+          <button class="btn-secondary d-none" id="btn-livro-editar" type="button" title="Carregar a escala em modo edição">
+            <i class="bi bi-pencil-square"></i> Editar esta escala
+          </button>
+        </div>
+        <div class="livro-action-group livro-action-group-end">
+          <button class="btn-secondary livro-clear-btn" id="btn-livro-limpar" type="button">
+            <i class="bi bi-eraser"></i> Limpar
+          </button>
+          <button class="btn-save" id="btn-livro-salvar" type="button">
+            <i class="bi bi-check2-circle"></i> Salvar escala
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace escala-stitch-page d-none" id="workspace-escala">
+      <header class="livro-page-header" id="escala-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-escala-voltar" type="button" aria-label="Voltar ao menu principal">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-calendar3"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">GESTÃO ASSISTENCIAL</span>
+            <h2>Gestão de Escalas — Psicologia</h2>
+            <p>Gestão e visualização de turnos da equipe multidisciplinar.</p>
+          </div>
+        </div>
+        <div class="escala-header-actions">
+        </div>
+      </header>
+
+      <div class="escala-filter-panel">
+        <div class="livro-field"><label for="escala-mes">Mês de referência</label><input type="month" id="escala-mes"></div>
+        <div class="livro-field"><label>Filtrar por turno</label><div class="escala-turno-filter"><button data-turno="" class="active" type="button">Todos</button><button data-turno="M" type="button">Manhã</button><button data-turno="N" type="button">Tarde</button></div></div>
+      </div>
+      <button class="btn-secondary escala-more-weeks" id="btn-escala-semanas-passadas" type="button"><i class="bi bi-chevron-up"></i> Carregar semanas passadas</button>
+      <div class="escala-week-list" id="escala-week-list"></div>
+      <button class="btn-secondary escala-more-weeks" id="btn-escala-mais-semanas" type="button"><i class="bi bi-chevron-down"></i> Carregar mais semanas</button>
+
+      <div class="livro-actions livro-action-bar escala-action-bar">
+        <div class="livro-action-group escala-action-filter">
+          <label for="escala-filtro-profissional">Filtrar profissional</label>
+          <div class="escala-search"><i class="bi bi-search"></i><input id="escala-filtro-profissional" type="search" placeholder="Buscar nome..."></div>
+        </div>
+        <div class="livro-action-group">
+          <button class="btn-secondary" id="btn-escala-imprimir" type="button"><i class="bi bi-printer"></i> Imprimir escala liberada</button>
+          <button class="btn-secondary livro-clear-btn" id="btn-escala-limpar" type="button"><i class="bi bi-eraser"></i> Limpar</button>
+          <button class="btn-save" id="btn-escala-publicar" type="button"><i class="bi bi-check2-circle"></i> Salvar/Publicar escala</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="livro-workspace print-stitch-page d-none" id="workspace-print">
+      <header class="livro-page-header">
+        <div class="livro-page-heading">
+          <button class="livro-page-back" id="btn-print-voltar" type="button" aria-label="Voltar ao menu do Livro Administrativo">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <span class="livro-page-icon"><i class="bi bi-printer"></i></span>
+          <div>
+            <span class="livro-page-eyebrow">Livro Administrativo</span>
+            <h2>Imprimir escalas liberadas</h2>
+            <p>Localize as escalas do plantão e escolha o que deseja imprimir.</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="livro-filter-panel" aria-label="Filtros de impressão">
+        <div class="livro-field">
+          <label for="print-data-plantao">Data do plantão</label>
+          <input type="date" id="print-data-plantao">
+        </div>
+        <div class="livro-field">
+          <label for="print-turno">Turno</label>
+          <select id="print-turno" class="form-select">
+            <option value="">Todos os turnos</option>
+            <option value="M">Diurno (07h - 19h)</option>
+            <option value="N">Noturno (19h - 07h)</option>
+          </select>
+        </div>
+        <div class="livro-field">
+          <label for="print-setor">Setor</label>
+          <select id="print-setor" class="form-select">
+            <option value="">Todos os setores</option>
+          </select>
+        </div>
+        <div class="filter-actions-group" style="display: flex; gap: 0.5rem; align-items: flex-end;">
+          <button class="btn-save print-filter-button" id="btn-print-buscar" type="button">
+            <i class="bi bi-funnel"></i> Aplicar filtros
+          </button>
+          <button class="btn-save print-filter-button d-none" id="btn-print-imprimir" type="button">
+            <i class="bi bi-printer"></i> Imprimir todas
+          </button>
+        </div>
+      </div>
+
+      <div class="print-results-summary" id="print-results-summary" aria-live="polite"></div>
+
+      <div class="livro-preview print-scale-list" id="print-preview">
+        <div class="loading-placeholder">Carregando escalas liberadas...</div>
+      </div>
+    </section>
+
+    <!-- TELA DE TESTE DE EVOLUÇÃO -->
+    <section id="sec-evolucao" class="app-container d-none p-4">
+      <div class="container-fluid max-w-1200 mx-auto mt-4">
+        <h2 class="mb-4"><i class="bi bi-file-earmark-medical me-2"></i>Nova Evolução (Teste)</h2>
+        
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-bold">Criar Evolução Clínica</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Número do Atendimento</label>
+              <input type="number" class="form-control w-25" id="inp-evo-atendimento" placeholder="Ex: 767500">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Texto da Evolução</label>
+              <textarea class="form-control" id="inp-evo-texto" rows="5" placeholder="Digite o texto da evolução aqui..."></textarea>
+            </div>
+            <button class="btn btn-primary" id="btn-evo-liberar">Liberar (Gravar no Tasy)</button>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Validação de Assinatura</div>
+          <div class="card-body">
+            <p class="text-muted">Após criar a evolução acima e assiná-la no TasyNative, valide aqui o status.</p>
+            <button class="btn btn-outline-success" id="btn-evo-validar"><i class="bi bi-patch-check"></i> Validar Assinatura do Tasy</button>
+          </div>
+        </div>
+        
+        <button class="btn btn-secondary mt-4" onclick="document.getElementById('nav-home').click();">Voltar ao Início</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <div class="test-environment-bar d-none" id="test-environment-bar">⚠️ AMBIENTE DE HOMOLOGAÇÃO — BASE DE TESTES</div>
+
+  <footer class="app-version-footer" id="app-version-footer">v—</footer>
+
+  <div class="modal-overlay d-none" id="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-icon" id="modal-icon"></div>
+      <h3 id="modal-title"></h3>
+      <div class="modal-message" id="modal-message"></div>
+      <button class="modal-btn-primary" id="modal-close">OK</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay d-none" id="modal-confirm-overlay">
+    <div class="modal-card">
+      <h3 id="modal-confirm-title"></h3>
+      <div class="modal-message" id="modal-confirm-message"></div>
+      <div class="modal-actions">
+        <button class="modal-btn-secondary" id="modal-confirm-no">Não</button>
+        <button class="modal-btn-primary" id="modal-confirm-yes">Sim</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay d-none" id="modal-escala-print-overlay">
+    <div class="modal-card modal-card-lg escala-print-modal">
+      <div class="escala-print-modal-header">
+        <div><span class="livro-page-eyebrow">Gestão de Escalas</span><h3>Selecionar semanas para impressão</h3></div>
+        <button class="modal-internacao-close" id="modal-escala-print-close" type="button" aria-label="Fechar"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <label class="livro-field" for="escala-print-mes"><span>Mês de referência</span><input type="month" id="escala-print-mes"></label>
+      <div id="escala-print-semanas" class="escala-print-week-options"></div>
+      <div class="modal-actions">
+        <button class="modal-btn-secondary" id="btn-escala-print-cancelar" type="button">Cancelar</button>
+        <button class="modal-btn-primary" id="btn-escala-print-confirmar" type="button"><i class="bi bi-printer"></i> Imprimir selecionadas</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay d-none" id="modal-internacao-overlay">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-internacao-header">
+        <div class="modal-internacao-brand">
+          <i class="bi bi-heart-pulse"></i>
+          <div>
+            <h3 id="modal-internacao-title">Indicação de Internação</h3>
+            <span id="modal-internacao-subtitle">Carregando...</span>
+          </div>
+        </div>
+        <button class="modal-internacao-close" id="modal-internacao-close" type="button" aria-label="Fechar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="modal-internacao-body" id="modal-internacao-body">
+        <div class="modal-internacao-loading">
+          <i class="bi bi-arrow-repeat spin"></i>
+          <span>Carregando detalhes...</span>
+        </div>
+      </div>
+      <div class="modal-internacao-motivo" id="modal-internacao-motivo-wrapper">
+        <label for="modal-internacao-motivo">Motivo / Observação</label>
+        <textarea id="modal-internacao-motivo" rows="3" placeholder="Descreva o motivo da decisão..."></textarea>
+      </div>
+      <div class="modal-internacao-decisao d-none" id="modal-internacao-decisao-info"></div>
+      <div class="modal-internacao-setor-desejado d-none" id="modal-internacao-setor-desejado-wrapper">
+        <label for="modal-internacao-setor-desejado">Setor Desejado</label>
+        <select id="modal-internacao-setor-desejado" class="form-select">
+          <option value="">Selecione o setor...</option>
+        </select>
+      </div>
+      <div class="modal-internacao-rodizio d-none" id="modal-internacao-rodizio-wrapper">
+        <a href="https://hospitalandreluiz-my.sharepoint.com/:x:/r/personal/pedrort_heal_org_br/_layouts/15/Doc.aspx?sourcedoc=%7B6D74065D-86B5-456A-979E-547759257CA4%7D&file=Planilha%20de%20Rod%25u00edzio.xlsx&fromShare=true&action=default&mobileredirect=true" target="_blank" class="modal-rodizio-link" id="modal-internacao-rodizio-link">
+          <i class="bi bi-file-earmark-excel"></i>
+          Verificar Rodízio de Médicos
+        </a>
+      </div>
+      <div class="modal-internacao-actions" id="modal-internacao-actions">
+        <button class="btn-internacao-recusar" id="btn-recusar-internacao" type="button">
+          <i class="bi bi-x-circle"></i> Recusar
+        </button>
+        <button class="btn-internacao-confirmar" id="btn-aceitar-internacao" type="button">
+          <i class="bi bi-check-circle"></i> Aceitar
+        </button>
+      </div>
+      <div class="modal-internacao-alterar-actions">
+        <button class="btn-alterar-decisao d-none" id="btn-alterar-decisao" type="button">
+          <i class="bi bi-pencil-square"></i> Alterar decisão
+        </button>
+        <button class="btn-cancelar-alteracao d-none" id="btn-cancelar-alteracao" type="button">
+          <i class="bi bi-arrow-left-circle"></i> Cancelar alteração
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="src/main.js?v=359"></script>
+
+    <!-- Modal Triagem: Identificação e Abertura -->
+    <div class="modal fade" id="modal-triagem-identificacao" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1400px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          <div class="modal-header modal-recepcao-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <h5 class="modal-recepcao-title">
+                <i class="bi bi-person-bounding-box"></i> Triagem P.A.
+              </h5>
+              <span class="modal-recepcao-senha-badge" id="triagem-modal-senha-badge">
+                <i class="bi bi-ticket-perforated-fill text-warning me-1"></i> Senha: <strong>---</strong>
+              </span>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          
+          <div class="modal-body p-0">
+            <!-- Passo 1: Busca e Condição -->
+            <div id="triagem-modal-step-busca" class="p-4">
+              <h6 class="fw-bold text-primary mb-3"><i class="bi bi-card-checklist"></i> Condição de Identificação</h6>
+              <div class="row g-2 mb-4">
+                <div class="col-12">
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_identificado" value="IDENTIFICADO" checked>
+                  <label class="btn btn-outline-primary w-100 text-start p-3" for="cond_identificado">
+                    <strong>Identificado</strong><br><small>Paciente apresentou documento oficial.</small>
+                  </label>
+                </div>
+                <div class="col-12">
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_sem_doc" value="NAO_APRESENTOU_IDENTIFICACAO">
+                  <label class="btn btn-outline-primary w-100 text-start p-3" for="cond_sem_doc">
+                    <strong>Não apresentou identificação</strong><br><small>Paciente informou quem é, mas sem documento.</small>
+                  </label>
+                </div>
+                <div class="col-12">
+                  <input type="radio" class="btn-check" name="triagem_condicao" id="cond_nao_ident" value="NAO_IDENTIFICADO">
+                  <label class="btn btn-outline-warning w-100 text-start p-3" for="cond_nao_ident">
+                    <strong>Não identificado</strong><br><small>Paciente não consegue informar quem é (Anônimo).</small>
+                  </label>
+                </div>
+              </div>
+
+              <div id="triagem-modal-search-section">
+                <p class="text-muted fw-bold mb-2"><i class="bi bi-search me-1"></i> Busque o paciente no TASY ou cadastre um novo:</p>
+                <div class="input-group input-group-lg shadow-sm mb-3">
+                  <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control border-start-0 ps-0 fw-bold" id="triagem-modal-search-input" placeholder="Nome, CPF ou Prontuário...">
+                </div>
+
+                <div id="triagem-modal-search-results" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                  <div class="text-center text-muted py-3">
+                    <i class="bi bi-keyboard" style="font-size: 2rem; opacity: 0.3;"></i>
+                    <p class="mt-2 small">Digite para pesquisar...</p>
+                  </div>
+                </div>
+                
+                <div class="mt-3 text-center border-top pt-3">
+                  <button class="btn btn-outline-primary fw-bold px-4" id="btn-triagem-show-cadastro">
+                    <i class="bi bi-person-plus-fill me-1"></i> Cadastrar Novo Paciente (Básico)
+                  </button>
+                </div>
+              </div>
+
+              <div id="triagem-modal-anonimo-section" class="d-none text-center py-4">
+                <i class="bi bi-person-slash text-warning" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 fw-bold text-dark">Paciente Anônimo</h5>
+                <p class="text-muted small">Um novo registro temporário será criado automaticamente.</p>
+              </div>
+            </div>
+
+            <!-- Passo 2: Cadastro Novo -->
+            <div id="triagem-modal-step-cadastro" class="p-4 d-none">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary m-0"><i class="bi bi-person-plus"></i> Novo Cadastro</h6>
+                <button class="btn btn-sm btn-link text-muted" id="btn-triagem-back-busca"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
+              </div>
+              
+              <form id="form-triagem-novo-paciente">
+                <div class="mb-3">
+                  <label class="form-label fw-bold text-muted small mb-1">Nome Completo <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control fw-bold" id="triagem-form-nome" required>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">CPF</label>
+                    <input type="text" class="form-control" id="triagem-form-cpf" placeholder="000.000.000-00">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small mb-1">Data Nasc. <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="triagem-form-nascimento" required>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+
+            <!-- FASE 4: Etapas Clínicas -->
+            
+            <!-- Queixa Principal -->
+            <div id="triagem-modal-step-queixa" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-3"><i class="bi bi-chat-square-text"></i> Queixa Principal</h5>
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">Queixa Principal <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="triagem-queixa-principal" rows="5" placeholder="Relate a queixa do paciente..."></textarea>
+                <div class="invalid-feedback">Informe a queixa principal.</div>
+              </div>
+            </div>
+
+            <!-- Alergias -->
+            <div id="triagem-modal-step-alergias" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-3"><i class="bi bi-shield-exclamation"></i> Alergias</h5>
+              <div class="row">
+                <div class="col-md-6 border-end">
+                  <h6 class="fw-bold text-secondary mb-3">Alergias registradas no TASY</h6>
+                  <div id="triagem-alergias-existentes" class="p-3 bg-light rounded" style="min-height: 150px;">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Buscando...
+                  </div>
+                </div>
+                <div class="col-md-6 ps-4">
+                  <h6 class="fw-bold text-secondary mb-3">Registrar nova alergia</h6>
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="triagem-nega-alergias">
+                    <label class="form-check-label fw-bold" for="triagem-nega-alergias">Nega alergias</label>
+                  </div>
+                  <div class="mb-3" id="triagem-nova-alergia-container">
+                    <label class="form-label text-muted small fw-bold">Descrição da Alergia</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="triagem-nova-alergia-input" placeholder="Ex: Dipirona">
+                      <button class="btn btn-outline-primary" type="button" id="btn-triagem-add-alergia"><i class="bi bi-plus-lg"></i> Adicionar</button>
+                    </div>
+                  </div>
+                  <ul class="list-group" id="triagem-novas-alergias-list"></ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sinais Vitais -->
+            <div id="triagem-modal-step-sinais" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-4"><i class="bi bi-heart-pulse"></i> Sinais Vitais</h5>
+              <div class="row g-4">
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">PA Sistólica</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-pas" min="0" max="350">
+                    <span class="input-group-text">mmHg</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">PA Diastólica</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-pad" min="0" max="250">
+                    <span class="input-group-text">mmHg</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">Freq. Cardíaca</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-fc" min="0" max="350">
+                    <span class="input-group-text">bpm</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">Freq. Respiratória</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-fr" min="0" max="150">
+                    <span class="input-group-text">irpm</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">Temperatura</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-temp" min="15" max="45" step="0.1">
+                    <span class="input-group-text">°C</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">Saturação O2</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-spo2" min="0" max="100">
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted fw-bold small mb-1">Peso</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control fw-bold" id="triagem-sv-peso" min="0" max="600" step="0.01">
+                    <span class="input-group-text">kg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Histórico -->
+            <div id="triagem-modal-step-historico" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-4"><i class="bi bi-journal-medical"></i> Histórico e Estado Geral</h5>
+              
+              <div class="row g-4">
+                <div class="col-12">
+                  <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">Histórico de Saúde / Comorbidades</h6>
+                  <div class="row g-2" id="triagem-historico-container">
+                    <div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">Estado Geral</h6>
+                  <div class="row g-2" id="triagem-estado-geral-container">
+                    <div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">Comportamento</h6>
+                  <div class="row g-2" id="triagem-comportamento-container">
+                    <div class="col-12 text-center text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            
+            <!-- Glasgow -->
+            <div id="triagem-modal-step-glasgow" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-4"><i class="bi bi-eye"></i> Escala de Coma de Glasgow</h5>
+              <div class="row g-4">
+                <div class="col-md-4">
+                  <label class="form-label text-muted fw-bold small mb-1">Abertura Ocular (1-4)</label>
+                  <select class="form-select" id="triagem-glasgow-ocular">
+                    <option value="">Selecione...</option>
+                    <option value="4">4 - Espontânea</option>
+                    <option value="3">3 - À voz</option>
+                    <option value="2">2 - À dor</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label text-muted fw-bold small mb-1">Resposta Verbal (1-5)</label>
+                  <select class="form-select" id="triagem-glasgow-verbal">
+                    <option value="">Selecione...</option>
+                    <option value="5">5 - Orientada</option>
+                    <option value="4">4 - Confusa</option>
+                    <option value="3">3 - Palavras inapropriadas</option>
+                    <option value="2">2 - Sons ininteligíveis</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label text-muted fw-bold small mb-1">Resposta Motora (1-6)</label>
+                  <select class="form-select" id="triagem-glasgow-motora">
+                    <option value="">Selecione...</option>
+                    <option value="6">6 - Obedece a comandos</option>
+                    <option value="5">5 - Localiza a dor</option>
+                    <option value="4">4 - Flexão normal (Retirada)</option>
+                    <option value="3">3 - Flexão anormal (Decorticação)</option>
+                    <option value="2">2 - Extensão (Descerebração)</option>
+                    <option value="1">1 - Nenhuma</option>
+                  </select>
+                </div>
+                <div class="col-12 mt-4 text-center">
+                  <h4 class="fw-bold">Score Total: <span id="triagem-glasgow-total" class="text-primary">-</span></h4>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sintomas Gripais -->
+            <div id="triagem-modal-step-sintomas" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-4"><i class="bi bi-virus"></i> Sintomas Gripais</h5>
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <div class="form-check form-switch form-switch-lg mb-3">
+                    <input class="form-check-input" type="checkbox" id="triagem-sintomas-gripais-check">
+                    <label class="form-check-label fw-bold ms-2 mt-1" for="triagem-sintomas-gripais-check">Paciente apresenta sintomas gripais?</label>
+                  </div>
+                  <div id="triagem-sintomas-gripais-desc-container" class="d-none">
+                    <label class="form-label text-muted small fw-bold">Descrição dos sintomas (opcional)</label>
+                    <textarea class="form-control" id="triagem-sintomas-gripais-desc" rows="3"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passo 3: Confirmação -->
+            
+            <!-- Revisão -->
+            <div id="triagem-modal-step-revisao" class="p-4 d-none triagem-clinical-step">
+              <h5 class="fw-bold text-primary mb-4"><i class="bi bi-clipboard-check"></i> Revisão da Triagem</h5>
+              
+              <div class="row g-4">
+                <div class="col-12" id="triagem-revisao-conteudo">
+                  <!-- Preenchido via JS -->
+                </div>
+              </div>
+            </div>
+
+            <div id="triagem-modal-step-confirmacao" class="p-4 d-none">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary m-0"><i class="bi bi-person-check"></i> Confirmar Paciente</h6>
+                <button class="btn btn-sm btn-link text-muted" id="btn-triagem-back-busca-conf"><i class="bi bi-arrow-left"></i> Voltar à busca</button>
+              </div>
+              <div class="card bg-light border-0">
+                <div class="card-body" id="triagem-confirm-details">
+                  <!-- detalhes preenchidos via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-footer bg-light d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary d-none" id="btn-triagem-voltar-step">
+              <i class="bi bi-arrow-left"></i> Voltar
+            </button>
+            <button type="button" class="btn btn-light" id="btn-triagem-cancelar" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <div class="d-flex gap-2 ms-auto">
+              <button type="button" class="btn btn-success fw-bold px-4 d-none" id="btn-triagem-salvar-paciente">
+                <i class="bi bi-check-circle me-1"></i> Salvar e Iniciar Triagem
+              </button>
+              <button type="button" class="btn btn-primary fw-bold px-4 d-none" id="btn-triagem-confirmar-inicio">
+                Iniciar Triagem <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+</body>
+</html>
